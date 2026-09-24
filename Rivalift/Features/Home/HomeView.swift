@@ -1,3 +1,4 @@
+import Charts
 import SwiftUI
 
 /// PROG-06 / LOG-01 / appendix A.2.
@@ -6,7 +7,7 @@ struct HomeView: View {
     @State private var progress: WeekProgress?
     @State private var quickTemplates: [WorkoutTemplate] = []
     @State private var recentRecords: [PersonalRecord] = []
-    @State private var hasHistory = false
+    @State private var overview: AppEnvironment.TrainingOverview?
 
     var body: some View {
         ScrollView {
@@ -14,6 +15,7 @@ struct HomeView: View {
                 greeting
                 if let progress { WeekCard(progress: progress) }
                 startButtons
+                if let overview, overview.totalWorkouts > 0 { MetricsCard(overview: overview, unit: env.unit) }
                 LeagueTeaserCard()
                 if !quickTemplates.isEmpty { quickStart }
                 if !recentRecords.isEmpty { records }
@@ -28,21 +30,12 @@ struct HomeView: View {
     }
 
     private var greeting: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text(Date(), format: .dateTime.weekday(.wide).day().month())
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Text(env.settings.displayName.isEmpty ? String(localized: "Let's lift") : String(localized: "Hi, \(env.settings.displayName)"))
-                    .font(.largeTitle.bold())
-            }
-            Spacer()
-            Button {
-                env.selectedTab = .profile
-            } label: {
-                AvatarView(name: env.settings.displayName.isEmpty ? "?" : env.settings.displayName, size: 44)
-            }
-            .accessibilityLabel("Profile")
+        VStack(alignment: .leading) {
+            Text(Date(), format: .dateTime.weekday(.wide).day().month())
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Text(env.settings.displayName.isEmpty ? String(localized: "Let's lift") : String(localized: "Hi, \(env.settings.displayName)"))
+                .font(.largeTitle.bold())
         }
     }
 
@@ -53,20 +46,12 @@ struct HomeView: View {
                     .buttonStyle(.primary)
             } else {
                 Button {
-                    env.workout.requestStart(.empty)
+                    env.workout.isStartSheetPresented = true
                 } label: {
                     Label("Start workout", systemImage: "play.fill")
                 }
                 .buttonStyle(.primary)
                 .accessibilityIdentifier("startWorkoutButton")
-                if hasHistory {
-                    Button {
-                        env.workout.requestStart(.repeatLast)
-                    } label: {
-                        Label("Repeat last workout", systemImage: "arrow.clockwise")
-                    }
-                    .buttonStyle(.secondary)
-                }
             }
         }
     }
@@ -123,7 +108,8 @@ struct HomeView: View {
         progress = env.weekProgress()
         quickTemplates = env.templates.recentlyUsed()
         if quickTemplates.isEmpty {
-            quickTemplates = Array(env.templates.builtInTemplates().prefix(3))
+            let plan = env.templates.programs().first { $0.name == env.settings.planProgram }?.templates
+            quickTemplates = Array((plan ?? env.templates.builtInTemplates()).prefix(3))
         }
         let calendar = WeekCalendar()
         let weekSessions = env.sessions.completedSessions(from: calendar.weekStart(for: Date()), to: calendar.weekEnd(for: Date()))
@@ -133,7 +119,7 @@ struct HomeView: View {
                 .sorted { $0.achievedAt > $1.achievedAt }
                 .prefix(3)
         )
-        hasHistory = env.sessions.completedSessionCount() > 0
+        overview = env.trainingOverview()
     }
 }
 
@@ -178,6 +164,64 @@ struct WeekCard: View {
                 .foregroundStyle(.secondary)
         }
         .card()
+    }
+}
+
+/// Training summary on Home: this week vs last week and weekly volume.
+struct MetricsCard: View {
+    let overview: AppEnvironment.TrainingOverview
+    let unit: WeightUnit
+
+    var body: some View {
+        let now = overview.thisWeek, last = overview.lastWeek
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Your training").font(.headline)
+                Spacer()
+                Text("^[\(overview.totalWorkouts) workout](inflect: true) all time")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 14) {
+                GridRow {
+                    metric(WeightFormatter.string(kg: now.volumeKg, unit: unit, includeUnit: true), "Volume", now.volumeKg, last.volumeKg)
+                    metric("\(now.sets)", "Sets", Double(now.sets), Double(last.sets))
+                }
+                GridRow {
+                    metric(DurationFormatter.short(now.durationSec), "Time", Double(now.durationSec), Double(last.durationSec))
+                    metric("\(now.sessions)", "Workouts", Double(now.sessions), Double(last.sessions))
+                }
+            }
+            Chart(overview.weeklyVolume, id: \.weekStart) { week in
+                BarMark(x: .value("Week", week.weekStart, unit: .weekOfYear), y: .value("Volume", week.volumeKg))
+                    .foregroundStyle(week.weekStart == overview.weeklyVolume.last?.weekStart ? Theme.accent : Theme.accent.opacity(0.3))
+                    .cornerRadius(4)
+            }
+            .chartYAxis(.hidden)
+            .chartXAxis {
+                AxisMarks(values: .stride(by: .weekOfYear, count: 2)) {
+                    AxisValueLabel(format: .dateTime.day().month(.abbreviated))
+                }
+            }
+            .frame(height: 90)
+            .accessibilityLabel("Weekly volume, last 8 weeks")
+            Text("This week vs last week · volume over the last 8 weeks")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .card()
+    }
+
+    private func metric(_ value: String, _ label: LocalizedStringKey, _ current: Double, _ previous: Double) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            StatTile(value: value, label: label)
+            if let change = TrainingStats.percentChange(current: current, previous: previous), change != 0 {
+                Label("\(abs(change))%", systemImage: change > 0 ? "arrow.up.right" : "arrow.down.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(change > 0 ? Color.green : Color.secondary)
+                    .accessibilityLabel(change > 0 ? "Up \(change) percent from last week" : "Down \(-change) percent from last week")
+            }
+        }
     }
 }
 

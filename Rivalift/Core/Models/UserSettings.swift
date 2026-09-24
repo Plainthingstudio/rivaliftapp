@@ -26,7 +26,14 @@ final class UserSettings {
     var reminderHour: Int = 18
     /// ISO weekdays (1 = Monday) for workout reminders, comma separated.
     var reminderWeekdaysRaw: String = ""
-    /// 0 = not started; 1…3 = step reached; persisted so closing the app keeps choices (AUTH-05).
+    /// Onboarding answers used to recommend a built-in program (`PlanRecommender`).
+    var goalRaw: String = TrainingGoal.fitness.rawValue
+    var experienceRaw: String = ExperienceLevel.beginner.rawValue
+    /// Program name from templates.json, e.g. "Full Body 3×"; empty until onboarding ends.
+    var planProgram: String = ""
+    /// Weekly streak the user committed to during onboarding (0 = none).
+    var streakGoalWeeks: Int = 0
+    /// 0 = not started; then the step reached; persisted so closing the app keeps choices (AUTH-05).
     var onboardingStep: Int = 0
     var onboardingDone: Bool = false
     var hasAskedNotificationPermission: Bool = false
@@ -36,6 +43,22 @@ final class UserSettings {
     var unit: WeightUnit {
         get { WeightUnit(rawValue: unitRaw) ?? .kg }
         set { unitRaw = newValue.rawValue }
+    }
+
+    var goal: TrainingGoal {
+        get { TrainingGoal(rawValue: goalRaw) ?? .fitness }
+        set { goalRaw = newValue.rawValue }
+    }
+
+    var experience: ExperienceLevel {
+        get { ExperienceLevel(rawValue: experienceRaw) ?? .beginner }
+        set { experienceRaw = newValue.rawValue }
+    }
+
+    /// ISO weekdays (1 = Monday) the user plans to train.
+    var trainingWeekdays: Set<Int> {
+        get { Set(reminderWeekdaysRaw.split(separator: ",").compactMap { Int($0) }) }
+        set { reminderWeekdaysRaw = newValue.sorted().map(String.init).joined(separator: ",") }
     }
 
     /// Promotes a pending target once its week has started.

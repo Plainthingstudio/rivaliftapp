@@ -93,19 +93,19 @@ Setiap persyaratan punya ID agar mudah dirujuk saat memberi tugas ke Claude Code
 | AUTH-02 | Login dengan Google | P1 |
 | AUTH-03 | Mode tanpa akun: user bisa langsung mencatat latihan; login baru diminta saat membuat atau bergabung ke grup | P0 |
 | AUTH-04 | Profil: nama tampilan (wajib), avatar (foto atau inisial berwarna), satuan kg/lb, target sesi per minggu (1–7, default 3) | P0 |
-| AUTH-05 | Onboarding 3 langkah: pilih satuan, pilih target mingguan, pilih mulai dari template atau latihan kosong | P0 |
+| AUTH-05 | Onboarding 6 langkah (nama, tujuan, level, satuan, target mingguan dan hari latihan, komitmen streak) lalu rekomendasi program dari jawaban tersebut | P0 |
 | AUTH-06 | Data lokal yang dibuat sebelum login tetap tersimpan dan terhubung ke akun setelah login | P0 |
 
 **Acceptance criteria:**
 
-- User baru bisa sampai ke layar latihan aktif dalam ≤ 4 tap setelah membuka app pertama kali.
+- User baru menyelesaikan onboarding dalam ≤ 10 tap (di luar mengetik nama) dan melihat program yang direkomendasikan beserta alasannya.
 - Menutup app di tengah onboarding tidak menghilangkan pilihan yang sudah dibuat.
 
 ### 5.2 Pencatatan latihan (LOG)
 
 | ID | Persyaratan | Prioritas |
 | --- | --- | --- |
-| LOG-01 | Mulai sesi dari: latihan kosong, template, atau "ulangi sesi terakhir" | P0 |
+| LOG-01 | "Start workout" membuka pilihan dulu: rekomendasi (hari berikutnya dari program terakhir atau program onboarding), pilih latihan satuan, "ulangi sesi terakhir", atau template. Sesi dan durasinya baru mulai setelah user memilih | P0 |
 | LOG-02 | Tambah, hapus, dan urutkan ulang latihan dalam sesi (drag) | P0 |
 | LOG-03 | Tabel set per latihan: nomor set, kolom "previous", beban, repetisi, tombol centang | P0 |
 | LOG-04 | Kolom "previous" menampilkan beban × repetisi set yang sama pada sesi terakhir latihan tersebut; tap untuk mengisi otomatis | P0 |
@@ -311,8 +311,8 @@ Diagram menunjukkan alur utama; layar pendukung tercantum di tabel berikut.
 
 | Layar | Isi utama | Persyaratan terkait |
 | --- | --- | --- |
-| Onboarding | Satuan, target mingguan, pilihan mulai | AUTH-04, AUTH-05 |
-| Home | Tombol mulai latihan, ringkasan minggu ini, kartu posisi liga, template cepat | PROG-06, LOG-01 |
+| Onboarding | Nama, tujuan, level, satuan, target dan hari latihan, komitmen streak, rekomendasi program | AUTH-04, AUTH-05 |
+| Home | Tombol mulai latihan (membuka pilihan), ringkasan minggu ini, metrik latihan, kartu posisi liga, template cepat | PROG-06, LOG-01 |
 | Active Workout | Header statistik, daftar latihan dengan tabel set, rest timer melayang, tombol selesai | LOG-02 s.d. LOG-14 |
 | Exercise Picker | Pencarian, filter otot dan alat, tambah latihan custom | LIB-01 s.d. LIB-03 |
 | Workout Summary | Durasi, volume, set, rekor baru, estimasi poin liga | LOG-12, PROG-05 |
@@ -667,20 +667,26 @@ Setiap layar di bawah berisi daftar konten yang direkomendasikan untuk Rivalift,
 
 Referensi: [Gymshark — pilih satuan](https://mobbin.com/flows/497dfa33-efe9-4983-8ed4-47fcadc18b72), [pliability — frekuensi latihan](https://mobbin.com/flows/ba530414-fbc6-4e1f-a353-bbed6c52305a), [Tonal — ringkasan tujuan dan ajakan ikuti teman](https://mobbin.com/flows/9f597ed6-aea4-4ec7-b573-48ea7484b164).
 
-- Layar sambutan: nilai utama app dalam satu kalimat ("Lift with your friends. Win the week.") dan tombol mulai.
+- Layar sambutan: nilai utama app dalam satu kalimat ("Lift with your friends. Win the week."), tiga fitur utama (log cepat, rekor otomatis, liga mingguan), dan tombol mulai.
+- Nama tampilan (wajib, AUTH-04) dengan pratinjau avatar inisial.
+- Tujuan utama: Get stronger, Build muscle, Stay consistent, General fitness.
+- Level: Beginner, Intermediate, Advanced, masing-masing dengan satu baris penjelasan.
 - Pilih satuan: dua pilihan besar kg dan lb, tombol lewati (default dari locale).
-- Target mingguan: pilihan 2, 3, 4, 5+ sesi per minggu, dengan satu baris penjelasan bahwa target dipakai untuk liga.
-- Pilihan mulai: "Start from a program" (daftar template) atau "Start empty".
-- Indikator progres langkah (1/3, 2/3, 3/3) dan tombol kembali.
+- Target mingguan: pilihan 2, 3, 4, 5+ sesi per minggu, dengan satu baris penjelasan bahwa target dipakai untuk liga; lalu hari latihan (opsional, dipakai untuk pengingat NOT-02).
+- Komitmen streak: 2, 4, 8, atau 12 minggu berturut-turut mencapai target, tombol "Commit to my goal" dan "Maybe later".
+- "Building your plan": checklist singkat (±2 detik), lalu program yang direkomendasikan beserta alasannya dan daftar harinya. Aturan: target ≥ 5 dan bukan beginner → Push/Pull/Legs 6×; target ≥ 4 → Upper/Lower 4×; beginner dengan tujuan Get stronger → 5×5; selain itu Full Body 3×.
+- Indikator progres langkah (1/6 … 6/6) dan tombol kembali.
+- Izin notifikasi tidak diminta di onboarding (lihat bagian 10).
 - Tidak meminta tinggi, berat, atau tanggal lahir; data itu tidak dipakai di MVP.
 
 ### A.2 Home
 
 Referensi: [Hevy — quick start dan routines](https://mobbin.com/screens/c3143e37-c87b-431f-80ad-87637ce62d7b), [pushr — kartu minggu ini dengan streak](https://mobbin.com/screens/2d9dedab-7961-4927-ada0-5d9338d95bf7), [pliability — kartu sesi hari ini](https://mobbin.com/screens/3908dd21-ea9e-4f49-bbcc-3c878d1a8602).
 
-- Sapaan dengan nama dan avatar (tap ke Profile).
+- Sapaan dengan nama (tanpa tombol avatar; Profile ada di tab bar).
 - Kartu "This week": 7 titik hari (Senin–Minggu) dengan centang pada hari latihan, teks "2 of 3 sessions", dan ikon api streak mingguan.
-- Tombol utama besar "Start workout"; jika ada sesi aktif, berubah menjadi "Resume workout".
+- Tombol utama besar "Start workout" yang membuka pilihan (LOG-01); jika ada sesi aktif, berubah menjadi "Resume workout".
+- Kartu metrik "Your training": volume, jumlah set, waktu latihan, dan jumlah workout minggu ini dengan perubahan % dari minggu lalu, total workout sepanjang waktu, dan grafik volume 8 minggu terakhir.
 - Kartu liga: nama grup, peringkat user, skor, selisih poin ke peringkat di atasnya, dan hitung mundur. Jika belum punya grup, kartu berubah menjadi ajakan membuat atau bergabung.
 - Template cepat: 2–3 template terakhir dipakai sebagai kartu horizontal dengan tombol mulai.
 - Rekor terbaru minggu ini (maksimal 3) sebagai pengingat progres.

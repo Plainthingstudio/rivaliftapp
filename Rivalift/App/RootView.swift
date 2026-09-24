@@ -54,6 +54,10 @@ struct MainTabView: View {
                 .environment(env)
                 .interactiveDismissDisabled()
         }
+        .sheet(isPresented: $workout.isStartSheetPresented, onDismiss: { env.workout.startSheetDidDismiss() }) {
+            StartWorkoutSheet()
+                .environment(env)
+        }
         .startConflictAlert()
         .alert("Workout still running", isPresented: $workout.isStalePromptPresented) {
             Button("Finish at last set") { env.workout.finishStaleAtLastSet() }

@@ -33,6 +33,7 @@ python3 scripts/scoring_reference.py
 ```
 
 Launch argument `-ui-testing` starts the app with an in-memory store (fresh onboarding).
+The iPhone 16 simulator may not exist on newer Xcode; any iPhone simulator works.
 
 ## Layout
 
@@ -84,7 +85,8 @@ supabase/         migrations/, functions/ (M4+)
 - [x] M0 Foundation: project, models, seed data, design system, tab bar
 - [x] M1 Logging: LOG-01…LOG-14, exercise picker, rest timer
 - [x] M2 History/records/progress: PROG-01…06, PRG-01…04, LIB-04…06
-- [~] M3 Onboarding/settings: AUTH-04 (name + initials avatar), AUTH-05, SET-01…04 done;
+- [~] M3 Onboarding/settings: AUTH-04 (name + initials avatar), AUTH-05 (6 steps + program
+      recommendation via `PlanRecommender`), start-workout chooser, Home metrics, SET-01…04 done;
       photo avatar and workout-reminder scheduling (NOT-02) still to do
 - [ ] M4 Backend and accounts (Supabase, AUTH-01…03, AUTH-06, SyncService)
 - [ ] M5 Groups and leagues (SOC-01…18; domain scorers + vectors already exist)

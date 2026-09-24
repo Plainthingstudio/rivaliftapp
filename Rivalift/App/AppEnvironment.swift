@@ -110,6 +110,54 @@ final class AppEnvironment {
     }
 }
 
+extension AppEnvironment {
+    struct Recommendation {
+        var template: WorkoutTemplate
+        var reason: String
+    }
+
+    /// Next day of the program the user last trained, else of the onboarding plan.
+    func recommendedWorkout() -> Recommendation? {
+        let programs = templates.programs()
+        if let lastID = sessions.completedSessions().first?.templateID,
+           let last = templates.template(id: lastID), last.isBuiltIn,
+           let program = programs.first(where: { $0.name == last.programName }),
+           let nextID = PlanRecommender.next(in: program.templates.map(\.id), after: last.id),
+           let next = program.templates.first(where: { $0.id == nextID }) {
+            return Recommendation(template: next, reason: String(localized: "Next in \(program.name) · last time \(last.name)"))
+        }
+        guard let program = programs.first(where: { $0.name == settings.planProgram }) else { return nil }
+        let lastUsed = program.templates.filter { $0.lastUsedAt != nil }.max { ($0.lastUsedAt ?? .distantPast) < ($1.lastUsedAt ?? .distantPast) }
+        guard let nextID = PlanRecommender.next(in: program.templates.map(\.id), after: lastUsed?.id),
+              let next = program.templates.first(where: { $0.id == nextID }) else { return nil }
+        return Recommendation(template: next, reason: String(localized: "From your plan · \(program.name)"))
+    }
+
+    struct TrainingOverview {
+        var thisWeek: TrainingStats.Totals
+        var lastWeek: TrainingStats.Totals
+        var weeklyVolume: [TrainingStats.WeekVolume]
+        var totalWorkouts: Int
+    }
+
+    /// Home metrics (appendix A.2).
+    func trainingOverview(now: Date = Date()) -> TrainingOverview {
+        let calendar = WeekCalendar()
+        let completed = sessions.completedSessions()
+        let entries = completed.map {
+            TrainingStats.Entry(startedAt: $0.startedAt, volumeKg: $0.totalVolumeKg, sets: $0.completedSetCount, durationSec: $0.durationSec)
+        }
+        let start = calendar.weekStart(for: now)
+        let previous = calendar.calendar.date(byAdding: .weekOfYear, value: -1, to: start) ?? start
+        return TrainingOverview(
+            thisWeek: TrainingStats.totals(entries, from: start, to: calendar.weekEnd(for: now)),
+            lastWeek: TrainingStats.totals(entries, from: previous, to: start),
+            weeklyVolume: TrainingStats.weeklyVolume(entries, weeks: 8, endingAt: now, calendar: calendar),
+            totalWorkouts: completed.count
+        )
+    }
+}
+
 struct WeekProgress {
     var days: [Date]
     var trainedDays: Set<String>

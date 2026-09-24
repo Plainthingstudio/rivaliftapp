@@ -31,6 +31,8 @@ final class WorkoutStore {
         case empty
         case template(UUID)
         case repeatLast
+        /// Empty session prefilled with exercises picked before starting.
+        case exercises([UUID])
     }
 
     enum CompletionOutcome: Equatable {
@@ -52,6 +54,10 @@ final class WorkoutStore {
     var isStalePromptPresented = false
     /// Set when a start is requested while another session is active.
     var pendingStart: StartRequest?
+    /// "Start workout" opens a chooser first; the session (and its clock) starts only
+    /// after the user picks what to do.
+    var isStartSheetPresented = false
+    private var chosenStart: StartRequest?
     var notice: String?
     var onDataChange: (@MainActor () -> Void)?
 
@@ -112,6 +118,19 @@ final class WorkoutStore {
         return true
     }
 
+    /// Called from the start sheet. The start runs once the sheet has dismissed so the
+    /// workout cover is not presented on top of a closing sheet.
+    func choose(_ request: StartRequest) {
+        chosenStart = request
+        isStartSheetPresented = false
+    }
+
+    func startSheetDidDismiss() {
+        guard let request = chosenStart else { return }
+        chosenStart = nil
+        requestStart(request)
+    }
+
     func resumeInsteadOfStarting() {
         pendingStart = nil
         isPresented = true
@@ -138,6 +157,12 @@ final class WorkoutStore {
             }
         case .repeatLast:
             session = sessions.repeatLast() ?? sessions.startEmpty(name: defaultName())
+        case .exercises(let ids):
+            let session = sessions.startEmpty(name: defaultName())
+            for exercise in ids.compactMap(exercises.exercise(id:)) {
+                sessions.addExercise(exercise, to: session)
+            }
+            self.session = session
         }
         isPresented = true
         onDataChange?()
