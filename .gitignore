@@ -1,0 +1,18 @@
+# Xcode (the project is generated from project.yml by XcodeGen)
+*.xcodeproj/
+*.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+xcuserdata/
+DerivedData/
+build/
+*.xcresult
+.swiftpm/
+.build/
+
+# macOS
+.DS_Store
+
+# Supabase local
+supabase/.temp/
+supabase/.branches/
+.env

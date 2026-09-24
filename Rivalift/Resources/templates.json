@@ -1,0 +1,393 @@
+[
+  {
+    "program": "Full Body 3\u00d7",
+    "days": [
+      {
+        "name": "Full Body A",
+        "exercises": [
+          {
+            "exerciseKey": "barbell_back_squat",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "barbell_bench_press",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "barbell_row",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "dumbbell_lateral_raise",
+            "sets": 2,
+            "targetReps": 12
+          },
+          {
+            "exerciseKey": "plank",
+            "sets": 2,
+            "targetReps": 0
+          }
+        ]
+      },
+      {
+        "name": "Full Body B",
+        "exercises": [
+          {
+            "exerciseKey": "romanian_deadlift",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "overhead_press",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "lat_pulldown",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "dumbbell_lunge",
+            "sets": 2,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "hammer_curl",
+            "sets": 2,
+            "targetReps": 12
+          }
+        ]
+      },
+      {
+        "name": "Full Body C",
+        "exercises": [
+          {
+            "exerciseKey": "leg_press",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "incline_dumbbell_press",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "seated_cable_row",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "face_pull",
+            "sets": 2,
+            "targetReps": 15
+          },
+          {
+            "exerciseKey": "triceps_pushdown",
+            "sets": 2,
+            "targetReps": 12
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "program": "Upper/Lower 4\u00d7",
+    "days": [
+      {
+        "name": "Upper A",
+        "exercises": [
+          {
+            "exerciseKey": "barbell_bench_press",
+            "sets": 4,
+            "targetReps": 6
+          },
+          {
+            "exerciseKey": "barbell_row",
+            "sets": 4,
+            "targetReps": 6
+          },
+          {
+            "exerciseKey": "overhead_press",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "lat_pulldown",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "dumbbell_bicep_curl",
+            "sets": 2,
+            "targetReps": 12
+          },
+          {
+            "exerciseKey": "triceps_pushdown",
+            "sets": 2,
+            "targetReps": 12
+          }
+        ]
+      },
+      {
+        "name": "Lower A",
+        "exercises": [
+          {
+            "exerciseKey": "barbell_back_squat",
+            "sets": 4,
+            "targetReps": 6
+          },
+          {
+            "exerciseKey": "romanian_deadlift",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "leg_press",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "lying_leg_curl",
+            "sets": 3,
+            "targetReps": 12
+          },
+          {
+            "exerciseKey": "standing_calf_raise",
+            "sets": 3,
+            "targetReps": 12
+          }
+        ]
+      },
+      {
+        "name": "Upper B",
+        "exercises": [
+          {
+            "exerciseKey": "incline_dumbbell_press",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "pull_up",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "seated_dumbbell_shoulder_press",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "seated_cable_row",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "hammer_curl",
+            "sets": 2,
+            "targetReps": 12
+          },
+          {
+            "exerciseKey": "overhead_cable_triceps_extension",
+            "sets": 2,
+            "targetReps": 12
+          }
+        ]
+      },
+      {
+        "name": "Lower B",
+        "exercises": [
+          {
+            "exerciseKey": "deadlift",
+            "sets": 3,
+            "targetReps": 5
+          },
+          {
+            "exerciseKey": "front_squat",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "bulgarian_split_squat",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "seated_leg_curl",
+            "sets": 3,
+            "targetReps": 12
+          },
+          {
+            "exerciseKey": "seated_calf_raise",
+            "sets": 3,
+            "targetReps": 15
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "program": "Push/Pull/Legs 6\u00d7",
+    "days": [
+      {
+        "name": "Push",
+        "exercises": [
+          {
+            "exerciseKey": "barbell_bench_press",
+            "sets": 4,
+            "targetReps": 6
+          },
+          {
+            "exerciseKey": "overhead_press",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "incline_dumbbell_press",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "dumbbell_lateral_raise",
+            "sets": 3,
+            "targetReps": 12
+          },
+          {
+            "exerciseKey": "rope_pushdown",
+            "sets": 3,
+            "targetReps": 12
+          },
+          {
+            "exerciseKey": "overhead_dumbbell_triceps_extension",
+            "sets": 2,
+            "targetReps": 12
+          }
+        ]
+      },
+      {
+        "name": "Pull",
+        "exercises": [
+          {
+            "exerciseKey": "deadlift",
+            "sets": 3,
+            "targetReps": 5
+          },
+          {
+            "exerciseKey": "pull_up",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "barbell_row",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "face_pull",
+            "sets": 3,
+            "targetReps": 15
+          },
+          {
+            "exerciseKey": "barbell_curl",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "hammer_curl",
+            "sets": 2,
+            "targetReps": 12
+          }
+        ]
+      },
+      {
+        "name": "Legs",
+        "exercises": [
+          {
+            "exerciseKey": "barbell_back_squat",
+            "sets": 4,
+            "targetReps": 6
+          },
+          {
+            "exerciseKey": "romanian_deadlift",
+            "sets": 3,
+            "targetReps": 8
+          },
+          {
+            "exerciseKey": "leg_press",
+            "sets": 3,
+            "targetReps": 10
+          },
+          {
+            "exerciseKey": "leg_extension",
+            "sets": 3,
+            "targetReps": 12
+          },
+          {
+            "exerciseKey": "lying_leg_curl",
+            "sets": 3,
+            "targetReps": 12
+          },
+          {
+            "exerciseKey": "standing_calf_raise",
+            "sets": 4,
+            "targetReps": 12
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "program": "5\u00d75",
+    "days": [
+      {
+        "name": "5\u00d75 Workout A",
+        "exercises": [
+          {
+            "exerciseKey": "barbell_back_squat",
+            "sets": 5,
+            "targetReps": 5,
+            "restSec": 180
+          },
+          {
+            "exerciseKey": "barbell_bench_press",
+            "sets": 5,
+            "targetReps": 5,
+            "restSec": 180
+          },
+          {
+            "exerciseKey": "barbell_row",
+            "sets": 5,
+            "targetReps": 5,
+            "restSec": 180
+          }
+        ]
+      },
+      {
+        "name": "5\u00d75 Workout B",
+        "exercises": [
+          {
+            "exerciseKey": "barbell_back_squat",
+            "sets": 5,
+            "targetReps": 5,
+            "restSec": 180
+          },
+          {
+            "exerciseKey": "overhead_press",
+            "sets": 5,
+            "targetReps": 5,
+            "restSec": 180
+          },
+          {
+            "exerciseKey": "deadlift",
+            "sets": 1,
+            "targetReps": 5,
+            "restSec": 180
+          }
+        ]
+      }
+    ]
+  }
+]

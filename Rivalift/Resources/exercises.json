@@ -1,0 +1,1519 @@
+[
+  {
+    "key": "barbell_bench_press",
+    "name": "Barbell Bench Press",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "incline_barbell_bench_press",
+    "name": "Incline Barbell Bench Press",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "decline_barbell_bench_press",
+    "name": "Decline Barbell Bench Press",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "triceps"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "close_grip_bench_press",
+    "name": "Close-Grip Bench Press",
+    "primaryMuscle": "triceps",
+    "secondaryMuscles": [
+      "chest",
+      "shoulders"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "dumbbell_bench_press",
+    "name": "Dumbbell Bench Press",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "incline_dumbbell_press",
+    "name": "Incline Dumbbell Press",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "decline_dumbbell_press",
+    "name": "Decline Dumbbell Press",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "triceps"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "dumbbell_fly",
+    "name": "Dumbbell Fly",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "incline_dumbbell_fly",
+    "name": "Incline Dumbbell Fly",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "shoulders"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "cable_crossover",
+    "name": "Cable Crossover",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "low_to_high_cable_fly",
+    "name": "Low-to-High Cable Fly",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "shoulders"
+    ],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "machine_chest_press",
+    "name": "Machine Chest Press",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "triceps"
+    ],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "pec_deck",
+    "name": "Pec Deck",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "push_up",
+    "name": "Push-Up",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "incline_push_up",
+    "name": "Incline Push-Up",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "triceps"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "chest_dip",
+    "name": "Chest Dip",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "triceps",
+      "shoulders"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "smith_machine_bench_press",
+    "name": "Smith Machine Bench Press",
+    "primaryMuscle": "chest",
+    "secondaryMuscles": [
+      "triceps"
+    ],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "deadlift",
+    "name": "Deadlift",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "hamstrings",
+      "glutes",
+      "traps"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "barbell_row",
+    "name": "Barbell Row",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps",
+      "traps"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "pendlay_row",
+    "name": "Pendlay Row",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "t_bar_row",
+    "name": "T-Bar Row",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "dumbbell_row",
+    "name": "Dumbbell Row",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "chest_supported_dumbbell_row",
+    "name": "Chest-Supported Dumbbell Row",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "seated_cable_row",
+    "name": "Seated Cable Row",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "lat_pulldown",
+    "name": "Lat Pulldown",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "close_grip_lat_pulldown",
+    "name": "Close-Grip Lat Pulldown",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "straight_arm_pulldown",
+    "name": "Straight-Arm Pulldown",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "pull_up",
+    "name": "Pull-Up",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "chin_up",
+    "name": "Chin-Up",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "assisted_pull_up",
+    "name": "Assisted Pull-Up",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "inverted_row",
+    "name": "Inverted Row",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "machine_row",
+    "name": "Machine Row",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "back_extension",
+    "name": "Back Extension",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "rack_pull",
+    "name": "Rack Pull",
+    "primaryMuscle": "back",
+    "secondaryMuscles": [
+      "traps",
+      "glutes"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "kettlebell_swing",
+    "name": "Kettlebell Swing",
+    "primaryMuscle": "glutes",
+    "secondaryMuscles": [
+      "hamstrings",
+      "back"
+    ],
+    "equipment": "kettlebell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "dead_hang",
+    "name": "Dead Hang",
+    "primaryMuscle": "forearms",
+    "secondaryMuscles": [
+      "back"
+    ],
+    "equipment": "bodyweight",
+    "type": "duration",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "overhead_press",
+    "name": "Overhead Press",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [
+      "triceps"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "seated_dumbbell_shoulder_press",
+    "name": "Seated Dumbbell Shoulder Press",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [
+      "triceps"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "arnold_press",
+    "name": "Arnold Press",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [
+      "triceps"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "machine_shoulder_press",
+    "name": "Machine Shoulder Press",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [
+      "triceps"
+    ],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "push_press",
+    "name": "Push Press",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [
+      "triceps",
+      "quads"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "dumbbell_lateral_raise",
+    "name": "Dumbbell Lateral Raise",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "cable_lateral_raise",
+    "name": "Cable Lateral Raise",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "machine_lateral_raise",
+    "name": "Machine Lateral Raise",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "dumbbell_front_raise",
+    "name": "Dumbbell Front Raise",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "reverse_dumbbell_fly",
+    "name": "Reverse Dumbbell Fly",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [
+      "back"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "reverse_pec_deck",
+    "name": "Reverse Pec Deck",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [
+      "back"
+    ],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "face_pull",
+    "name": "Face Pull",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [
+      "traps"
+    ],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "upright_row",
+    "name": "Upright Row",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [
+      "traps"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "band_pull_apart",
+    "name": "Band Pull-Apart",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [
+      "back"
+    ],
+    "equipment": "band",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "kettlebell_press",
+    "name": "Kettlebell Press",
+    "primaryMuscle": "shoulders",
+    "secondaryMuscles": [
+      "triceps"
+    ],
+    "equipment": "kettlebell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "barbell_shrug",
+    "name": "Barbell Shrug",
+    "primaryMuscle": "traps",
+    "secondaryMuscles": [],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "dumbbell_shrug",
+    "name": "Dumbbell Shrug",
+    "primaryMuscle": "traps",
+    "secondaryMuscles": [],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "farmers_carry",
+    "name": "Farmer's Carry",
+    "primaryMuscle": "forearms",
+    "secondaryMuscles": [
+      "traps",
+      "core"
+    ],
+    "equipment": "dumbbell",
+    "type": "duration",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "barbell_curl",
+    "name": "Barbell Curl",
+    "primaryMuscle": "biceps",
+    "secondaryMuscles": [
+      "forearms"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "ez_bar_curl",
+    "name": "EZ-Bar Curl",
+    "primaryMuscle": "biceps",
+    "secondaryMuscles": [
+      "forearms"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "dumbbell_bicep_curl",
+    "name": "Dumbbell Bicep Curl",
+    "primaryMuscle": "biceps",
+    "secondaryMuscles": [
+      "forearms"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "hammer_curl",
+    "name": "Hammer Curl",
+    "primaryMuscle": "biceps",
+    "secondaryMuscles": [
+      "forearms"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "incline_dumbbell_curl",
+    "name": "Incline Dumbbell Curl",
+    "primaryMuscle": "biceps",
+    "secondaryMuscles": [],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "preacher_curl",
+    "name": "Preacher Curl",
+    "primaryMuscle": "biceps",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "concentration_curl",
+    "name": "Concentration Curl",
+    "primaryMuscle": "biceps",
+    "secondaryMuscles": [],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "cable_curl",
+    "name": "Cable Curl",
+    "primaryMuscle": "biceps",
+    "secondaryMuscles": [],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "bayesian_cable_curl",
+    "name": "Bayesian Cable Curl",
+    "primaryMuscle": "biceps",
+    "secondaryMuscles": [],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "band_curl",
+    "name": "Band Curl",
+    "primaryMuscle": "biceps",
+    "secondaryMuscles": [],
+    "equipment": "band",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "triceps_pushdown",
+    "name": "Triceps Pushdown",
+    "primaryMuscle": "triceps",
+    "secondaryMuscles": [],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "rope_pushdown",
+    "name": "Rope Pushdown",
+    "primaryMuscle": "triceps",
+    "secondaryMuscles": [],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "overhead_cable_triceps_extension",
+    "name": "Overhead Cable Triceps Extension",
+    "primaryMuscle": "triceps",
+    "secondaryMuscles": [],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "overhead_dumbbell_triceps_extension",
+    "name": "Overhead Dumbbell Triceps Extension",
+    "primaryMuscle": "triceps",
+    "secondaryMuscles": [],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "skull_crusher",
+    "name": "Skull Crusher",
+    "primaryMuscle": "triceps",
+    "secondaryMuscles": [],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "dumbbell_kickback",
+    "name": "Dumbbell Kickback",
+    "primaryMuscle": "triceps",
+    "secondaryMuscles": [],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "triceps_dip",
+    "name": "Triceps Dip",
+    "primaryMuscle": "triceps",
+    "secondaryMuscles": [
+      "chest",
+      "shoulders"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "bench_dip",
+    "name": "Bench Dip",
+    "primaryMuscle": "triceps",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "machine_triceps_extension",
+    "name": "Machine Triceps Extension",
+    "primaryMuscle": "triceps",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "diamond_push_up",
+    "name": "Diamond Push-Up",
+    "primaryMuscle": "triceps",
+    "secondaryMuscles": [
+      "chest"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "wrist_curl",
+    "name": "Wrist Curl",
+    "primaryMuscle": "forearms",
+    "secondaryMuscles": [],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "reverse_wrist_curl",
+    "name": "Reverse Wrist Curl",
+    "primaryMuscle": "forearms",
+    "secondaryMuscles": [],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "reverse_barbell_curl",
+    "name": "Reverse Barbell Curl",
+    "primaryMuscle": "forearms",
+    "secondaryMuscles": [
+      "biceps"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "barbell_back_squat",
+    "name": "Barbell Back Squat",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "front_squat",
+    "name": "Front Squat",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes",
+      "core"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "goblet_squat",
+    "name": "Goblet Squat",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "hack_squat",
+    "name": "Hack Squat",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes"
+    ],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "smith_machine_squat",
+    "name": "Smith Machine Squat",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes"
+    ],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "leg_press",
+    "name": "Leg Press",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "leg_extension",
+    "name": "Leg Extension",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "bulgarian_split_squat",
+    "name": "Bulgarian Split Squat",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "dumbbell_lunge",
+    "name": "Dumbbell Lunge",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "walking_lunge",
+    "name": "Walking Lunge",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "barbell_lunge",
+    "name": "Barbell Lunge",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "step_up",
+    "name": "Step-Up",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "bodyweight_squat",
+    "name": "Bodyweight Squat",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "pistol_squat",
+    "name": "Pistol Squat",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes",
+      "core"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "sissy_squat",
+    "name": "Sissy Squat",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "wall_sit",
+    "name": "Wall Sit",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "duration",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "kettlebell_goblet_squat",
+    "name": "Kettlebell Goblet Squat",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes"
+    ],
+    "equipment": "kettlebell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "romanian_deadlift",
+    "name": "Romanian Deadlift",
+    "primaryMuscle": "hamstrings",
+    "secondaryMuscles": [
+      "glutes",
+      "back"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "dumbbell_romanian_deadlift",
+    "name": "Dumbbell Romanian Deadlift",
+    "primaryMuscle": "hamstrings",
+    "secondaryMuscles": [
+      "glutes"
+    ],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "stiff_leg_deadlift",
+    "name": "Stiff-Leg Deadlift",
+    "primaryMuscle": "hamstrings",
+    "secondaryMuscles": [
+      "glutes",
+      "back"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "lying_leg_curl",
+    "name": "Lying Leg Curl",
+    "primaryMuscle": "hamstrings",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "seated_leg_curl",
+    "name": "Seated Leg Curl",
+    "primaryMuscle": "hamstrings",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "good_morning",
+    "name": "Good Morning",
+    "primaryMuscle": "hamstrings",
+    "secondaryMuscles": [
+      "back",
+      "glutes"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "nordic_hamstring_curl",
+    "name": "Nordic Hamstring Curl",
+    "primaryMuscle": "hamstrings",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "sumo_deadlift",
+    "name": "Sumo Deadlift",
+    "primaryMuscle": "hamstrings",
+    "secondaryMuscles": [
+      "glutes",
+      "quads",
+      "back"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "trap_bar_deadlift",
+    "name": "Trap Bar Deadlift",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [
+      "glutes",
+      "hamstrings",
+      "back"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "barbell_hip_thrust",
+    "name": "Barbell Hip Thrust",
+    "primaryMuscle": "glutes",
+    "secondaryMuscles": [
+      "hamstrings"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "glute_bridge",
+    "name": "Glute Bridge",
+    "primaryMuscle": "glutes",
+    "secondaryMuscles": [
+      "hamstrings"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "cable_kickback",
+    "name": "Cable Kickback",
+    "primaryMuscle": "glutes",
+    "secondaryMuscles": [],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "hip_abduction_machine",
+    "name": "Hip Abduction Machine",
+    "primaryMuscle": "glutes",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "hip_adduction_machine",
+    "name": "Hip Adduction Machine",
+    "primaryMuscle": "quads",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "cable_pull_through",
+    "name": "Cable Pull-Through",
+    "primaryMuscle": "glutes",
+    "secondaryMuscles": [
+      "hamstrings"
+    ],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "standing_calf_raise",
+    "name": "Standing Calf Raise",
+    "primaryMuscle": "calves",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "seated_calf_raise",
+    "name": "Seated Calf Raise",
+    "primaryMuscle": "calves",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "dumbbell_calf_raise",
+    "name": "Dumbbell Calf Raise",
+    "primaryMuscle": "calves",
+    "secondaryMuscles": [],
+    "equipment": "dumbbell",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "leg_press_calf_raise",
+    "name": "Leg Press Calf Raise",
+    "primaryMuscle": "calves",
+    "secondaryMuscles": [],
+    "equipment": "machine",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "plank",
+    "name": "Plank",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "duration",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "side_plank",
+    "name": "Side Plank",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "duration",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "crunch",
+    "name": "Crunch",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "cable_crunch",
+    "name": "Cable Crunch",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "hanging_leg_raise",
+    "name": "Hanging Leg Raise",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "hanging_knee_raise",
+    "name": "Hanging Knee Raise",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "lying_leg_raise",
+    "name": "Lying Leg Raise",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "ab_wheel_rollout",
+    "name": "Ab Wheel Rollout",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "russian_twist",
+    "name": "Russian Twist",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "pallof_press",
+    "name": "Pallof Press",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "cable",
+    "type": "weight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "dead_bug",
+    "name": "Dead Bug",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "mountain_climber",
+    "name": "Mountain Climber",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [
+      "shoulders"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "hollow_body_hold",
+    "name": "Hollow Body Hold",
+    "primaryMuscle": "core",
+    "secondaryMuscles": [],
+    "equipment": "bodyweight",
+    "type": "duration",
+    "isCompound": false,
+    "defaultRestSec": 90
+  },
+  {
+    "key": "power_clean",
+    "name": "Power Clean",
+    "primaryMuscle": "full_body",
+    "secondaryMuscles": [
+      "quads",
+      "traps",
+      "back"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "clean_and_jerk",
+    "name": "Clean and Jerk",
+    "primaryMuscle": "full_body",
+    "secondaryMuscles": [
+      "shoulders",
+      "quads"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "snatch",
+    "name": "Snatch",
+    "primaryMuscle": "full_body",
+    "secondaryMuscles": [
+      "shoulders",
+      "quads"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "thruster",
+    "name": "Thruster",
+    "primaryMuscle": "full_body",
+    "secondaryMuscles": [
+      "quads",
+      "shoulders"
+    ],
+    "equipment": "barbell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "kettlebell_turkish_get_up",
+    "name": "Kettlebell Turkish Get-Up",
+    "primaryMuscle": "full_body",
+    "secondaryMuscles": [
+      "shoulders",
+      "core"
+    ],
+    "equipment": "kettlebell",
+    "type": "weight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  },
+  {
+    "key": "burpee",
+    "name": "Burpee",
+    "primaryMuscle": "full_body",
+    "secondaryMuscles": [
+      "chest",
+      "quads"
+    ],
+    "equipment": "bodyweight",
+    "type": "bodyweight_reps",
+    "isCompound": true,
+    "defaultRestSec": 150
+  }
+]
