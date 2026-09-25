@@ -44,6 +44,22 @@ final class RivaliftUITests: XCTestCase {
     }
 
     @MainActor
+    func testBrowseTemplateDetailThenStart() throws {
+        let app = launchAndOnboard()
+
+        app.buttons["startWorkoutButton"].tap()
+        app.buttons["browseTemplates"].tap()
+        let template = app.staticTexts["5×5 Workout B"].firstMatch
+        XCTAssertTrue(template.waitForExistence(timeout: 5))
+        template.tap()
+        let start = app.buttons["startTemplateButton"]
+        XCTAssertTrue(start.waitForExistence(timeout: 5))
+        start.tap()
+
+        XCTAssertTrue(app.buttons["finishWorkoutButton"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testLogAndFinishWorkout() throws {
         let app = launchAndOnboard()
 

@@ -20,7 +20,8 @@ struct HistoryView: View {
                     message: "Your finished workouts show up here.",
                     actionTitle: "Start your first workout"
                 ) {
-                    env.workout.isStartSheetPresented = true
+                    env.selectedTab = .home
+                    env.workout.isStartScreenPresented = true
                 }
             } else {
                 switch mode {

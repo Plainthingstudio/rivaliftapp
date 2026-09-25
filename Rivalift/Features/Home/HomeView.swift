@@ -25,6 +25,9 @@ struct HomeView: View {
         .background(Theme.background)
         .navigationTitle("Home")
         .toolbar(.hidden, for: .navigationBar)
+        .navigationDestination(isPresented: Bindable(env.workout).isStartScreenPresented) {
+            StartWorkoutView()
+        }
         .onAppear(perform: reload)
         .onChange(of: env.dataVersion) { _, _ in reload() }
     }
@@ -46,7 +49,7 @@ struct HomeView: View {
                     .buttonStyle(.primary)
             } else {
                 Button {
-                    env.workout.isStartSheetPresented = true
+                    env.workout.isStartScreenPresented = true
                 } label: {
                     Label("Start workout", systemImage: "play.fill")
                 }
@@ -67,19 +70,24 @@ struct HomeView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(quickTemplates) { template in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(template.name).font(.subheadline.weight(.semibold)).lineLimit(1)
-                            Text(template.orderedExercises.compactMap(\.exercise?.name).prefix(3).joined(separator: ", "))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
-                            Spacer(minLength: 0)
-                            Button("Start") { env.workout.requestStart(.template(template.id)) }
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.small)
+                        NavigationLink {
+                            TemplateDetailView(template: template)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(template.name).font(.subheadline.weight(.semibold)).lineLimit(1)
+                                Text(template.orderedExercises.compactMap(\.exercise?.name).prefix(3).joined(separator: ", "))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                                Spacer(minLength: 0)
+                                Text("~\(template.estimatedDurationMin) min · \(template.orderedExercises.count) exercises")
+                                    .font(.caption.weight(.medium))
+                                    .foregroundStyle(Theme.accent)
+                            }
+                            .frame(width: 180, height: 120, alignment: .leading)
+                            .card()
                         }
-                        .frame(width: 180, height: 120, alignment: .leading)
-                        .card()
+                        .buttonStyle(.plain)
                     }
                 }
             }

@@ -65,12 +65,17 @@ struct TemplatesView: View {
                 reload()
             }
         }
-        .onAppear(perform: reload)
+        .onAppear {
+            reload()
+            if mine.isEmpty { segment = .programs }
+        }
     }
 
     private func reload() {
         mine = env.templates.userTemplates()
-        programs = env.templates.programs()
+        // The user's plan first, then the other programs in seed order.
+        let all = env.templates.programs()
+        programs = all.filter { $0.name == env.settings.planProgram } + all.filter { $0.name != env.settings.planProgram }
     }
 }
 
@@ -82,6 +87,14 @@ struct TemplateCard: View {
     var onDelete: (() -> Void)?
 
     var body: some View {
+        NavigationLink {
+            TemplateDetailView(template: template)
+        } label: {
+            content
+        }
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(template.name).font(.headline)
@@ -99,15 +112,9 @@ struct TemplateCard: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
-            HStack {
-                Text("\(template.totalSets) sets · ~\(template.estimatedDurationMin) min")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("Start") { env.workout.requestStart(.template(template.id)) }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-            }
+            Text("\(template.totalSets) sets · ~\(template.estimatedDurationMin) min")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
     }
