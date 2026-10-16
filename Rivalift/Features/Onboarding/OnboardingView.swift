@@ -15,25 +15,41 @@ struct OnboardingView: View {
     var body: some View {
         VStack(spacing: 0) {
             if step > 0 {
-                HStack {
-                    Button {
-                        setStep(step - 1)
-                    } label: {
-                        Image(systemName: "chevron.left").frame(width: Theme.minTap, height: Theme.minTap)
+                VStack(spacing: 12) {
+                    HStack {
+                        Button {
+                            setStep(step - 1)
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: Theme.minTap, height: Theme.minTap)
+                                .background(.ultraThinMaterial, in: Circle())
+                        }
+                        .accessibilityLabel("Back")
+                        Spacer()
+                        if step <= Self.questionCount {
+                            Text("\(step)/\(Self.questionCount)").font(.callout.monospacedDigit()).foregroundStyle(.white.opacity(0.8))
+                        }
+                        Spacer()
+                        Color.clear.frame(width: Theme.minTap, height: Theme.minTap)
                     }
-                    .accessibilityLabel("Back")
-                    Spacer()
                     if step <= Self.questionCount {
-                        Text("\(step)/\(Self.questionCount)").font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
+                        // Figma "Progress Bar": one segment per question, done ones lit.
+                        HStack(spacing: 8) {
+                            ForEach(1...Self.questionCount, id: \.self) { index in
+                                Capsule()
+                                    .fill(index <= step
+                                        ? AnyShapeStyle(LinearGradient(colors: [.white, Color(red: 90 / 255, green: 92 / 255, blue: 105 / 255)], startPoint: .topTrailing, endPoint: .bottomLeading))
+                                        : AnyShapeStyle(Color.white.opacity(0.1)))
+                                    .frame(height: 6)
+                            }
+                        }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Step \(step) of \(Self.questionCount)")
                     }
-                    Spacer()
-                    Color.clear.frame(width: Theme.minTap, height: Theme.minTap)
                 }
                 .padding(.horizontal)
-                if step <= Self.questionCount {
-                    ProgressView(value: Double(step), total: Double(Self.questionCount))
-                        .padding(.horizontal)
-                }
             }
             Group {
                 switch step {
@@ -48,56 +64,60 @@ struct OnboardingView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(24)
+            .padding(.horizontal, 16)
+            .padding(.top, 24)
+            .padding(.bottom, 16)
             .animation(.snappy, value: step)
         }
-        .background(Theme.background)
+        .screenBackground()
     }
 
+    /// Figma "Onboarding 0 – Welcome".
     private var welcome: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 32) {
             Spacer()
-            Image(systemName: "trophy.fill")
-                .font(.system(size: 72))
-                .foregroundStyle(Theme.accent)
-                .accessibilityHidden(true)
-            Text("Rivalift").font(.largeTitle.bold())
-            Text("Lift with your friends. Win the week.")
-                .font(.title3)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 16) {
-                feature("bolt.fill", "Log sets in seconds", "Previous weights and rest timer built in.")
-                feature("chart.line.uptrend.xyaxis", "See yourself get stronger", "Records and 1RM tracked automatically.")
-                feature("person.3.fill", "Compete every week", "Leagues reward showing up, not just lifting heavy.")
+            VStack(spacing: 24) {
+                HeroRing(image: "Icon_ob_trophy")
+                VStack(spacing: 8) {
+                    Text("Rivalift").font(.largeTitle)
+                    Text("Lift with your friends. Win the week.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
             }
-            .padding(.top, 8)
+            VStack(alignment: .leading, spacing: 12) {
+                feature("Icon_ob_n1", "Log sets in seconds", "Previous weights and rest timer built in.")
+                Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+                feature("Icon_ob_n2", "See yourself get stronger", "Records and your estimated one-rep max (1RM) tracked automatically.")
+                Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+                feature("Icon_ob_n3", "Compete every week", "Leagues reward showing up, not just lifting heavy.")
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .dotTexture(alignment: .center, x: 14, y: -79.46)
+            .glassCard()
             Spacer()
-            Button("Get started") { setStep(1) }
+            Button("Get Started") { setStep(1) }
                 .buttonStyle(.primary)
                 .accessibilityIdentifier("onboardingGetStarted")
         }
     }
 
     private func feature(_ icon: String, _ title: LocalizedStringKey, _ detail: LocalizedStringKey) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(Theme.accent)
-                .frame(width: 32)
-                .accessibilityHidden(true)
+        HStack(spacing: 8) {
+            RingIcon(image: icon)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
-                Text(detail).font(.subheadline).foregroundStyle(.secondary)
+                Text(title).font(.callout)
+                Text(detail).font(.caption).foregroundStyle(.secondary)
             }
         }
         .accessibilityElement(children: .combine)
     }
 
     private var goalStep: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("What's your main goal?").font(.title.bold())
-            Text("We'll use it to suggest a program.").foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 8) {
+            StepTitle(title: "What's your main goal?", subtitle: "We'll use it to suggest a program.")
             ForEach(TrainingGoal.allCases) { goal in
                 BigChoice(title: goal.title, subtitle: goal.detail, isSelected: step > 2 && env.settings.goal == goal) {
                     env.settings.goal = goal
@@ -110,8 +130,8 @@ struct OnboardingView: View {
     }
 
     private var levelStep: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("How experienced are you with lifting?").font(.title.bold())
+        VStack(alignment: .leading, spacing: 8) {
+            StepTitle(title: "How experienced are you with lifting?")
             ForEach(ExperienceLevel.allCases) { level in
                 BigChoice(title: level.title, subtitle: level.detail, isSelected: step > 3 && env.settings.experience == level) {
                     env.settings.experience = level
@@ -124,9 +144,8 @@ struct OnboardingView: View {
     }
 
     private var unitStep: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Which unit do you lift in?").font(.title.bold())
-            Text("You can change this anytime in Settings.").foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 8) {
+            StepTitle(title: "Which unit do you lift in?", subtitle: "You can change this anytime in Settings.")
             ForEach(WeightUnit.allCases) { unit in
                 BigChoice(title: unit == .kg ? "Kilograms (kg)" : "Pounds (lb)", isSelected: env.settings.unit == unit) {
                     env.settings.unit = unit
@@ -136,7 +155,7 @@ struct OnboardingView: View {
             }
             Spacer()
             Button("Skip") { setStep(5) }
-                .frame(maxWidth: .infinity)
+                .buttonStyle(.secondary)
         }
     }
 
@@ -162,20 +181,29 @@ private struct NameStep: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("What should we call you?").font(.title.bold())
-            Text("Friends see this name in your leagues.").foregroundStyle(.secondary)
-            HStack(spacing: 12) {
-                AvatarView(name: trimmed.isEmpty ? "?" : trimmed, size: 52)
-                TextField("Your name", text: $name)
-                    .font(.title3)
+            VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("What should we call you?").font(.title)
+                    Text("Friends see this name in your leagues.").font(.callout).foregroundStyle(.secondary)
+                }
+                TextField("Enter your full name", text: $name)
+                    .font(.subheadline)
                     .textContentType(.givenName)
                     .submitLabel(.continue)
                     .focused($focused)
                     .onSubmit(save)
-                    .padding()
-                    .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+                    .padding(.horizontal, 14)
+                    .frame(height: 48)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(.white.opacity(0.1))
+                            .strokeBorder(.white.opacity(0.2))
+                    )
                     .accessibilityIdentifier("nameField")
             }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassCard()
             Spacer()
             Button("Continue", action: save)
                 .buttonStyle(.primary)
@@ -204,9 +232,9 @@ private struct ScheduleStep: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("How often do you want to train?").font(.title.bold())
-            Text("Your weekly target is used for streaks and league bonus points.").foregroundStyle(.secondary)
-            HStack(spacing: 10) {
+            Text("How often do you want to train?").font(.title)
+            Text("Your weekly target is used for streaks and league bonus points.").font(.callout).foregroundStyle(.secondary)
+            HStack(spacing: 12) {
                 ForEach([2, 3, 4, 5], id: \.self) { target in
                     pill(target == 5 ? "5+" : "\(target)", selected: env.settings.weeklyTarget == target) {
                         env.settings.weeklyTarget = target
@@ -216,10 +244,11 @@ private struct ScheduleStep: View {
                     .accessibilityLabel(target == 5 ? "5 or more sessions per week" : "\(target) sessions per week")
                 }
             }
-            Text("sessions per week").font(.subheadline).foregroundStyle(.secondary)
+            .modifier(PillTrack())
+            Text("sessions per week").font(.callout).foregroundStyle(.secondary)
 
-            Text("Which days work best?").font(.headline).padding(.top, 16)
-            Text("Optional. We'll plan around these days.").font(.subheadline).foregroundStyle(.secondary)
+            Text("Which days work best?").font(.callout.weight(.medium)).padding(.top, 20)
+            Text("Optional. We'll plan around these days.").font(.callout).foregroundStyle(.secondary)
             HStack(spacing: 6) {
                 ForEach(weekdays, id: \.iso) { day in
                     let isOn = env.settings.trainingWeekdays.contains(day.iso)
@@ -232,6 +261,7 @@ private struct ScheduleStep: View {
                     .accessibilityLabel(Calendar(identifier: .iso8601).weekdaySymbols[day.iso % 7])
                 }
             }
+            .modifier(PillTrack())
             Spacer()
             Button("Continue", action: next)
                 .buttonStyle(.primary)
@@ -242,10 +272,18 @@ private struct ScheduleStep: View {
     private func pill(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.headline)
-                .frame(maxWidth: .infinity, minHeight: Theme.minTap)
-                .foregroundStyle(selected ? .white : .primary)
-                .background(selected ? Theme.accent : Theme.card, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .font(.callout)
+                .frame(maxWidth: .infinity, minHeight: 37)
+                .foregroundStyle(selected ? Color.white : Color.white.opacity(0.6))
+                .background {
+                    if selected {
+                        Capsule().fill(Theme.primaryGradient)
+                    } else {
+                        Capsule().fill(Color.black.opacity(0.24).shadow(.inner(color: .white.opacity(0.25), radius: 1)))
+                    }
+                }
+                .frame(minHeight: Theme.minTap)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -263,12 +301,10 @@ private struct CommitStep: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "flame.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(.orange)
-                .accessibilityHidden(true)
-            Text("Set your streak goal").font(.title.bold())
+            HeroRing(image: "Icon_ob_flame")
+            Text("Set your streak goal").font(.title)
             Text("Hit \(env.settings.weeklyTarget) sessions a week, week after week. Streaks make the habit stick.")
+                .font(.callout)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
             VStack(spacing: 10) {
@@ -277,16 +313,16 @@ private struct CommitStep: View {
                         weeks = option.weeks
                     } label: {
                         HStack {
-                            Text("\(option.weeks)-week streak").font(.headline)
+                            Text("\(option.weeks)-week streak").font(.callout)
                             Spacer()
-                            Text(option.label).foregroundStyle(.secondary)
+                            Text(option.label).font(.caption).foregroundStyle(.secondary)
                         }
-                        .padding()
+                        .padding(.horizontal, 16)
                         .frame(maxWidth: .infinity, minHeight: 56)
-                        .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+                        .glassCard(cornerRadius: 24)
                         .overlay {
-                            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-                                .stroke(weeks == option.weeks ? Theme.accent : .clear, lineWidth: 2)
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .strokeBorder(weeks == option.weeks ? Color.white : .clear, lineWidth: 2)
                         }
                     }
                     .buttonStyle(.plain)
@@ -295,14 +331,15 @@ private struct CommitStep: View {
             }
             .padding(.top, 8)
             Spacer()
-            Button("Commit to my goal") {
+            Button("Commit to My Goal") {
                 env.settings.streakGoalWeeks = weeks
                 env.saveSettings()
                 next()
             }
             .buttonStyle(.primary)
             .accessibilityIdentifier("commitButton")
-            Button("Maybe later", action: next)
+            Button("Maybe Later", action: next)
+                .buttonStyle(.secondary)
         }
         .onAppear {
             if env.settings.streakGoalWeeks > 0 { weeks = env.settings.streakGoalWeeks }
@@ -334,17 +371,25 @@ private struct PlanStep: View {
                 result(program)
             } else {
                 Spacer()
-                Text("Building your plan…").font(.title.bold())
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(spacing: 24) {
+                    HeroRing(image: "Icon_ob_trophy")
+                    Text("Building your plan…").font(.title)
+                }
+                .frame(maxWidth: .infinity)
+                VStack(alignment: .leading, spacing: 12) {
                     ForEach(Array(checks.enumerated()), id: \.offset) { index, text in
-                        HStack(spacing: 12) {
-                            Image(systemName: index < revealed ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(index < revealed ? Theme.accent : Color.secondary)
-                            Text(text).foregroundStyle(index < revealed ? .primary : .secondary)
+                        if index > 0 { Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5) }
+                        HStack(spacing: 8) {
+                            Image(index < revealed ? "Icon_ob_done" : "Icon_ob_pending").accessibilityHidden(true)
+                            Text(text).font(.callout).foregroundStyle(index < revealed ? .primary : .secondary)
                         }
-                        .font(.headline)
                     }
                 }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .dotTexture(alignment: .center, x: 14, y: -79.96)
+                .glassCard()
+                .padding(.top, 8)
                 Spacer()
             }
         }
@@ -366,28 +411,26 @@ private struct PlanStep: View {
         let s = env.settings
         return VStack(alignment: .leading, spacing: 16) {
             Text(s.displayName.isEmpty ? String(localized: "Your plan is ready") : String(localized: "\(s.displayName), your plan is ready"))
-                .font(.title.bold())
-            VStack(alignment: .leading, spacing: 6) {
-                Label("Recommended for you", systemImage: "sparkles")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
-                Text(program.name).font(.largeTitle.bold())
-                Text("\(s.experience.title) · \(s.goal.title) · \(s.weeklyTarget)× per week")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .card()
+                .font(.title)
             ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(program.templates) { template in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(template.name).font(.headline)
-                            Text(template.orderedExercises.compactMap(\.exercise?.name).joined(separator: " · "))
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
+                VStack(spacing: 14) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 4) {
+                            Image("Icon_sparkle").accessibilityHidden(true)
+                            Text("Recommended for you").font(.subheadline)
                         }
-                        .card()
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(program.name).font(.title2)
+                            DividedText(parts: [s.experience.title, s.goal.title, String(localized: "\(s.weeklyTarget)x per week")])
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 32)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .dotTexture(alignment: .center, x: -0.57, y: 5)
+                    .redCard()
+                    ForEach(program.templates) { template in
+                        TemplateRowCard(template: template)
                     }
                 }
             }
@@ -439,6 +482,7 @@ extension ExperienceLevel {
     }
 }
 
+/// Option card (Figma "Onboarding 2 – Goal / Card"): white ring and green check when picked.
 struct BigChoice: View {
     var title: String
     var subtitle: String?
@@ -448,25 +492,65 @@ struct BigChoice: View {
     var body: some View {
         Button(action: action) {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.headline).foregroundStyle(.primary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title).font(.callout).foregroundStyle(.white)
                     if let subtitle {
-                        Text(subtitle).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                        Text(subtitle).font(.caption.weight(.light)).foregroundStyle(.secondary).lineLimit(2)
                     }
                 }
                 Spacer()
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "chevron.right")
-                    .foregroundStyle(isSelected ? Theme.accent : Color.secondary)
+                Image(isSelected ? "Icon_ob_check" : "Icon_ob_uncheck").accessibilityHidden(true)
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 18)
             .frame(maxWidth: .infinity, minHeight: 64)
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+            .dotTexture("DotGridWeek", alignment: .center, x: 14, y: -143.46)
+            .glassCard(cornerRadius: 24)
             .overlay {
-                RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-                    .stroke(isSelected ? Theme.accent : .clear, lineWidth: 2)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(isSelected ? Color.white : .clear, lineWidth: 2)
             }
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+/// Large question title with an optional subtitle.
+private struct StepTitle: View {
+    let title: LocalizedStringKey
+    var subtitle: LocalizedStringKey?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title).font(.title)
+            if let subtitle { Text(subtitle).font(.callout).foregroundStyle(.secondary) }
+        }
+        .padding(.bottom, 16)
+    }
+}
+
+/// 80 pt dashed red ring around a 36 pt glyph (welcome, streak, building plan).
+private struct HeroRing: View {
+    let image: String
+
+    var body: some View {
+        Image(image)
+            .resizable()
+            .frame(width: 36, height: 36)
+            .frame(width: 80, height: 80)
+            .background(Circle().fill(Theme.heat.opacity(0.2).shadow(.inner(color: .white.opacity(0.1), radius: 24))))
+            .overlay(Circle().strokeBorder(Theme.heat, style: StrokeStyle(lineWidth: 3.8, dash: [6, 4])))
+            .accessibilityHidden(true)
+    }
+}
+
+/// Black capsule track that holds a row of pills (Figma "Weekly target", "Training Days").
+private struct PillTrack: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+            .background(Color.black.shadow(.inner(color: .white.opacity(0.2), radius: 7, y: 2)), in: Capsule())
     }
 }

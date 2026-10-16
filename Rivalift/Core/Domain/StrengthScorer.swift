@@ -6,7 +6,7 @@ enum StrengthScorer {
         case relative, absolute
     }
 
-    struct LiftInput: Codable, Equatable, Sendable {
+    struct LiftInput: Codable, Hashable, Sendable {
         var exerciseKey: String
         /// Best e1RM in the 8 weeks before this week; nil means this is a baseline week.
         var baselineE1RMKg: Double?

@@ -185,7 +185,7 @@ Setiap persyaratan punya ID agar mudah dirujuk saat memberi tugas ke Claude Code
 | ID | Persyaratan | Prioritas |
 | --- | --- | --- |
 | SOC-12 | Admin memilih mode liga (Consistency, Strength, Custom) saat membuat grup dan di pengaturan grup; perubahan berlaku minggu berikutnya | P0 |
-| SOC-13 | Mode Strength: pilih 1–3 lift dari library dan pilih perbandingan Relative atau Absolute | P0 |
+| SOC-13 | Mode Strength: pilih 1–5 lift dari library dan pilih perbandingan Relative atau Absolute | P0 |
 | SOC-14 | Mode Custom: buat, edit, dan urutkan 1–5 kategori (latihan, metrik, perbandingan, minimum repetisi) | P0 |
 | SOC-15 | Leaderboard mode Custom punya tab Overall dan satu tab per kategori; mode Strength menampilkan persen kenaikan atau total estimasi 1RM | P0 |
 | SOC-16 | Preset kategori populer: Pull-up max reps, Push-up total reps, Bench press est. 1RM, Bicep curl best set volume, Plank longest hold | P1 |
@@ -210,7 +210,7 @@ Setiap grup memilih satu dari tiga mode untuk liga mingguannya: Consistency (def
 | Mode | Yang diadu | Cocok untuk |
 | --- | --- | --- |
 | Consistency | Sesi valid, rekor pribadi, target mingguan, streak | Grup dengan level campuran yang fokus membangun kebiasaan |
-| Strength | Kekuatan pada 1–3 lift pilihan, relatif (persen kenaikan) atau absolut | Grup yang ingin adu progres kekuatan |
+| Strength | Kekuatan pada 1–5 lift pilihan, relatif (persen kenaikan) atau absolut | Grup yang ingin adu progres kekuatan |
 | Custom | 1–5 kategori buatan admin, masing-masing dengan latihan dan metrik sendiri | Grup yang ingin tantangan spesifik, misalnya pull-up terbanyak atau bicep curl terberat |
 
 ### 6.1 Mode Consistency (default)
@@ -243,7 +243,7 @@ Angka poin di atas disimpan sebagai konfigurasi di server (tabel `league_config`
 
 ### 6.2 Mode Strength
 
-Mode Strength mengadu kekuatan pada 1–3 lift yang dipilih admin (default: squat, bench press, deadlift), dengan pilihan perbandingan relatif atau absolut.
+Mode Strength mengadu kekuatan pada 1–5 lift yang dipilih admin (default: squat, bench press, deadlift), dengan pilihan perbandingan relatif atau absolut.
 
 - **Relative (default):** skor adalah rata-rata persentase kenaikan estimasi 1RM minggu ini dibanding baseline, yaitu estimasi 1RM terbaik user pada lift tersebut dalam 8 minggu sebelumnya. Lift tanpa baseline belum dihitung pada minggu pertamanya.
 - **Absolute:** skor adalah jumlah estimasi 1RM terbaik minggu ini dari semua lift terpilih. Leaderboard diberi label "Absolute weight" agar ekspektasi anggota jelas.

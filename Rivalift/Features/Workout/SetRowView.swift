@@ -27,8 +27,15 @@ struct SetRowView: View {
                 rowLayout
             }
         }
+        .padding(.horizontal, 4)
         .padding(.vertical, 2)
-        .background(set.isCompleted ? Theme.completedRow : .clear, in: RoundedRectangle(cornerRadius: 8))
+        .background {
+            if set.isCompleted {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(.white.opacity(0.1))
+                    .strokeBorder(.white.opacity(0.2))
+            }
+        }
         .onAppear(perform: syncFromModel)
         .onChange(of: set.weightKg) { _, _ in if focus != .weight { syncFromModel() } }
         .onChange(of: set.reps) { _, _ in if focus != .reps { syncFromModel() } }
@@ -101,7 +108,7 @@ struct SetRowView: View {
         } label: {
             HStack(spacing: 2) {
                 Text(setTitle)
-                    .font(.subheadline.weight(.bold))
+                    .font(.callout)
                     .foregroundStyle(setTypeColor)
                 if set.isPR { Image(systemName: "trophy.fill").font(.caption2).foregroundStyle(Theme.pr) }
             }
@@ -168,9 +175,9 @@ struct SetRowView: View {
             .keyboardType(.decimalPad)
             .focused($focus, equals: .weight)
             .multilineTextAlignment(.center)
-            .font(.body.monospacedDigit().weight(.semibold))
-            .frame(minHeight: Theme.minTap)
-            .background(Theme.elevated, in: RoundedRectangle(cornerRadius: 8))
+            .font(.subheadline.monospacedDigit())
+            .frame(minHeight: 36)
+            .background(fieldBackground(highlighted: false))
             .disabled(set.isCompleted)
             .accessibilityLabel(Text("Weight in \(unit.symbol)"))
     }
@@ -180,12 +187,9 @@ struct SetRowView: View {
             .keyboardType(.numberPad)
             .focused($focus, equals: .reps)
             .multilineTextAlignment(.center)
-            .font(.body.monospacedDigit().weight(.semibold))
-            .frame(minHeight: Theme.minTap)
-            .background(
-                repsHighlighted ? Color.red.opacity(0.25) : Theme.elevated,
-                in: RoundedRectangle(cornerRadius: 8)
-            )
+            .font(.subheadline.monospacedDigit())
+            .frame(minHeight: 36)
+            .background(fieldBackground(highlighted: repsHighlighted))
             .disabled(set.isCompleted)
             .accessibilityLabel(type == .duration ? "Seconds" : "Reps")
     }
@@ -195,14 +199,19 @@ struct SetRowView: View {
             focus = nil
             complete(confirmed: false)
         } label: {
-            Image(systemName: set.isCompleted ? "checkmark.circle.fill" : "checkmark.circle")
-                .font(.title2)
-                .foregroundStyle(set.isCompleted ? Color.green : Color.secondary)
+            Image(set.isCompleted ? "Icon_set_done" : "Icon_set_todo")
                 .frame(width: Theme.minTap, height: Theme.minTap)
                 .contentShape(Rectangle())
         }
         .accessibilityLabel(set.isCompleted ? "Completed. Double tap to undo." : "Complete set")
         .accessibilityIdentifier("completeSetButton")
+    }
+
+    /// Boxed field as in the design; a red tint marks missing reps.
+    private func fieldBackground(highlighted: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .fill(highlighted ? Color.red.opacity(0.25) : .white.opacity(0.1))
+            .strokeBorder(.white.opacity(0.2))
     }
 
     private func complete(confirmed: Bool) {

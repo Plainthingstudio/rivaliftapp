@@ -12,48 +12,36 @@ struct TemplatesView: View {
     enum Segment: Hashable { case mine, programs }
 
     var body: some View {
-        List {
-            Picker("Templates", selection: $segment) {
-                Text("My templates").tag(Segment.mine)
-                Text("Programs").tag(Segment.programs)
-            }
-            .pickerStyle(.segmented)
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets())
-
-            switch segment {
-            case .mine:
-                if mine.isEmpty {
-                    Text("Create a template or save a finished workout as one.")
-                        .foregroundStyle(.secondary)
-                }
-                ForEach(mine) { template in
-                    TemplateCard(template: template, onEdit: { editing = template }, onDuplicate: {
-                        env.templates.duplicate(template)
-                        reload()
-                    }, onDelete: { toDelete = template })
-                }
-            case .programs:
-                ForEach(programs) { program in
-                    Section(program.name) {
-                        ForEach(program.templates) { template in
-                            TemplateCard(template: template, onEdit: nil, onDuplicate: {
-                                env.templates.duplicate(template)
-                                segment = .mine
-                                reload()
-                            }, onDelete: nil)
-                        }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                PillPicker(selection: $segment, options: [(.mine, "My templates"), (.programs, "Programs")])
+                    .frame(maxWidth: .infinity)
+                switch segment {
+                case .mine:
+                    if mine.isEmpty {
+                        Text("Create a template or save a finished workout as one.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 8)
+                    }
+                    cards(mine, editable: true)
+                case .programs:
+                    ForEach(programs) { program in
+                        Text(program.name).padding(.horizontal, 8).padding(.top, 10)
+                        cards(program.templates, editable: false)
                     }
                 }
             }
+            .padding()
         }
-        .listStyle(.insetGrouped)
+        .screenBackground()
         .navigationTitle("Templates")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("New template", systemImage: "plus") {
                     editing = env.templates.create(name: String(localized: "New template"))
                 }
+                .tint(.white)
             }
         }
         .sheet(item: $editing, onDismiss: reload) { template in
@@ -71,6 +59,17 @@ struct TemplatesView: View {
         }
     }
 
+    private func cards(_ templates: [WorkoutTemplate], editable: Bool) -> some View {
+        ForEach(Array(templates.enumerated()), id: \.element.id) { index, template in
+            if index > 0 { Rectangle().fill(.white.opacity(0.1)).frame(height: 0.5) }
+            TemplateCard(template: template, onEdit: editable ? { editing = template } : nil, onDuplicate: {
+                env.templates.duplicate(template)
+                if !editable { segment = .mine }
+                reload()
+            }, onDelete: editable ? { toDelete = template } : nil)
+        }
+    }
+
     private func reload() {
         mine = env.templates.userTemplates()
         // The user's plan first, then the other programs in seed order.
@@ -79,8 +78,8 @@ struct TemplatesView: View {
     }
 }
 
+/// A template in the list; long-press for edit, duplicate and delete.
 struct TemplateCard: View {
-    @Environment(AppEnvironment.self) private var env
     let template: WorkoutTemplate
     var onEdit: (() -> Void)?
     var onDuplicate: () -> Void
@@ -90,33 +89,43 @@ struct TemplateCard: View {
         NavigationLink {
             TemplateDetailView(template: template)
         } label: {
-            content
+            TemplateRowCard(template: template)
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            if let onEdit { Button("Edit", systemImage: "pencil", action: onEdit) }
+            Button("Duplicate", systemImage: "plus.square.on.square", action: onDuplicate)
+            if let onDelete { Button("Delete", systemImage: "trash", role: .destructive, action: onDelete) }
         }
     }
+}
 
-    private var content: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(template.name).font(.headline)
-                Spacer()
-                Menu {
-                    if let onEdit { Button("Edit", systemImage: "pencil", action: onEdit) }
-                    Button("Duplicate", systemImage: "plus.square.on.square", action: onDuplicate)
-                    if let onDelete { Button("Delete", systemImage: "trash", role: .destructive, action: onDelete) }
-                } label: {
-                    Image(systemName: "ellipsis").frame(width: Theme.minTap, height: Theme.minTap)
+/// Figma "Template - Programs / Card": name, first exercises, sets and duration chips.
+struct TemplateRowCard: View {
+    let template: WorkoutTemplate
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(template.name).font(.callout)
+                    DividedText(parts: Array(template.orderedExercises.compactMap(\.exercise?.name).prefix(3)))
                 }
-                .accessibilityLabel("Template options")
+                HStack(spacing: 4) {
+                    InfoChip(icon: "Icon_chip_repeat", text: String(localized: "\(template.totalSets) sets"), fill: Color(red: 64 / 255, green: 87 / 255, blue: 235 / 255).opacity(0.24))
+                    InfoChip(icon: "Icon_chip_clock", text: String(localized: "\(template.estimatedDurationMin) min"), fill: Color(red: 64 / 255, green: 87 / 255, blue: 235 / 255).opacity(0.24))
+                }
             }
-            Text(template.orderedExercises.compactMap(\.exercise?.name).joined(separator: ", "))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-            Text("\(template.totalSets) sets · ~\(template.estimatedDurationMin) min")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Spacer(minLength: 8)
+            Image("IconChevronCircle").accessibilityHidden(true)
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dotTexture("DotGridWeek", alignment: .center, x: 14, y: -143.46)
+        .glassCard(cornerRadius: 24)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -130,21 +139,25 @@ struct TemplateEditorView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    TextField("Template name", text: $template.name)
-                }
-                Section("Exercises") {
-                    ForEach(template.orderedExercises) { item in
-                        TemplateExerciseRow(item: item)
+                Group {
+                    Section {
+                        TextField("Template name", text: $template.name)
                     }
-                    .onDelete { offsets in
-                        let items = template.orderedExercises
-                        for index in offsets { env.templates.removeExercise(items[index]) }
+                    Section("Exercises") {
+                        ForEach(template.orderedExercises) { item in
+                            TemplateExerciseRow(item: item)
+                        }
+                        .onDelete { offsets in
+                            let items = template.orderedExercises
+                            for index in offsets { env.templates.removeExercise(items[index]) }
+                        }
+                        .onMove { env.templates.move(in: template, from: $0, to: $1) }
+                        Button("Add exercises", systemImage: "plus") { isPickerPresented = true }
                     }
-                    .onMove { env.templates.move(in: template, from: $0, to: $1) }
-                    Button("Add exercises", systemImage: "plus") { isPickerPresented = true }
                 }
+                .listRowBackground(Theme.listRow)
             }
+            .screenBackground()
             .navigationTitle("Edit template")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

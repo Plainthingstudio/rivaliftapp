@@ -6,57 +6,82 @@ struct TemplateDetailView: View {
     let template: WorkoutTemplate
 
     var body: some View {
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: 4) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 12) {
                     if !template.programName.isEmpty {
-                        Text(template.programName).font(.subheadline).foregroundStyle(.secondary)
+                        Text(template.programName).padding(.horizontal, 4)
                     }
-                    Text("\(template.orderedExercises.count) exercises · \(template.totalSets) sets · ~\(template.estimatedDurationMin) min")
-                        .font(.subheadline.weight(.semibold))
-                }
-                .listRowBackground(Color.clear)
-            }
-            Section("Exercises") {
-                ForEach(template.orderedExercises) { item in
-                    HStack(spacing: 12) {
-                        if let exercise = item.exercise {
-                            ExerciseIcon(muscle: exercise.primaryMuscle)
-                        }
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(item.exercise?.name ?? "").font(.headline)
-                            if let exercise = item.exercise {
-                                Text(exercise.subtitle).font(.caption).foregroundStyle(.secondary)
-                            }
-                            Text(prescription(item)).font(.subheadline)
-                        }
+                    HStack(spacing: 8) {
+                        stat("\(template.orderedExercises.count)", "Exercises")
+                        stat("\(template.totalSets)", "Sets")
+                        stat("\(template.estimatedDurationMin)", "Minute")
                     }
-                    .padding(.vertical, 2)
-                    .accessibilityElement(children: .combine)
+                }
+                Button {
+                    env.workout.requestStart(.template(template.id))
+                } label: {
+                    HStack(spacing: 6) {
+                        Image("IconPlay").accessibilityHidden(true)
+                        Text("Start \(template.name)")
+                    }
+                }
+                .buttonStyle(.primary)
+                .accessibilityIdentifier("startTemplateButton")
+                Text("Exercises").padding(.horizontal, 4)
+                ForEach(Array(template.orderedExercises.enumerated()), id: \.element.id) { index, item in
+                    if index > 0 { Rectangle().fill(.white.opacity(0.1)).frame(height: 0.5) }
+                    row(item)
                 }
             }
+            .padding()
         }
-        .listStyle(.insetGrouped)
+        .screenBackground()
         .navigationTitle(template.name)
         .navigationBarTitleDisplayMode(.large)
-        .safeAreaInset(edge: .bottom) {
-            Button {
-                env.workout.requestStart(.template(template.id))
-            } label: {
-                Label("Start \(template.name)", systemImage: "play.fill")
-            }
-            .buttonStyle(.primary)
-            .padding()
-            .background(.bar)
-            .accessibilityIdentifier("startTemplateButton")
-        }
     }
 
-    private func prescription(_ item: TemplateExercise) -> String {
-        let rest = String(localized: "Rest \(DurationFormatter.clock(item.restSec))")
-        if item.exercise?.type == .duration || item.targetReps == 0 {
-            return String(localized: "\(item.setCount) sets · \(rest)")
+    /// Figma "Stat": red rounded square with a number and a label.
+    private func stat(_ value: String, _ label: LocalizedStringKey) -> some View {
+        VStack(spacing: 4) {
+            Text(value).font(.title2).monospacedDigit()
+            Text(label).font(.caption.weight(.light)).foregroundStyle(.white.opacity(0.8))
         }
-        return String(localized: "\(item.setCount) sets × \(item.targetReps) reps · \(rest)")
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
+        .redCard(cornerRadius: 36)
+        .accessibilityElement(children: .combine)
     }
+
+    private func row(_ item: TemplateExercise) -> some View {
+        HStack(spacing: 8) {
+            ExercisePhoto(exercise: item.exercise)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .dotTexture("DotGridWeek", alignment: .center, x: 14, y: -143.46)
+                .glassCard(cornerRadius: 24)
+            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.exercise?.name ?? "").font(.callout).lineLimit(2)
+                    if let exercise = item.exercise {
+                        DividedText(parts: [exercise.primaryMuscle.displayName, exercise.equipment.displayName])
+                    }
+                }
+                HStack(spacing: 4) {
+                    InfoChip(icon: "Icon_chip_repeat", text: setsText(item))
+                    InfoChip(icon: "Icon_chip_timer", text: String(localized: "Rest \(DurationFormatter.clock(item.restSec))"))
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func setsText(_ item: TemplateExercise) -> String {
+        if item.exercise?.type == .duration || item.targetReps == 0 {
+            return String(localized: "\(item.setCount) sets")
+        }
+        return String(localized: "\(item.setCount) sets x \(item.targetReps) reps")
+    }
+
 }

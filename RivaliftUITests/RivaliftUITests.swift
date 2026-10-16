@@ -16,9 +16,11 @@ final class RivaliftUITests: XCTestCase {
         let name = app.textFields["nameField"]
         XCTAssertTrue(name.waitForExistence(timeout: 5))
         name.tap()
-        name.typeText("Sam")
-        app.buttons["nameContinue"].tap()
-        app.buttons["goal-strength"].tap()
+        // Return submits the name; the AutoFill bar can shift the Continue button mid-tap.
+        name.typeText("Sam\n")
+        let goal = app.buttons["goal-strength"]
+        XCTAssertTrue(goal.waitForExistence(timeout: 5))
+        goal.tap()
         app.buttons["level-beginner"].tap()
         app.buttons["unit-kg"].tap()
         app.buttons["target-3"].tap()
@@ -57,6 +59,120 @@ final class RivaliftUITests: XCTestCase {
         start.tap()
 
         XCTAssertTrue(app.buttons["finishWorkoutButton"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testCreateAndJoinLeagueGroups() throws {
+        let app = launchAndOnboard()
+
+        app.tabBars.buttons["Leagues"].tap()
+        app.buttons["createGroupButton"].tap()
+        let name = app.textFields["groupNameField"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.typeText("Gym Buddies")
+        app.buttons["createGroupConfirm"].tap()
+        XCTAssertTrue(app.otherElements["inviteCode"].waitForExistence(timeout: 5))
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.staticTexts["Gym Buddies"].waitForExistence(timeout: 5))
+
+        app.buttons["joinGroupButton"].tap()
+        let code = app.textFields["joinCodeField"]
+        XCTAssertTrue(code.waitForExistence(timeout: 5))
+        code.typeText("ab3k7q")
+        let join = app.buttons["joinGroupConfirm"]
+        XCTAssertTrue(join.waitForExistence(timeout: 5))
+        join.tap()
+        XCTAssertTrue(app.staticTexts["Iron Squad"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testCreateCustomLeagueShowsCategoryTabs() throws {
+        let app = launchAndOnboard()
+
+        app.tabBars.buttons["Leagues"].tap()
+        app.buttons["createGroupButton"].tap()
+        let name = app.textFields["groupNameField"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.typeText("Rep Kings")
+        app.buttons["Custom"].firstMatch.tap()
+        app.buttons["createGroupConfirm"].tap()
+        app.buttons["Done"].tap()
+
+        app.staticTexts["Rep Kings"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Overall"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Pull-Up · Max reps"].exists)
+    }
+
+    @MainActor
+    func testAddCustomCategoryWhileCreatingGroup() throws {
+        let app = launchAndOnboard()
+
+        app.tabBars.buttons["Leagues"].tap()
+        app.buttons["createGroupButton"].tap()
+        let name = app.textFields["groupNameField"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.typeText("Core Crew")
+        app.buttons["Custom"].firstMatch.tap()
+
+        let newCategory = app.buttons["newCategoryButton"]
+        for _ in 0..<5 where !newCategory.isHittable { app.swipeUp() }
+        newCategory.tap()
+        app.buttons["categoryExerciseRow"].tap()
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("Side Plank")
+        app.staticTexts["Side Plank"].firstMatch.tap()
+        app.buttons["saveCategoryButton"].tap()
+
+        XCTAssertTrue(app.staticTexts["Side Plank"].waitForExistence(timeout: 5), "Category added and still in the New group form")
+        app.buttons["createGroupConfirm"].tap()
+        app.buttons["Done"].tap()
+        app.staticTexts["Core Crew"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Side Plank · Longest hold"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testAddLiftThenMixIntoCustom() throws {
+        let app = launchAndOnboard()
+
+        app.tabBars.buttons["Leagues"].tap()
+        app.buttons["createGroupButton"].tap()
+        XCTAssertTrue(app.textFields["groupNameField"].waitForExistence(timeout: 5))
+        app.buttons["Strength"].firstMatch.tap()
+
+        let addLift = app.buttons["addLiftButton"]
+        for _ in 0..<5 where !addLift.isHittable { app.swipeUp() }
+        addLift.tap()
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("Overhead Press")
+        app.staticTexts["Overhead Press"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Overhead Press"].waitForExistence(timeout: 5), "Fourth lift added")
+
+        let mix = app.buttons["mixIntoCustomButton"]
+        for _ in 0..<5 where !mix.isHittable { app.swipeUp() }
+        mix.tap()
+        XCTAssertTrue(app.staticTexts["Estimated 1RM · Improvement"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Overhead Press"].exists)
+    }
+
+    @MainActor
+    func testCompetedExerciseShowsLeagueHint() throws {
+        let app = launchAndOnboard()
+
+        app.buttons["startWorkoutButton"].tap()
+        app.buttons["startPickExercises"].tap()
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("Pull-Up")
+        app.staticTexts["Pull-Up"].firstMatch.tap()
+        app.buttons["addSelectedExercisesButton"].tap()
+
+        let hint = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Pull-up Club")).firstMatch
+        XCTAssertTrue(hint.waitForExistence(timeout: 5))
     }
 
     @MainActor

@@ -11,11 +11,12 @@ struct ExerciseCardView: View {
     @State private var isRestPickerPresented = false
     @State private var isNotesVisible = false
     @State private var notesDraft = ""
+    @State private var competitionHint: String?
 
     private var store: WorkoutStore { env.workout }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             header
             if isNotesVisible || !entry.notes.isEmpty {
                 TextField("Notes", text: $notesDraft, axis: .vertical)
@@ -25,6 +26,7 @@ struct ExerciseCardView: View {
                     .onChange(of: notesDraft) { _, value in store.setNotes(entry, value) }
             }
             columnHeader
+            Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
             ForEach(entry.orderedSets) { set in
                 SetRowView(set: set, entry: entry)
                     .swipeToDelete { store.removeSet(set) }
@@ -32,13 +34,21 @@ struct ExerciseCardView: View {
             Button {
                 store.addSet(to: entry)
             } label: {
-                Label("Add set", systemImage: "plus")
-                    .font(.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity, minHeight: Theme.minTap)
+                HStack(spacing: 6) {
+                    Image("Icon_plus").accessibilityHidden(true)
+                    Text("Add set")
+                }
             }
-            .background(Theme.elevated, in: RoundedRectangle(cornerRadius: 10))
+            .buttonStyle(.primary)
+            .padding(.top, 6)
         }
-        .card()
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard()
+        .task(id: entry.exercise?.key) {
+            competitionHint = entry.exercise.flatMap { env.competitionHint(exerciseKey: $0.key) }
+        }
         .confirmationDialog("Remove exercise?", isPresented: $isRemoveConfirmPresented, titleVisibility: .visible) {
             Button("Remove", role: .destructive) { store.removeExercise(entry) }
         } message: {
@@ -57,22 +67,38 @@ struct ExerciseCardView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
-            ExerciseIcon(muscle: entry.exercise?.primaryMuscle ?? .fullBody)
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: 8) {
+            Image(ExerciseArt.imageName(key: entry.exercise?.key, muscle: entry.exercise?.primaryMuscle))
+                .resizable()
+                .scaledToFill()
+                .frame(width: 42, height: 42)
+                .clipShape(Circle())
+                .overlay(Circle().fill(Theme.heat.opacity(0.2)))
+                .overlay(Circle().strokeBorder(Theme.heat, style: StrokeStyle(lineWidth: 2, dash: [4, 3])))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 1) {
                 if let exercise = entry.exercise {
                     NavigationLink {
                         ExerciseDetailView(exercise: exercise)
                     } label: {
                         Text(exercise.name)
-                            .font(.headline)
-                            .foregroundStyle(Theme.accent)
+                            .font(.callout)
+                            .foregroundStyle(.white)
                             .multilineTextAlignment(.leading)
                     }
                 }
-                Label("Rest \(DurationFormatter.clock(entry.restSec))", systemImage: "timer")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Image("Icon_rest_icon").accessibilityHidden(true)
+                    Text("Rest \(DurationFormatter.clock(entry.restSec))")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                if let competitionHint {
+                    Label(competitionHint, systemImage: "trophy.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Theme.pr)
+                        .accessibilityLabel(String(localized: "Counts in your league. \(competitionHint)"))
+                }
             }
             Spacer()
             Menu {
@@ -88,7 +114,7 @@ struct ExerciseCardView: View {
                     }
                 }
             } label: {
-                Image(systemName: "ellipsis")
+                Image("Icon_more_btn")
                     .frame(width: Theme.minTap, height: Theme.minTap)
             }
             .accessibilityLabel("Exercise options")
@@ -109,9 +135,9 @@ struct ExerciseCardView: View {
             Text("PREVIOUS").frame(maxWidth: .infinity)
             Text(weightTitle).frame(width: 72)
             Text(type == .duration ? "SEC" : "REPS").frame(width: 56)
-            Image(systemName: "checkmark").frame(width: Theme.minTap)
+            Image("Icon_check_head").frame(width: Theme.minTap)
         }
-        .font(.caption2.weight(.semibold))
+        .font(.caption.weight(.medium))
         .foregroundStyle(.secondary)
         .accessibilityHidden(true)
     }
@@ -136,7 +162,7 @@ private struct SwipeToDelete: ViewModifier {
             .accessibilityLabel("Delete set")
 
             content
-                .background(Theme.card)
+                .background(offset < 0 ? Color.black : .clear) // covers the delete button while swiping
                 .offset(x: offset)
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 20)

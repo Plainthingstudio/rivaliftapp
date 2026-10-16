@@ -29,29 +29,36 @@ struct MainTabView: View {
         @Bindable var workout = env.workout
         TabView(selection: $env.selectedTab) {
             NavigationStack { HomeView() }
+                .tint(Theme.accent)
                 .workoutMiniBar()
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(AppTab.home)
             NavigationStack { HistoryView() }
+                .tint(Theme.accent)
                 .workoutMiniBar()
                 .tabItem { Label("History", systemImage: "calendar") }
                 .tag(AppTab.history)
             NavigationStack { LeaguesView() }
+                .tint(Theme.accent)
                 .workoutMiniBar()
                 .tabItem { Label("Leagues", systemImage: "trophy.fill") }
                 .tag(AppTab.leagues)
             NavigationStack { ProfileView() }
+                .tint(Theme.accent)
                 .workoutMiniBar()
                 .tabItem { Label("Profile", systemImage: "person.crop.circle") }
                 .tag(AppTab.profile)
         }
+        .tint(Theme.heat) // selected tab; content below keeps the app accent
         .fullScreenCover(isPresented: $workout.isPresented) {
             ActiveWorkoutView()
                 .environment(env)
+                .tint(Theme.accent)
         }
         .sheet(item: $workout.summary) { summary in
             WorkoutSummaryView(summary: summary)
                 .environment(env)
+                .tint(Theme.accent)
                 .interactiveDismissDisabled()
         }
         .startConflictAlert()

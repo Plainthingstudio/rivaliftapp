@@ -26,18 +26,22 @@ struct ExercisePickerView: View {
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                 }
-                if query.isEmpty, muscles.isEmpty, equipment.isEmpty, !recent.isEmpty {
-                    Section("Recent") {
-                        ForEach(recent) { row($0) }
+                Group {
+                    if query.isEmpty, muscles.isEmpty, equipment.isEmpty, !recent.isEmpty {
+                        Section("Recent") {
+                            ForEach(recent) { row($0) }
+                        }
+                    }
+                    Section(query.isEmpty ? "All exercises" : "Results") {
+                        if results.isEmpty {
+                            Text("No exercises found").foregroundStyle(.secondary)
+                        }
+                        ForEach(results) { row($0) }
                     }
                 }
-                Section(query.isEmpty ? "All exercises" : "Results") {
-                    if results.isEmpty {
-                        Text("No exercises found").foregroundStyle(.secondary)
-                    }
-                    ForEach(results) { row($0) }
-                }
+                .listRowBackground(Theme.listRow)
             }
+            .screenBackground()
             .listStyle(.insetGrouped)
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search exercises")
             .navigationTitle(title)
@@ -52,7 +56,7 @@ struct ExercisePickerView: View {
                         .buttonStyle(.primary)
                         .disabled(selected.isEmpty)
                         .padding()
-                        .background(.bar)
+                        .background(Theme.bottomFade)
                         .accessibilityIdentifier("addSelectedExercisesButton")
                 }
             }
@@ -204,39 +208,45 @@ struct CreateExerciseView: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("Name", text: $name)
-                Picker("Primary muscle", selection: $primary) {
-                    ForEach(MuscleGroup.allCases) { Text($0.displayName).tag($0) }
-                }
-                NavigationLink {
-                    List(MuscleGroup.allCases.filter { $0 != primary }) { muscle in
-                        Button {
-                            if secondary.contains(muscle) { secondary.remove(muscle) } else { secondary.insert(muscle) }
-                        } label: {
-                            HStack {
-                                Text(muscle.displayName).foregroundStyle(.primary)
-                                Spacer()
-                                if secondary.contains(muscle) { Image(systemName: "checkmark").foregroundStyle(Theme.accent) }
-                            }
-                        }
+                Group {
+                    TextField("Name", text: $name)
+                    Picker("Primary muscle", selection: $primary) {
+                        ForEach(MuscleGroup.allCases) { Text($0.displayName).tag($0) }
                     }
-                    .navigationTitle("Secondary muscles")
-                } label: {
-                    LabeledContent("Secondary muscles", value: secondary.isEmpty ? "None" : secondary.map(\.displayName).sorted().joined(separator: ", "))
+                    NavigationLink {
+                        List(MuscleGroup.allCases.filter { $0 != primary }) { muscle in
+                            Button {
+                                if secondary.contains(muscle) { secondary.remove(muscle) } else { secondary.insert(muscle) }
+                            } label: {
+                                HStack {
+                                    Text(muscle.displayName).foregroundStyle(.primary)
+                                    Spacer()
+                                    if secondary.contains(muscle) { Image(systemName: "checkmark").foregroundStyle(Theme.accent) }
+                                }
+                            }
+                            .listRowBackground(Theme.listRow)
+                        }
+                        .screenBackground()
+                        .navigationTitle("Secondary muscles")
+                    } label: {
+                        LabeledContent("Secondary muscles", value: secondary.isEmpty ? "None" : secondary.map(\.displayName).sorted().joined(separator: ", "))
+                    }
+                    Picker("Equipment", selection: $equipment) {
+                        ForEach(Equipment.allCases) { Text($0.displayName).tag($0) }
+                    }
+                    Picker("Type", selection: $type) {
+                        ForEach(ExerciseType.allCases) { Text($0.displayName).tag($0) }
+                    }
+                    Toggle("Compound movement", isOn: $isCompound)
+                    Section {
+                        Text("Custom exercises can't be used as league categories because they can't be matched between friends.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                Picker("Equipment", selection: $equipment) {
-                    ForEach(Equipment.allCases) { Text($0.displayName).tag($0) }
-                }
-                Picker("Type", selection: $type) {
-                    ForEach(ExerciseType.allCases) { Text($0.displayName).tag($0) }
-                }
-                Toggle("Compound movement", isOn: $isCompound)
-                Section {
-                    Text("Custom exercises can't be used as league categories because they can't be matched between friends.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
+                .listRowBackground(Theme.listRow)
             }
+            .screenBackground()
             .navigationTitle("New exercise")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

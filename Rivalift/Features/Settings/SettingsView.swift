@@ -13,81 +13,114 @@ struct SettingsView: View {
 
     var body: some View {
         @Bindable var settings = env.settings
-        Form {
-            if !iCloudAvailable {
-                Section {
-                    Label("iCloud is off. Your workouts are only stored on this iPhone. Turn on iCloud or export your data regularly.", systemImage: "exclamationmark.icloud")
-                        .font(.subheadline)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                if !iCloudAvailable {
+                    notice("Icon_set_icloud", "iCloud is off. Your workouts are only stored on this iPhone. Turn on iCloud or export your data regularly.")
                 }
-            }
 
-            Section("Units") {
-                Picker("Weight unit", selection: $settings.unitRaw) {
-                    Text("Kilograms (kg)").tag(WeightUnit.kg.rawValue)
-                    Text("Pounds (lb)").tag(WeightUnit.lb.rawValue)
+                section("Units") {
+                    row("Icon_set_unit", "Weight Unit") {
+                        Menu {
+                            Picker("Weight unit", selection: $settings.unitRaw) {
+                                Text("Kilograms (kg)").tag(WeightUnit.kg.rawValue)
+                                Text("Pounds (lb)").tag(WeightUnit.lb.rawValue)
+                            }
+                        } label: {
+                            pill(settings.unitRaw == WeightUnit.lb.rawValue ? String(localized: "Pounds (lb)") : String(localized: "Kilograms (kg)"))
+                        }
+                    }
                 }
-            }
 
-            Section("Training") {
-                Stepper(value: Binding(get: { settings.pendingWeeklyTarget ?? settings.weeklyTarget }, set: setWeeklyTarget), in: 1...7) {
-                    LabeledContent("Weekly target", value: "\(settings.pendingWeeklyTarget ?? settings.weeklyTarget)")
+                section("Training") {
+                    row("Icon_set_target", "Weekly Target") {
+                        let value = settings.pendingWeeklyTarget ?? settings.weeklyTarget
+                        HStack(spacing: 12) {
+                            Text("\(value)").font(.subheadline).monospacedDigit()
+                            HStack(spacing: 0) {
+                                stepButton("minus", "Decrease weekly target", enabled: value > 1) { setWeeklyTarget(value - 1) }
+                                Rectangle().fill(.white.opacity(0.2)).frame(width: 0.5, height: 16)
+                                stepButton("plus", "Increase weekly target", enabled: value < 7) { setWeeklyTarget(value + 1) }
+                            }
+                            .background(.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        }
+                        .padding(.leading, 13)
+                        .padding(.trailing, 7)
+                        .padding(.vertical, 7)
+                        .background(fieldBackground)
+                    }
+                    if settings.pendingWeeklyTarget != nil {
+                        Text("Your new target starts next Monday.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                if settings.pendingWeeklyTarget != nil {
-                    Text("Your new target starts next Monday.")
+
+                section("Rest Timer") {
+                    row("Icon_set_timer", "Compound Exercises") { restMenu($settings.compoundRestSec) }
+                    divider
+                    row("Icon_set_timer", "Isolation Exercises") { restMenu($settings.isolationRestSec) }
+                    divider
+                    row("Icon_set_sound", "Sound") { Toggle("Sound", isOn: $settings.restSoundEnabled).labelsHidden().tint(.green) }
+                    divider
+                    row("Icon_set_vibe", "Vibration") { Toggle("Vibration", isOn: $settings.restHapticsEnabled).labelsHidden().tint(.green) }
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Notifications").padding(.horizontal, 4)
+                    if notificationStatus == .denied {
+                        notice("Icon_set_bell", "Notifications are off for Rivalift. Enable them in iOS Settings.") {
+                            Button("Open iOS Settings") {
+                                if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+                            }
+                            .font(.subheadline.weight(.medium))
+                        }
+                    }
+                    card {
+                        toggle("Rest timer finished", $settings.notifyRestTimer)
+                        divider
+                        toggle("Workout reminders", $settings.notifyWorkoutReminder)
+                        divider
+                        toggle("Overtaken in a league", $settings.notifyOvertaken)
+                        divider
+                        toggle("Close to ranking up", $settings.notifyAlmostRankUp)
+                        divider
+                        toggle("League results", $settings.notifyLeagueResults)
+                        divider
+                        toggle("New group members", $settings.notifyNewMember)
+                    }
+                }
+
+                section("Data") {
+                    Button { export() } label: {
+                        Label("Export workouts (CSV)", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity, minHeight: Theme.minTap, alignment: .leading)
+                    }
+                    if let exportURL {
+                        divider
+                        ShareLink("Share export", item: exportURL).frame(maxWidth: .infinity, minHeight: Theme.minTap, alignment: .leading)
+                    }
+                }
+
+                section("Account") {
+                    Text("Sign in with Apple arrives with leagues. Everything works without an account.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-            }
 
-            Section("Rest timer") {
-                Picker("Compound exercises", selection: $settings.compoundRestSec) {
-                    ForEach(restOptions, id: \.self) { Text(DurationFormatter.clock($0)).tag($0) }
-                }
-                Picker("Isolation exercises", selection: $settings.isolationRestSec) {
-                    ForEach(restOptions, id: \.self) { Text(DurationFormatter.clock($0)).tag($0) }
-                }
-                Toggle("Sound", isOn: $settings.restSoundEnabled)
-                Toggle("Vibration", isOn: $settings.restHapticsEnabled)
-            }
-
-            Section {
-                if notificationStatus == .denied {
-                    Label("Notifications are off for Rivalift. The rest timer only works while the app is open. Enable them in iOS Settings.", systemImage: "bell.slash")
-                        .font(.subheadline)
-                    Button("Open iOS Settings") {
-                        if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
-                    }
-                }
-                Toggle("Rest timer finished", isOn: $settings.notifyRestTimer)
-                Toggle("Workout reminders", isOn: $settings.notifyWorkoutReminder)
-                Toggle("Overtaken in a league", isOn: $settings.notifyOvertaken)
-                Toggle("Close to ranking up", isOn: $settings.notifyAlmostRankUp)
-                Toggle("League results", isOn: $settings.notifyLeagueResults)
-                Toggle("New group members", isOn: $settings.notifyNewMember)
-            } header: {
-                Text("Notifications")
-            }
-
-            Section("Data") {
-                Button("Export workouts (CSV)", systemImage: "square.and.arrow.up") { export() }
-                if let exportURL {
-                    ShareLink("Share export", item: exportURL)
+                section("About") {
+                    link("Privacy policy", "https://rivalift.app/privacy")
+                    divider
+                    link("Terms of service", "https://rivalift.app/terms")
+                    divider
+                    link("Send feedback", "mailto:support@rivalift.app")
+                    divider
+                    LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
+                        .frame(minHeight: Theme.minTap)
                 }
             }
-
-            Section("Account") {
-                Text("Sign in with Apple arrives with leagues. Everything works without an account.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section("About") {
-                Link("Privacy policy", destination: URL(string: "https://rivalift.app/privacy")!)
-                Link("Terms of service", destination: URL(string: "https://rivalift.app/terms")!)
-                Link("Send feedback", destination: URL(string: "mailto:support@rivalift.app")!)
-                LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "")
-            }
+            .padding()
         }
+        .screenBackground()
         .navigationTitle("Settings")
         .onChange(of: settings.unitRaw) { _, _ in env.saveSettings() }
         .onChange(of: settings.compoundRestSec) { _, _ in applyRestDefaults() }
@@ -103,6 +136,107 @@ struct SettingsView: View {
         .task {
             notificationStatus = await env.notifications.authorizationStatus()
             iCloudAvailable = FileManager.default.ubiquityIdentityToken != nil
+        }
+    }
+
+    // MARK: Building blocks (Figma "Settings")
+
+    private var divider: some View {
+        Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+    }
+
+    private var fieldBackground: some View {
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(.white.opacity(0.1))
+            .strokeBorder(.white.opacity(0.2))
+    }
+
+    private func card(@ViewBuilder _ content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 12) { content() }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .dotTexture(alignment: .center, x: 14, y: -79.96)
+            .glassCard()
+    }
+
+    private func section(_ title: LocalizedStringKey, @ViewBuilder _ content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).padding(.horizontal, 4)
+            card(content)
+        }
+    }
+
+    private func row(_ icon: String, _ title: LocalizedStringKey, @ViewBuilder trailing: () -> some View) -> some View {
+        HStack(spacing: 10) {
+            RingIcon(image: icon, strong: true)
+            Text(title).font(.subheadline)
+            Spacer(minLength: 8)
+            trailing()
+        }
+    }
+
+    private func notice(_ icon: String, _ text: LocalizedStringKey, @ViewBuilder action: () -> some View = { EmptyView() }) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                RingIcon(image: icon, strong: true)
+                Text(text).font(.subheadline)
+            }
+            action()
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dotTexture(alignment: .center, x: 14, y: -79.46)
+        .glassCard()
+    }
+
+    /// Value in a boxed capsule with the up/down glyph, as a menu label.
+    private func pill(_ text: String) -> some View {
+        HStack(spacing: 8) {
+            Text(text).font(.subheadline).foregroundStyle(.white).lineLimit(1)
+            Image("Icon_set_updown").accessibilityHidden(true)
+        }
+        .padding(.horizontal, 13)
+        .frame(minHeight: Theme.minTap)
+        .background(fieldBackground)
+    }
+
+    private func restMenu(_ value: Binding<Int>) -> some View {
+        Menu {
+            Picker("Rest", selection: value) {
+                ForEach(restOptions, id: \.self) { Text(DurationFormatter.clock($0)).tag($0) }
+            }
+        } label: {
+            pill(DurationFormatter.clock(value.wrappedValue))
+        }
+    }
+
+    private func stepButton(_ symbol: String, _ label: LocalizedStringKey, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 33, height: 34)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.4)
+        .accessibilityLabel(label)
+    }
+
+    private func toggle(_ title: LocalizedStringKey, _ isOn: Binding<Bool>) -> some View {
+        Toggle(title, isOn: isOn).font(.subheadline).tint(.green)
+    }
+
+    private func link(_ title: LocalizedStringKey, _ url: String) -> some View {
+        Link(destination: URL(string: url)!) {
+            HStack {
+                Text(title).font(.subheadline).foregroundStyle(.white)
+                Spacer()
+                Image("IconChevronCircle").accessibilityHidden(true)
+            }
+            .frame(minHeight: Theme.minTap)
         }
     }
 

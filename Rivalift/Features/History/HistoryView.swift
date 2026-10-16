@@ -1,10 +1,12 @@
 import SwiftUI
 
-/// PROG-01 / appendix A.6: list grouped by week, and a monthly calendar.
+/// PROG-01 / appendix A.6. Layout follows Figma "History" (node 169:3641): this week's
+/// progress, recent workouts, and a monthly calendar.
 struct HistoryView: View {
     @Environment(AppEnvironment.self) private var env
     @State private var mode: Mode = .list
     @State private var sessions: [WorkoutSession] = []
+    @State private var progress: WeekProgress?
 
     enum Mode: String, CaseIterable, Identifiable {
         case list, calendar
@@ -13,38 +15,255 @@ struct HistoryView: View {
 
     var body: some View {
         Group {
-            if sessions.isEmpty {
-                EmptyStateView(
-                    systemImage: "calendar.badge.plus",
-                    title: "No workouts yet",
-                    message: "Your finished workouts show up here.",
-                    actionTitle: "Start your first workout"
-                ) {
-                    env.selectedTab = .home
-                    env.workout.isStartScreenPresented = true
+            if mode == .calendar, !sessions.isEmpty {
+                VStack(spacing: 0) {
+                    header.padding([.horizontal, .top])
+                    CalendarHistoryView(sessions: sessions)
                 }
             } else {
-                switch mode {
-                case .list: listView
-                case .calendar: CalendarHistoryView(sessions: sessions)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
+                        header
+                        if sessions.isEmpty {
+                            EmptyStateView(
+                                systemImage: "calendar.badge.plus",
+                                title: "No workouts yet",
+                                message: "Your finished workouts show up here.",
+                                actionTitle: "Start your first workout"
+                            ) {
+                                env.selectedTab = .home
+                                env.workout.isStartScreenPresented = true
+                            }
+                        } else {
+                            if let progress {
+                                HistoryWeekCard(progress: progress, sessions: thisWeek, unit: env.unit)
+                            }
+                            recentWorkouts
+                        }
+                    }
+                    .padding()
                 }
             }
         }
-        .background(Theme.background)
+        .screenBackground()
         .navigationTitle("History")
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Picker("View", selection: $mode) {
-                    Text("List").tag(Mode.list)
-                    Text("Calendar").tag(Mode.calendar)
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 200)
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear(perform: reload)
         .onChange(of: env.dataVersion) { _, _ in reload() }
     }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            PillPicker(selection: $mode, options: [(.list, "List"), (.calendar, "Calendar")])
+                .frame(maxWidth: .infinity)
+            ScreenTitle(title: "History", subtitle: weekRange)
+        }
+    }
+
+    private var weekRange: String {
+        let calendar = WeekCalendar()
+        let start = calendar.weekStart(for: Date())
+        let last = calendar.calendar.date(byAdding: .day, value: 6, to: start) ?? start
+        let format = Date.FormatStyle.dateTime.day().month(.wide)
+        return "\(start.formatted(format)) - \(last.formatted(format))"
+    }
+
+    private var thisWeek: [WorkoutSession] {
+        let calendar = WeekCalendar()
+        let start = calendar.weekStart(for: Date())
+        return sessions.filter { $0.startedAt >= start && $0.startedAt < calendar.weekEnd(for: start) }
+    }
+
+    private var recentWorkouts: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Recent workouts")
+                Spacer()
+                NavigationLink { AllWorkoutsView(sessions: sessions) } label: {
+                    HStack(spacing: 0) {
+                        Text("See all")
+                        Image("Icon_seeall").accessibilityHidden(true)
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(minHeight: Theme.minTap)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.leading, 8)
+            .padding(.trailing, 4)
+            .padding(.vertical, -11)
+            ForEach(Array(sessions.prefix(5).enumerated()), id: \.element.id) { index, session in
+                if index > 0 {
+                    Rectangle().fill(.white.opacity(0.1)).frame(height: 0.5)
+                }
+                NavigationLink {
+                    SessionDetailView(session: session)
+                } label: {
+                    RecentWorkoutRow(session: session, unit: env.unit)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func reload() {
+        sessions = env.sessions.completedSessions()
+        progress = env.weekProgress()
+    }
+}
+
+/// "This week" in red: one dot per planned session, then the week's totals.
+struct HistoryWeekCard: View {
+    let progress: WeekProgress
+    let sessions: [WorkoutSession]
+    let unit: WeightUnit
+
+    var body: some View {
+        let prs = sessions.reduce(0) { $0 + ($1.personalRecords?.count ?? 0) }
+        VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("This week")
+                SessionTrack(done: progress.sessions, target: progress.target)
+                    .padding(.horizontal, 14)
+            }
+            StatStrip(items: [
+                ("\(sessions.count)", sessions.count == 1 ? "Workout" : "Workouts"),
+                (WeightFormatter.volume(kg: sessions.reduce(0) { $0 + $1.totalVolumeKg }, unit: unit), "Total Volume"),
+                (DurationFormatter.short(sessions.reduce(0) { $0 + $1.durationSec }), "Total Time"),
+                ("\(prs)", "PR"),
+            ])
+            .padding(.horizontal, 8)
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 32)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dotTexture(alignment: .center, x: -0.57, y: -21.5)
+        .redCard()
+    }
+}
+
+/// Dots for the week's target on a thin track; finished sessions are green.
+private struct SessionTrack: View {
+    let done: Int
+    let target: Int
+
+    var body: some View {
+        let count = max(target, 1)
+        VStack(spacing: 12) {
+            GeometryReader { geo in
+                let span = geo.size.width - 18
+                let step = count > 1 ? span / CGFloat(count - 1) : 0
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.black.opacity(0.24).shadow(.inner(color: .white.opacity(0.25), radius: 1)))
+                        .frame(height: 6)
+                    Capsule()
+                        .fill(Color(red: 0x4A / 255, green: 0xDE / 255, blue: 0x80 / 255))
+                        .frame(width: max(0, geo.size.width * CGFloat(min(done, count)) / CGFloat(count) - 4), height: 3)
+                        .padding(.leading, 2)
+                    ForEach(0..<count, id: \.self) { index in
+                        dot(complete: index < done)
+                            .position(x: 9 + step * CGFloat(index), y: 9)
+                    }
+                }
+                .frame(height: 18)
+            }
+            .frame(height: 18)
+            HStack(spacing: 0) {
+                ForEach(0..<count, id: \.self) { index in
+                    if index > 0 { Spacer(minLength: 0) }
+                    Text(count > 4 ? "\(index + 1)" : String(localized: "Sessions \(index + 1)"))
+                        .font(.caption2.weight(.light))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .fixedSize()
+                }
+            }
+            .padding(.horizontal, -14)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(done) of \(target) sessions")
+    }
+
+    @ViewBuilder
+    private func dot(complete: Bool) -> some View {
+        if complete {
+            Image("Icon_complete")
+                .frame(width: 18, height: 18)
+                .background(
+                    Circle().fill(
+                        Color(red: 21 / 255, green: 128 / 255, blue: 61 / 255).opacity(0.12)
+                            .shadow(.inner(color: Color(red: 0x4A / 255, green: 0xDE / 255, blue: 0x80 / 255).opacity(0.46), radius: 2.5, y: 1))
+                    )
+                )
+        } else {
+            Circle()
+                .fill(.white)
+                .frame(width: 10, height: 10)
+                .padding(4)
+                .background(Circle().fill(Color.black.opacity(0.5)))
+                .shadow(color: .black.opacity(0.25), radius: 17, y: 16)
+        }
+    }
+}
+
+/// One finished workout: photo of its first exercise, name, date, and totals.
+struct RecentWorkoutRow: View {
+    let session: WorkoutSession
+    let unit: WeightUnit
+
+    var body: some View {
+        let first = session.orderedExercises.first?.exercise
+        HStack(spacing: 12) {
+            ExercisePhoto(exercise: first)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .dotTexture("DotGridWeek", x: 14, y: -138.6)
+                .glassCard(cornerRadius: 24)
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(session.name).font(.callout).lineLimit(1)
+                    HStack(spacing: 6) {
+                        Text(session.startedAt, format: .dateTime.weekday(.abbreviated).day().month().year())
+                        if let first {
+                            Rectangle().fill(.white.opacity(0.3)).frame(width: 1, height: 12)
+                            Text(first.name)
+                        }
+                    }
+                    .font(.caption.weight(.light))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                }
+                HStack(alignment: .top) {
+                    stat(String(max(0, session.durationSec) / 60), "min", "Training Time")
+                    Spacer(minLength: 4)
+                    stat(WeightFormatter.string(kg: session.totalVolumeKg.rounded(), unit: unit), unit.symbol, "Volume lifted")
+                    Spacer(minLength: 4)
+                    stat("\(session.orderedExercises.count)", "ex", "Movements")
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+
+    private func stat(_ value: String, _ unit: String, _ label: LocalizedStringKey) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .lastTextBaseline, spacing: 3) {
+                Text(value).font(.callout.weight(.medium)).monospacedDigit()
+                Text(unit).font(.caption.weight(.light))
+            }
+            Text(label).font(.caption2.weight(.light)).foregroundStyle(.secondary)
+        }
+        .lineLimit(1)
+    }
+}
+
+/// Every finished workout, grouped by week ("See all").
+struct AllWorkoutsView: View {
+    @Environment(AppEnvironment.self) private var env
+    let sessions: [WorkoutSession]
 
     struct WeekGroup: Identifiable {
         var start: Date
@@ -58,7 +277,7 @@ struct HistoryView: View {
         return grouped.keys.sorted(by: >).map { WeekGroup(start: $0, sessions: grouped[$0] ?? []) }
     }
 
-    private var listView: some View {
+    var body: some View {
         List {
             ForEach(weeks) { week in
                 Section {
@@ -79,12 +298,11 @@ struct HistoryView: View {
                     }
                 }
             }
+            .listRowBackground(Theme.listRow)
         }
         .listStyle(.insetGrouped)
-    }
-
-    private func reload() {
-        sessions = env.sessions.completedSessions()
+        .screenBackground()
+        .navigationTitle("All workouts")
     }
 }
 
@@ -132,57 +350,60 @@ struct CalendarHistoryView: View {
 
     var body: some View {
         List {
-            Section {
-                VStack(spacing: 12) {
-                    HStack {
-                        Button { shiftMonth(-1) } label: { Image(systemName: "chevron.left").frame(width: Theme.minTap, height: Theme.minTap) }
-                            .accessibilityLabel("Previous month")
-                        Spacer()
-                        Text(month, format: .dateTime.month(.wide).year()).font(.headline)
-                        Spacer()
-                        Button { shiftMonth(1) } label: { Image(systemName: "chevron.right").frame(width: Theme.minTap, height: Theme.minTap) }
-                            .accessibilityLabel("Next month")
-                    }
-                    .buttonStyle(.plain)
-                    let columns = Array(repeating: GridItem(.flexible()), count: 7)
-                    LazyVGrid(columns: columns, spacing: 8) {
-                        ForEach(calendar.days(ofWeekContaining: Date()), id: \.self) { day in
-                            Text(day, format: .dateTime.weekday(.narrow)).font(.caption).foregroundStyle(.secondary)
+            Group {
+                Section {
+                    VStack(spacing: 12) {
+                        HStack {
+                            Button { shiftMonth(-1) } label: { Image(systemName: "chevron.left").frame(width: Theme.minTap, height: Theme.minTap) }
+                                .accessibilityLabel("Previous month")
+                            Spacer()
+                            Text(month, format: .dateTime.month(.wide).year()).font(.headline)
+                            Spacer()
+                            Button { shiftMonth(1) } label: { Image(systemName: "chevron.right").frame(width: Theme.minTap, height: Theme.minTap) }
+                                .accessibilityLabel("Next month")
                         }
-                        ForEach(Array(monthCells.enumerated()), id: \.offset) { _, day in
-                            if let day {
-                                let key = calendar.localDateString(for: day)
-                                let trained = trainedDays.contains(key)
-                                Button {
-                                    selectedDay = key
-                                } label: {
-                                    Text(day, format: .dateTime.day())
-                                        .font(.subheadline.weight(trained ? .bold : .regular))
-                                        .frame(width: 36, height: 36)
-                                        .foregroundStyle(trained ? Color.white : Color.primary)
-                                        .background(trained ? Theme.accent : .clear, in: Circle())
-                                        .overlay(Circle().stroke(selectedDay == key ? Theme.accent : .clear, lineWidth: 2))
+                        .buttonStyle(.plain)
+                        let columns = Array(repeating: GridItem(.flexible()), count: 7)
+                        LazyVGrid(columns: columns, spacing: 8) {
+                            ForEach(calendar.days(ofWeekContaining: Date()), id: \.self) { day in
+                                Text(day, format: .dateTime.weekday(.narrow)).font(.caption).foregroundStyle(.secondary)
+                            }
+                            ForEach(Array(monthCells.enumerated()), id: \.offset) { _, day in
+                                if let day {
+                                    let key = calendar.localDateString(for: day)
+                                    let trained = trainedDays.contains(key)
+                                    Button {
+                                        selectedDay = key
+                                    } label: {
+                                        Text(day, format: .dateTime.day())
+                                            .font(.subheadline.weight(trained ? .bold : .regular))
+                                            .frame(width: 36, height: 36)
+                                            .foregroundStyle(trained ? Color.white : Color.primary)
+                                            .background(trained ? Theme.accent : .clear, in: Circle())
+                                            .overlay(Circle().stroke(selectedDay == key ? Theme.accent : .clear, lineWidth: 2))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel(Text(day, format: .dateTime.day().month()) + Text(trained ? ", trained" : ""))
+                                } else {
+                                    Color.clear.frame(height: 36)
                                 }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel(Text(day, format: .dateTime.day().month()) + Text(trained ? ", trained" : ""))
-                            } else {
-                                Color.clear.frame(height: 36)
                             }
                         }
                     }
                 }
-            }
-            if let selectedDay {
-                Section(selectedDay) {
-                    let daySessions = sessions.filter { calendar.localDateString(for: $0.startedAt) == selectedDay }
-                    if daySessions.isEmpty {
-                        Text("Rest day").foregroundStyle(.secondary)
-                    }
-                    ForEach(daySessions) { session in
-                        NavigationLink(session.name) { SessionDetailView(session: session) }
+                if let selectedDay {
+                    Section(selectedDay) {
+                        let daySessions = sessions.filter { calendar.localDateString(for: $0.startedAt) == selectedDay }
+                        if daySessions.isEmpty {
+                            Text("Rest day").foregroundStyle(.secondary)
+                        }
+                        ForEach(daySessions) { session in
+                            NavigationLink(session.name) { SessionDetailView(session: session) }
+                        }
                     }
                 }
             }
+            .listRowBackground(Theme.listRow)
         }
         .listStyle(.insetGrouped)
     }
@@ -219,45 +440,49 @@ struct SessionDetailView: View {
 
     var body: some View {
         List {
-            Section {
-                LabeledContent("Date") { Text(session.startedAt, format: .dateTime.day().month().year().hour().minute()) }
-                LabeledContent("Duration", value: DurationFormatter.short(session.durationSec))
-                LabeledContent("Volume", value: WeightFormatter.volume(kg: session.totalVolumeKg, unit: env.unit))
-                LabeledContent("Sets", value: "\(session.completedWorkingSets.count)")
-                if !session.notes.isEmpty { Text(session.notes).foregroundStyle(.secondary) }
-            }
-            ForEach(session.orderedExercises) { entry in
+            Group {
                 Section {
-                    ForEach(Array(entry.orderedSets.enumerated()), id: \.element.id) { index, set in
-                        HStack {
-                            Text(set.setType.badge ?? "\(index + 1)")
-                                .font(.subheadline.weight(.bold))
-                                .frame(width: 28)
-                            Text(setText(set, type: entry.exercise?.type ?? .weightReps))
-                                .monospacedDigit()
-                            Spacer()
-                            if set.isPR { PRBadge() }
+                    LabeledContent("Date") { Text(session.startedAt, format: .dateTime.day().month().year().hour().minute()) }
+                    LabeledContent("Duration", value: DurationFormatter.short(session.durationSec))
+                    LabeledContent("Volume", value: WeightFormatter.volume(kg: session.totalVolumeKg, unit: env.unit))
+                    LabeledContent("Sets", value: "\(session.completedWorkingSets.count)")
+                    if !session.notes.isEmpty { Text(session.notes).foregroundStyle(.secondary) }
+                }
+                ForEach(session.orderedExercises) { entry in
+                    Section {
+                        ForEach(Array(entry.orderedSets.enumerated()), id: \.element.id) { index, set in
+                            HStack {
+                                Text(set.setType.badge ?? "\(index + 1)")
+                                    .font(.subheadline.weight(.bold))
+                                    .frame(width: 28)
+                                Text(setText(set, type: entry.exercise?.type ?? .weightReps))
+                                    .monospacedDigit()
+                                Spacer()
+                                if set.isPR { PRBadge() }
+                            }
+                        }
+                        if !entry.notes.isEmpty {
+                            Text(entry.notes).font(.footnote).foregroundStyle(.secondary)
+                        }
+                    } header: {
+                        if let exercise = entry.exercise {
+                            NavigationLink(exercise.name) { ExerciseDetailView(exercise: exercise) }
+                                .font(.headline)
+                                .textCase(nil)
                         }
                     }
-                    if !entry.notes.isEmpty {
-                        Text(entry.notes).font(.footnote).foregroundStyle(.secondary)
+                }
+                Section {
+                    Button("Save as template") {
+                        templateName = session.name
+                        isSaveTemplatePresented = true
                     }
-                } header: {
-                    if let exercise = entry.exercise {
-                        NavigationLink(exercise.name) { ExerciseDetailView(exercise: exercise) }
-                            .font(.headline)
-                            .textCase(nil)
-                    }
+                    Button("Delete workout", role: .destructive) { isDeleteConfirmPresented = true }
                 }
             }
-            Section {
-                Button("Save as template") {
-                    templateName = session.name
-                    isSaveTemplatePresented = true
-                }
-                Button("Delete workout", role: .destructive) { isDeleteConfirmPresented = true }
-            }
+            .listRowBackground(Theme.listRow)
         }
+        .screenBackground()
         .navigationTitle(session.name)
         .navigationBarTitleDisplayMode(.inline)
         .alert("Save as template", isPresented: $isSaveTemplatePresented) {
