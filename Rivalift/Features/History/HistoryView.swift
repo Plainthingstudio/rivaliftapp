@@ -278,70 +278,41 @@ struct AllWorkoutsView: View {
     }
 
     var body: some View {
-        List {
-            ForEach(weeks) { week in
-                Section {
-                    ForEach(week.sessions) { session in
-                        NavigationLink {
-                            SessionDetailView(session: session)
-                        } label: {
-                            SessionCard(session: session, unit: env.unit)
-                        }
-                    }
-                } header: {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 12) {
+                ForEach(weeks) { week in
                     HStack {
                         Text(week.start, format: .dateTime.day().month())
                         + Text(" – ")
                         + Text(WeekCalendar().calendar.date(byAdding: .day, value: 6, to: week.start) ?? week.start, format: .dateTime.day().month())
                         Spacer()
                         Text("\(week.sessions.count)/\(env.settings.effectiveWeeklyTarget(at: week.start)) sessions")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.top, 8)
+                    ForEach(Array(week.sessions.enumerated()), id: \.element.id) { index, session in
+                        if index > 0 { Rectangle().fill(.white.opacity(0.1)).frame(height: 0.5) }
+                        NavigationLink {
+                            SessionDetailView(session: session)
+                        } label: {
+                            RecentWorkoutRow(session: session, unit: env.unit)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
-            .listRowBackground(Theme.listRow)
+            .padding()
         }
-        .listStyle(.insetGrouped)
         .screenBackground()
         .navigationTitle("All workouts")
     }
 }
 
-struct SessionCard: View {
-    let session: WorkoutSession
-    let unit: WeightUnit
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(session.name).font(.headline)
-                Spacer()
-                let prs = session.personalRecords?.count ?? 0
-                if prs > 0 {
-                    Label("\(prs)", systemImage: "trophy.fill")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(Theme.pr)
-                        .accessibilityLabel("\(prs) records")
-                }
-            }
-            Text(session.startedAt, format: .dateTime.weekday(.abbreviated).day().month().hour().minute())
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            HStack(spacing: 16) {
-                Label(DurationFormatter.short(session.durationSec), systemImage: "clock")
-                Label(WeightFormatter.volume(kg: session.totalVolumeKg, unit: unit), systemImage: "scalemass")
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            Text(session.orderedExercises.prefix(3).compactMap(\.exercise?.name).joined(separator: " · "))
-                .font(.caption)
-                .lineLimit(1)
-        }
-        .padding(.vertical, 4)
-    }
-}
-
 /// Monthly calendar with dots on training days; tapping a day lists its sessions.
 struct CalendarHistoryView: View {
+    @Environment(AppEnvironment.self) private var env
     let sessions: [WorkoutSession]
     @State private var month = Date()
     @State private var selectedDay: String?
@@ -349,63 +320,66 @@ struct CalendarHistoryView: View {
     private let calendar = WeekCalendar()
 
     var body: some View {
-        List {
-            Group {
-                Section {
-                    VStack(spacing: 12) {
-                        HStack {
-                            Button { shiftMonth(-1) } label: { Image(systemName: "chevron.left").frame(width: Theme.minTap, height: Theme.minTap) }
-                                .accessibilityLabel("Previous month")
-                            Spacer()
-                            Text(month, format: .dateTime.month(.wide).year()).font(.headline)
-                            Spacer()
-                            Button { shiftMonth(1) } label: { Image(systemName: "chevron.right").frame(width: Theme.minTap, height: Theme.minTap) }
-                                .accessibilityLabel("Next month")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                GlassCard {
+                    HStack {
+                        Button { shiftMonth(-1) } label: { Image(systemName: "chevron.left").frame(width: Theme.minTap, height: Theme.minTap) }
+                            .accessibilityLabel("Previous month")
+                        Spacer()
+                        Text(month, format: .dateTime.month(.wide).year()).font(.headline)
+                        Spacer()
+                        Button { shiftMonth(1) } label: { Image(systemName: "chevron.right").frame(width: Theme.minTap, height: Theme.minTap) }
+                            .accessibilityLabel("Next month")
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white)
+                    let columns = Array(repeating: GridItem(.flexible()), count: 7)
+                    LazyVGrid(columns: columns, spacing: 8) {
+                        ForEach(calendar.days(ofWeekContaining: Date()), id: \.self) { day in
+                            Text(day, format: .dateTime.weekday(.narrow)).font(.caption).foregroundStyle(.secondary)
                         }
-                        .buttonStyle(.plain)
-                        let columns = Array(repeating: GridItem(.flexible()), count: 7)
-                        LazyVGrid(columns: columns, spacing: 8) {
-                            ForEach(calendar.days(ofWeekContaining: Date()), id: \.self) { day in
-                                Text(day, format: .dateTime.weekday(.narrow)).font(.caption).foregroundStyle(.secondary)
-                            }
-                            ForEach(Array(monthCells.enumerated()), id: \.offset) { _, day in
-                                if let day {
-                                    let key = calendar.localDateString(for: day)
-                                    let trained = trainedDays.contains(key)
-                                    Button {
-                                        selectedDay = key
-                                    } label: {
-                                        Text(day, format: .dateTime.day())
-                                            .font(.subheadline.weight(trained ? .bold : .regular))
-                                            .frame(width: 36, height: 36)
-                                            .foregroundStyle(trained ? Color.white : Color.primary)
-                                            .background(trained ? Theme.accent : .clear, in: Circle())
-                                            .overlay(Circle().stroke(selectedDay == key ? Theme.accent : .clear, lineWidth: 2))
-                                    }
-                                    .buttonStyle(.plain)
-                                    .accessibilityLabel(Text(day, format: .dateTime.day().month()) + Text(trained ? ", trained" : ""))
-                                } else {
-                                    Color.clear.frame(height: 36)
+                        ForEach(Array(monthCells.enumerated()), id: \.offset) { _, day in
+                            if let day {
+                                let key = calendar.localDateString(for: day)
+                                let trained = trainedDays.contains(key)
+                                Button {
+                                    selectedDay = key
+                                } label: {
+                                    Text(day, format: .dateTime.day())
+                                        .font(.subheadline.weight(trained ? .bold : .regular))
+                                        .frame(width: 36, height: 36)
+                                        .foregroundStyle(.white)
+                                        .background(trained ? AnyShapeStyle(Theme.redFill) : AnyShapeStyle(Color.white.opacity(0.06)), in: Circle())
+                                        .overlay(Circle().strokeBorder(selectedDay == key ? Color.white : .clear, lineWidth: 2))
                                 }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(Text(day, format: .dateTime.day().month()) + Text(trained ? ", trained" : ""))
+                            } else {
+                                Color.clear.frame(height: 36)
                             }
                         }
                     }
                 }
                 if let selectedDay {
-                    Section(selectedDay) {
-                        let daySessions = sessions.filter { calendar.localDateString(for: $0.startedAt) == selectedDay }
-                        if daySessions.isEmpty {
-                            Text("Rest day").foregroundStyle(.secondary)
+                    let daySessions = sessions.filter { calendar.localDateString(for: $0.startedAt) == selectedDay }
+                    Text(selectedDay).padding(.horizontal, 8)
+                    if daySessions.isEmpty {
+                        Text("Rest day").font(.subheadline).foregroundStyle(.secondary).padding(.horizontal, 8)
+                    }
+                    ForEach(Array(daySessions.enumerated()), id: \.element.id) { index, session in
+                        if index > 0 { Rectangle().fill(.white.opacity(0.1)).frame(height: 0.5) }
+                        NavigationLink {
+                            SessionDetailView(session: session)
+                        } label: {
+                            RecentWorkoutRow(session: session, unit: env.unit)
                         }
-                        ForEach(daySessions) { session in
-                            NavigationLink(session.name) { SessionDetailView(session: session) }
-                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
-            .listRowBackground(Theme.listRow)
+            .padding()
         }
-        .listStyle(.insetGrouped)
     }
 
     private var trainedDays: Set<String> {
@@ -439,23 +413,45 @@ struct SessionDetailView: View {
     @State private var isDeleteConfirmPresented = false
 
     var body: some View {
-        List {
-            Group {
-                Section {
-                    LabeledContent("Date") { Text(session.startedAt, format: .dateTime.day().month().year().hour().minute()) }
-                    LabeledContent("Duration", value: DurationFormatter.short(session.durationSec))
-                    LabeledContent("Volume", value: WeightFormatter.volume(kg: session.totalVolumeKg, unit: env.unit))
-                    LabeledContent("Sets", value: "\(session.completedWorkingSets.count)")
-                    if !session.notes.isEmpty { Text(session.notes).foregroundStyle(.secondary) }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                GlassCard {
+                    Text(session.startedAt, format: .dateTime.weekday(.wide).day().month().year().hour().minute())
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    StatStrip(items: [
+                        (DurationFormatter.short(session.durationSec), "Duration"),
+                        (WeightFormatter.volume(kg: session.totalVolumeKg, unit: env.unit), "Volume"),
+                        ("\(session.completedWorkingSets.count)", "Sets"),
+                    ])
+                    if !session.notes.isEmpty {
+                        GlassDivider()
+                        Text(session.notes).font(.subheadline).foregroundStyle(.secondary)
+                    }
                 }
                 ForEach(session.orderedExercises) { entry in
-                    Section {
+                    GlassCard {
+                        if let exercise = entry.exercise {
+                            NavigationLink { ExerciseDetailView(exercise: exercise) } label: {
+                                HStack(spacing: 12) {
+                                    ExercisePhoto(exercise: exercise, width: 52, height: 38)
+                                    Text(exercise.name).font(.headline).multilineTextAlignment(.leading)
+                                    Spacer(minLength: 4)
+                                    Image("IconChevronCircle").accessibilityHidden(true)
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            GlassDivider()
+                        }
                         ForEach(Array(entry.orderedSets.enumerated()), id: \.element.id) { index, set in
                             HStack {
                                 Text(set.setType.badge ?? "\(index + 1)")
                                     .font(.subheadline.weight(.bold))
+                                    .foregroundStyle(.secondary)
                                     .frame(width: 28)
                                 Text(setText(set, type: entry.exercise?.type ?? .weightReps))
+                                    .font(.subheadline)
                                     .monospacedDigit()
                                 Spacer()
                                 if set.isPR { PRBadge() }
@@ -464,23 +460,19 @@ struct SessionDetailView: View {
                         if !entry.notes.isEmpty {
                             Text(entry.notes).font(.footnote).foregroundStyle(.secondary)
                         }
-                    } header: {
-                        if let exercise = entry.exercise {
-                            NavigationLink(exercise.name) { ExerciseDetailView(exercise: exercise) }
-                                .font(.headline)
-                                .textCase(nil)
-                        }
                     }
                 }
-                Section {
-                    Button("Save as template") {
-                        templateName = session.name
-                        isSaveTemplatePresented = true
-                    }
-                    Button("Delete workout", role: .destructive) { isDeleteConfirmPresented = true }
+                Button("Save as template") {
+                    templateName = session.name
+                    isSaveTemplatePresented = true
                 }
+                .buttonStyle(.secondary)
+                Button("Delete workout", role: .destructive) { isDeleteConfirmPresented = true }
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, minHeight: Theme.minTap)
             }
-            .listRowBackground(Theme.listRow)
+            .padding()
         }
         .screenBackground()
         .navigationTitle(session.name)

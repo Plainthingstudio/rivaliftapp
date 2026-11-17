@@ -8,6 +8,8 @@ final class UserSettings {
     var id: UUID = UUID()
     var createdAt: Date = Date()
     var displayName: String = ""
+    /// Profile photo as a downscaled JPEG (AUTH-04); nil shows the default avatar.
+    @Attribute(.externalStorage) var avatarImageData: Data?
     var unitRaw: String = WeightUnit.kg.rawValue
     var weeklyTarget: Int = 3
     /// Target changes apply from the next week (section 6.1, T).

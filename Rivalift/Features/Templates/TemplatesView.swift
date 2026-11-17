@@ -139,25 +139,31 @@ struct TemplateEditorView: View {
     var body: some View {
         NavigationStack {
             List {
-                Group {
-                    Section {
-                        TextField("Template name", text: $template.name)
-                    }
-                    Section("Exercises") {
-                        ForEach(template.orderedExercises) { item in
-                            TemplateExerciseRow(item: item)
-                        }
-                        .onDelete { offsets in
-                            let items = template.orderedExercises
-                            for index in offsets { env.templates.removeExercise(items[index]) }
-                        }
-                        .onMove { env.templates.move(in: template, from: $0, to: $1) }
-                        Button("Add exercises", systemImage: "plus") { isPickerPresented = true }
-                    }
+                Section {
+                    TextField("Template name", text: $template.name)
+                        .glassField()
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                 }
-                .listRowBackground(Theme.listRow)
+                Section {
+                    ForEach(template.orderedExercises) { item in
+                        TemplateExerciseRow(item: item).glassListRow()
+                    }
+                    .onDelete { offsets in
+                        let items = template.orderedExercises
+                        for index in offsets { env.templates.removeExercise(items[index]) }
+                    }
+                    .onMove { env.templates.move(in: template, from: $0, to: $1) }
+                    Button { isPickerPresented = true } label: { GlassAddLabel(title: "Add exercises") }
+                        .buttonStyle(.plain)
+                        .glassListRow()
+                } header: {
+                    Text("Exercises").font(.body).foregroundStyle(.white).textCase(nil)
+                } footer: {
+                    Text("Swipe left to remove, tap Edit to reorder.").font(.footnote)
+                }
             }
-            .screenBackground()
+            .glassList()
             .navigationTitle("Edit template")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -184,7 +190,10 @@ struct TemplateExerciseRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(item.exercise?.name ?? "").font(.headline)
+            HStack(spacing: 12) {
+                ExercisePhoto(exercise: item.exercise, width: 52, height: 38)
+                Text(item.exercise?.name ?? "").font(.headline)
+            }
             Stepper("Sets: \(item.setCount)", value: $item.setCount, in: 1...10)
             if item.exercise?.type != .duration {
                 Stepper("Target reps: \(item.targetReps)", value: $item.targetReps, in: 1...50)

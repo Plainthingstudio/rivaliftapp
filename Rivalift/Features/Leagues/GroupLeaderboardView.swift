@@ -43,7 +43,7 @@ struct GroupLeaderboardView: View {
                         VStack(spacing: 0) {
                             ForEach(board.rows) { row in
                                 StandingRow(row: row, showsMovement: board.id == boards.first?.id)
-                                if row.id != board.rows.last?.id { Divider().padding(.leading, 64) }
+                                if row.id != board.rows.last?.id { GlassDivider().padding(.horizontal, 12) }
                             }
                         }
                         .padding(.vertical, 6)
@@ -52,14 +52,14 @@ struct GroupLeaderboardView: View {
                 }
                 VStack(spacing: 0) {
                     Button { isScoringPresented = true } label: {
-                        LinkRow(title: "How this league works", systemImage: "questionmark.circle")
+                        LinkRow(title: "How this league works", icon: "Icon_ring_doc")
                     }
                     if !group.lastWeek.isEmpty {
-                        Divider().padding(.leading, 52)
+                        GlassDivider().padding(.horizontal, 12)
                         NavigationLink {
                             WeekResultsView(group: group, weekNumber: calendar.weekNumber(for: now) - 1)
                         } label: {
-                            LinkRow(title: "Last week's results", systemImage: "trophy")
+                            LinkRow(title: "Last week's results", icon: "Icon_trophy")
                         }
                     }
                 }
@@ -151,12 +151,7 @@ struct BoardTabs: View {
                     Button {
                         selection = board.id
                     } label: {
-                        Text(board.title)
-                            .font(.subheadline.weight(isSelected ? .semibold : .regular))
-                            .foregroundStyle(isSelected ? Color.white : Color.primary)
-                            .padding(.horizontal, 14)
-                            .frame(minHeight: 36)
-                            .background(isSelected ? Theme.accent : Theme.card, in: Capsule())
+                        FilterPill(title: board.title, isSelected: isSelected)
                     }
                     .buttonStyle(.plain)
                     .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -174,7 +169,8 @@ struct ModeBadge: View {
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background(Theme.elevated, in: Capsule())
+            .background(Theme.heat.opacity(0.3), in: Capsule())
+            .overlay(Capsule().strokeBorder(Theme.heat))
     }
 }
 
@@ -195,12 +191,14 @@ struct MyPositionCard: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                 if let gap = row.gapText {
-                    Text(gap).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.accent)
+                    Text(gap).font(.subheadline.weight(.semibold))
                 }
             }
             Spacer(minLength: 0)
         }
-        .card()
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .redCard(cornerRadius: Theme.cornerRadius)
         .accessibilityElement(children: .combine)
     }
 }
@@ -223,7 +221,7 @@ struct StandingRow: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Theme.accent, in: Capsule())
+                            .background(Theme.heat, in: Capsule())
                     }
                 }
                 Text(row.detail).font(.caption).foregroundStyle(.secondary).lineLimit(2)
@@ -234,7 +232,7 @@ struct StandingRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(row.isMe ? Theme.accent.opacity(0.08) : .clear)
+        .background(row.isMe ? Theme.heat.opacity(0.15) : .clear)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
     }
@@ -283,14 +281,14 @@ private struct Movement: View {
 
 private struct LinkRow: View {
     let title: LocalizedStringKey
-    let systemImage: String
+    let icon: String
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: systemImage).foregroundStyle(Theme.accent).frame(width: 28)
-            Text(title).foregroundStyle(.primary)
+            RingIcon(image: icon, strong: true)
+            Text(title).font(.subheadline).foregroundStyle(.white)
             Spacer()
-            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+            Image("IconChevronCircle").accessibilityHidden(true)
         }
         .padding(.horizontal, 12)
         .frame(minHeight: Theme.minTap + 8)

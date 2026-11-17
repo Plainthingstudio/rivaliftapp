@@ -189,15 +189,16 @@ struct ReorderExercisesView: View {
     var body: some View {
         NavigationStack {
             List {
-                Group {
-                    ForEach(env.workout.session?.orderedExercises ?? []) { entry in
-                        Text(entry.exercise?.name ?? "")
+                ForEach(env.workout.session?.orderedExercises ?? []) { entry in
+                    HStack(spacing: 12) {
+                        ExercisePhoto(exercise: entry.exercise, width: 52, height: 38)
+                        Text(entry.exercise?.name ?? "").font(.subheadline)
                     }
-                    .onMove { env.workout.moveExercises(from: $0, to: $1) }
+                    .glassListRow()
                 }
-                .listRowBackground(Theme.listRow)
+                .onMove { env.workout.moveExercises(from: $0, to: $1) }
             }
-            .screenBackground()
+            .glassList()
             .environment(\.editMode, .constant(.active))
             .navigationTitle("Reorder")
             .navigationBarTitleDisplayMode(.inline)

@@ -7,6 +7,16 @@ final class RivaliftUITests: XCTestCase {
     }
 
     @MainActor
+    /// Group cards and other combined rows: the first element whose label mentions the text.
+    private func labelled(_ app: XCUIApplication, _ text: String) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
+    }
+
+    /// Exercise pickers show a card whose label starts with the exercise name.
+    private func exerciseCard(_ app: XCUIApplication, _ name: String) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
+    }
+
     private func launchAndOnboard() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-ui-testing"]
@@ -56,6 +66,15 @@ final class RivaliftUITests: XCTestCase {
         template.tap()
         let start = app.buttons["startTemplateButton"]
         XCTAssertTrue(start.waitForExistence(timeout: 5))
+
+        // Each exercise opens its detail with how-to steps.
+        let exercise = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Overhead Press'")).firstMatch
+        XCTAssertTrue(exercise.waitForExistence(timeout: 5))
+        exercise.tap()
+        XCTAssertTrue(app.staticTexts["How to do it"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        XCTAssertTrue(start.waitForExistence(timeout: 5))
         start.tap()
 
         XCTAssertTrue(app.buttons["finishWorkoutButton"].waitForExistence(timeout: 5))
@@ -69,11 +88,11 @@ final class RivaliftUITests: XCTestCase {
         app.buttons["createGroupButton"].tap()
         let name = app.textFields["groupNameField"]
         XCTAssertTrue(name.waitForExistence(timeout: 5))
-        name.typeText("Gym Buddies")
+        name.typeText("Gym Buddies\n") // close the keyboard so the bottom Create button takes the tap
         app.buttons["createGroupConfirm"].tap()
-        XCTAssertTrue(app.otherElements["inviteCode"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["inviteCode"].waitForExistence(timeout: 5))
         app.buttons["Done"].tap()
-        XCTAssertTrue(app.staticTexts["Gym Buddies"].waitForExistence(timeout: 5))
+        XCTAssertTrue(labelled(app, "Gym Buddies").waitForExistence(timeout: 5))
 
         app.buttons["joinGroupButton"].tap()
         let code = app.textFields["joinCodeField"]
@@ -82,7 +101,7 @@ final class RivaliftUITests: XCTestCase {
         let join = app.buttons["joinGroupConfirm"]
         XCTAssertTrue(join.waitForExistence(timeout: 5))
         join.tap()
-        XCTAssertTrue(app.staticTexts["Iron Squad"].waitForExistence(timeout: 5))
+        XCTAssertTrue(labelled(app, "Iron Squad").waitForExistence(timeout: 5))
     }
 
     @MainActor
@@ -93,12 +112,14 @@ final class RivaliftUITests: XCTestCase {
         app.buttons["createGroupButton"].tap()
         let name = app.textFields["groupNameField"]
         XCTAssertTrue(name.waitForExistence(timeout: 5))
-        name.typeText("Rep Kings")
+        name.typeText("Rep Kings\n") // close the keyboard so the bottom Create button takes the tap
         app.buttons["Custom"].firstMatch.tap()
         app.buttons["createGroupConfirm"].tap()
         app.buttons["Done"].tap()
 
-        app.staticTexts["Rep Kings"].firstMatch.tap()
+        let group = labelled(app, "Rep Kings")
+        XCTAssertTrue(group.waitForExistence(timeout: 5))
+        group.tap()
         XCTAssertTrue(app.buttons["Overall"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Pull-Up · Max reps"].exists)
     }
@@ -111,7 +132,7 @@ final class RivaliftUITests: XCTestCase {
         app.buttons["createGroupButton"].tap()
         let name = app.textFields["groupNameField"]
         XCTAssertTrue(name.waitForExistence(timeout: 5))
-        name.typeText("Core Crew")
+        name.typeText("Core Crew\n") // close the keyboard so the bottom Create button takes the tap
         app.buttons["Custom"].firstMatch.tap()
 
         let newCategory = app.buttons["newCategoryButton"]
@@ -122,13 +143,16 @@ final class RivaliftUITests: XCTestCase {
         XCTAssertTrue(search.waitForExistence(timeout: 5))
         search.tap()
         search.typeText("Side Plank")
-        app.staticTexts["Side Plank"].firstMatch.tap()
+        exerciseCard(app, "Side Plank").tap()
         app.buttons["saveCategoryButton"].tap()
 
         XCTAssertTrue(app.staticTexts["Side Plank"].waitForExistence(timeout: 5), "Category added and still in the New group form")
         app.buttons["createGroupConfirm"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["inviteCode"].waitForExistence(timeout: 5))
         app.buttons["Done"].tap()
-        app.staticTexts["Core Crew"].firstMatch.tap()
+        let group = labelled(app, "Core Crew")
+        XCTAssertTrue(group.waitForExistence(timeout: 5))
+        group.tap()
         XCTAssertTrue(app.buttons["Side Plank · Longest hold"].waitForExistence(timeout: 5))
     }
 
@@ -139,6 +163,7 @@ final class RivaliftUITests: XCTestCase {
         app.tabBars.buttons["Leagues"].tap()
         app.buttons["createGroupButton"].tap()
         XCTAssertTrue(app.textFields["groupNameField"].waitForExistence(timeout: 5))
+        app.textFields["groupNameField"].typeText("\n") // keyboard would cover the taller lift rows
         app.buttons["Strength"].firstMatch.tap()
 
         let addLift = app.buttons["addLiftButton"]
@@ -148,7 +173,7 @@ final class RivaliftUITests: XCTestCase {
         XCTAssertTrue(search.waitForExistence(timeout: 5))
         search.tap()
         search.typeText("Overhead Press")
-        app.staticTexts["Overhead Press"].firstMatch.tap()
+        exerciseCard(app, "Overhead Press").tap()
         XCTAssertTrue(app.staticTexts["Overhead Press"].waitForExistence(timeout: 5), "Fourth lift added")
 
         let mix = app.buttons["mixIntoCustomButton"]
@@ -168,7 +193,7 @@ final class RivaliftUITests: XCTestCase {
         XCTAssertTrue(search.waitForExistence(timeout: 5))
         search.tap()
         search.typeText("Pull-Up")
-        app.staticTexts["Pull-Up"].firstMatch.tap()
+        exerciseCard(app, "Pull-Up").tap()
         app.buttons["addSelectedExercisesButton"].tap()
 
         let hint = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "Pull-up Club")).firstMatch
@@ -185,7 +210,7 @@ final class RivaliftUITests: XCTestCase {
         XCTAssertTrue(search.waitForExistence(timeout: 5))
         search.tap()
         search.typeText("Bench Press")
-        app.staticTexts["Barbell Bench Press"].firstMatch.tap()
+        exerciseCard(app, "Barbell Bench Press").tap()
         app.buttons["addSelectedExercisesButton"].tap()
 
         let weight = app.textFields.element(boundBy: 0)

@@ -102,23 +102,19 @@ extension CustomCategoryScorer.Comparison {
     }
 }
 
-/// Mode sections for a Form (SOC-12 … SOC-14, SOC-16). Editors push on the containing
+/// Mode settings as glass sections (SOC-12 … SOC-14, SOC-16). Editors push on the containing
 /// NavigationStack; a sheet on top of the create/settings sheet would close it.
 struct LeagueModeSections: View {
     @Environment(AppEnvironment.self) private var env
     @Binding var draft: LeagueModeDraft
 
     var body: some View {
-        Section {
-            Picker("League", selection: $draft.kind) {
-                ForEach(LeagueMode.Kind.allCases) { Text($0.title).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .accessibilityIdentifier("leagueModePicker")
-        } header: {
-            Text("League")
-        } footer: {
-            Text(draft.kind.summary)
+        VStack(alignment: .leading, spacing: 12) {
+            Text("League").padding(.horizontal, 4)
+            PillPicker(selection: $draft.kind, options: LeagueMode.Kind.allCases.map { ($0, $0.title) })
+                .frame(maxWidth: .infinity)
+                .accessibilityIdentifier("leagueModePicker")
+            Text(draft.kind.summary).font(.footnote).foregroundStyle(.secondary).padding(.horizontal, 4)
         }
 
         switch draft.kind {
@@ -133,51 +129,53 @@ struct LeagueModeSections: View {
 
     @ViewBuilder
     private var strengthSections: some View {
-        Section {
-            ForEach(draft.strength.exerciseKeys, id: \.self) { key in
-                Text(env.exercises.exercise(key: key)?.name ?? key)
+        let keys = draft.strength.exerciseKeys
+        GlassSection("Lifts", footer: Text("Any built-in exercise with weights, for example Overhead Press or Barbell Row. Up to \(StrengthSetup.liftRange.upperBound)."))
+        {
+            ForEach(Array(keys.enumerated()), id: \.element) { index, key in
+                if index > 0 { GlassDivider() }
+                let exercise = env.exercises.exercise(key: key)
+                HStack(spacing: 12) {
+                    ExercisePhoto(exercise: exercise, width: 52, height: 38)
+                    Text(exercise?.name ?? key).font(.subheadline)
+                    Spacer(minLength: 4)
+                    GlassRemoveButton(label: String(localized: "Remove \(exercise?.name ?? key)"), isEnabled: keys.count > StrengthSetup.liftRange.lowerBound) {
+                        draft.strength.exerciseKeys.removeAll { $0 == key }
+                    }
+                }
             }
-            .onDelete { offsets in
-                guard draft.strength.exerciseKeys.count - offsets.count >= StrengthSetup.liftRange.lowerBound else { return }
-                draft.strength.exerciseKeys.remove(atOffsets: offsets)
-            }
-            if draft.strength.exerciseKeys.count < StrengthSetup.liftRange.upperBound {
+            if !keys.isEmpty { GlassDivider() }
+            if keys.count < StrengthSetup.liftRange.upperBound {
                 NavigationLink {
-                    LeagueExercisePicker(title: "Add lift", allowedTypes: [.weightReps], excluding: draft.strength.exerciseKeys) {
+                    LeagueExercisePicker(title: "Add lift", allowedTypes: [.weightReps], excluding: keys) {
                         draft.strength.exerciseKeys.append($0.key)
                     }
                 } label: {
-                    Label("Add lift", systemImage: "plus").foregroundStyle(Theme.accent)
+                    GlassAddLabel(title: "Add lift")
                 }
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("addLiftButton")
             } else {
-                Label("Add lift · \(StrengthSetup.liftRange.upperBound) is the maximum", systemImage: "plus")
-                    .foregroundStyle(.secondary)
+                Text("Add lift · \(StrengthSetup.liftRange.upperBound) is the maximum").font(.subheadline).foregroundStyle(.secondary)
             }
-        } header: {
-            Text("Lifts")
-        } footer: {
-            Text("Any built-in exercise with weights, for example Overhead Press or Barbell Row. Up to \(StrengthSetup.liftRange.upperBound); swipe to remove.")
         }
-        Section {
+        GlassSection(footer: Text("Strength compares estimated 1RM, so it needs weights. To add pull-ups, push-ups or planks, this switches to Custom and keeps your lifts as 1RM categories.")) {
             Button {
                 mixIntoCustom()
             } label: {
-                Label("Mix lifts with other exercises", systemImage: "square.stack.3d.up")
+                GlassRow(icon: "Icon_menu_exercises", title: "Mix lifts with other exercises") {
+                    Image("IconChevronCircle").accessibilityHidden(true)
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .accessibilityIdentifier("mixIntoCustomButton")
-        } footer: {
-            Text("Strength compares estimated 1RM, so it needs weights. To add pull-ups, push-ups or planks, this switches to Custom and keeps your lifts as 1RM categories.")
         }
-        Section {
-            Picker("Compare", selection: $draft.strength.comparison) {
-                Text("Relative").tag(StrengthScorer.Comparison.relative)
-                Text("Absolute").tag(StrengthScorer.Comparison.absolute)
-            }
-            .pickerStyle(.segmented)
+        GlassSection("How to compare") {
+            PillPicker(selection: $draft.strength.comparison, options: [(StrengthScorer.Comparison.relative, "Relative"), (.absolute, "Absolute")])
+                .frame(maxWidth: .infinity)
+            GlassDivider()
             StrengthExample(comparison: draft.strength.comparison)
-        } header: {
-            Text("How to compare")
         }
     }
 
@@ -193,47 +191,57 @@ struct LeagueModeSections: View {
 
     @ViewBuilder
     private var customSections: some View {
-        Section {
-            ForEach(Array(draft.categories.enumerated()), id: \.element.id) { index, category in
-                NavigationLink {
-                    CategoryEditorView(category: category) { draft.categories[index] = $0 }
-                } label: {
-                    CategoryLabel(category: category)
+        let categories = draft.categories
+        GlassSection("Categories", footer: Text("Each category is one exercise and what counts, like \"Pull-Up · Max reps\". Tap to change, − to remove. Everyone is ranked per category and the Overall tab adds up the places.")) {
+            ForEach(Array(categories.enumerated()), id: \.element.id) { index, category in
+                if index > 0 { GlassDivider() }
+                HStack(spacing: 4) {
+                    NavigationLink {
+                        CategoryEditorView(category: category) { draft.categories[index] = $0 }
+                    } label: {
+                        HStack {
+                            CategoryLabel(category: category)
+                            Spacer(minLength: 4)
+                            Image("IconChevronCircle").accessibilityHidden(true)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    GlassRemoveButton(
+                        label: String(localized: "Remove \(env.exercises.exercise(key: category.exerciseKey)?.name ?? category.exerciseKey)"),
+                        isEnabled: categories.count > CustomCategoryScorer.categoryRange.lowerBound
+                    ) {
+                        draft.categories.removeAll { $0.id == category.id }
+                    }
                 }
             }
-            .onDelete { offsets in
-                guard draft.categories.count - offsets.count >= CustomCategoryScorer.categoryRange.lowerBound else { return }
-                draft.categories.remove(atOffsets: offsets)
-            }
-            if draft.categories.count < CustomCategoryScorer.categoryRange.upperBound {
+            if !categories.isEmpty { GlassDivider() }
+            if categories.count < CustomCategoryScorer.categoryRange.upperBound {
                 NavigationLink {
                     CategoryEditorView(category: nil) { draft.categories.append($0) }
                 } label: {
-                    Label("New category", systemImage: "plus").foregroundStyle(Theme.accent)
+                    GlassAddLabel(title: "New category")
                 }
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("newCategoryButton")
             } else {
-                Label("New category · \(CustomCategoryScorer.categoryRange.upperBound) is the maximum", systemImage: "plus")
-                    .foregroundStyle(.secondary)
+                Text("New category · \(CustomCategoryScorer.categoryRange.upperBound) is the maximum").font(.subheadline).foregroundStyle(.secondary)
             }
-        } header: {
-            Text("Categories")
-        } footer: {
-            Text("Each category is one exercise and what counts, like \"Pull-Up · Max reps\". Tap to change, swipe to remove. Everyone is ranked per category and the Overall tab adds up the places.")
         }
         let unused = CustomCategoryScorer.presets.filter { preset in
-            !draft.categories.contains { $0.exerciseKey == preset.exerciseKey && $0.metric == preset.metric }
+            !categories.contains { $0.exerciseKey == preset.exerciseKey && $0.metric == preset.metric }
         }
-        if !unused.isEmpty && draft.categories.count < CustomCategoryScorer.categoryRange.upperBound {
-            Section("Popular") {
-                ForEach(unused, id: \.id) { preset in
+        if !unused.isEmpty && categories.count < CustomCategoryScorer.categoryRange.upperBound {
+            GlassSection("Popular") {
+                ForEach(Array(unused.enumerated()), id: \.element.id) { index, preset in
+                    if index > 0 { GlassDivider() }
                     Button {
                         draft.categories.append(preset)
                     } label: {
                         HStack {
                             CategoryLabel(category: preset)
-                            Spacer()
-                            Image(systemName: "plus.circle.fill").foregroundStyle(Theme.accent)
+                            Spacer(minLength: 4)
+                            Image(systemName: "plus.circle.fill").font(.title3).foregroundStyle(Theme.heat)
                         }
                         .contentShape(Rectangle())
                     }
@@ -250,11 +258,15 @@ private struct CategoryLabel: View {
     let category: CustomCategoryScorer.Category
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(env.exercises.exercise(key: category.exerciseKey)?.name ?? category.exerciseKey).foregroundStyle(.primary)
-            Text(CategorySummary.text(category))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        let exercise = env.exercises.exercise(key: category.exerciseKey)
+        HStack(spacing: 12) {
+            ExercisePhoto(exercise: exercise, width: 52, height: 38)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(exercise?.name ?? category.exerciseKey).font(.subheadline).foregroundStyle(.white)
+                Text(CategorySummary.text(category))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }
@@ -333,20 +345,19 @@ struct LeagueExercisePicker: View {
     var body: some View {
         let results = env.exercises.search(query, muscles: [], equipment: [])
             .filter { !$0.isCustom && allowedTypes.contains($0.type) && !excluding.contains($0.key) }
-        List(results) { exercise in
-            Button {
-                onPick(exercise)
-                dismiss()
-            } label: {
-                HStack(spacing: 12) {
-                    ExerciseIcon(muscle: exercise.primaryMuscle, size: 36)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(exercise.name).foregroundStyle(.primary)
-                        Text(exercise.subtitle).font(.caption).foregroundStyle(.secondary)
+        ScrollView {
+            LazyVStack(spacing: 8) {
+                ForEach(results) { exercise in
+                    Button {
+                        onPick(exercise)
+                        dismiss()
+                    } label: {
+                        ExerciseRowCard(exercise: exercise)
                     }
+                    .buttonStyle(.plain)
                 }
             }
-            .listRowBackground(Theme.listRow)
+            .padding()
         }
         .screenBackground()
         .overlay {
@@ -381,9 +392,9 @@ struct CategoryEditorView: View {
 
     var body: some View {
         let exercise = exerciseKey.flatMap { env.exercises.exercise(key: $0) }
-        Form {
-            Group {
-                Section {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                GlassSection(footer: Text("Built-in exercises only, so everyone logs the same one.")) {
                     NavigationLink {
                         LeagueExercisePicker(title: "Choose exercise", allowedTypes: Set(ExerciseType.allCases)) { picked in
                             exerciseKey = picked.key
@@ -391,39 +402,51 @@ struct CategoryEditorView: View {
                             if !options.contains(metric) { metric = options[0] }
                         }
                     } label: {
-                        LabeledContent("Exercise") {
-                            Text(exercise?.name ?? String(localized: "Choose"))
-                                .foregroundStyle(exercise == nil ? Theme.accent : .secondary)
+                        HStack(spacing: 12) {
+                            if let exercise {
+                                ExercisePhoto(exercise: exercise, width: 52, height: 38)
+                            } else {
+                                RingIcon(image: "Icon_menu_exercises", strong: true)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Exercise").font(.caption).foregroundStyle(.secondary)
+                                Text(exercise?.name ?? String(localized: "Choose")).font(.subheadline)
+                            }
+                            Spacer(minLength: 4)
+                            Image("IconChevronCircle").accessibilityHidden(true)
                         }
+                        .frame(minHeight: Theme.minTap)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                     .accessibilityIdentifier("categoryExerciseRow")
-                } footer: {
-                    Text("Built-in exercises only, so everyone logs the same one.")
                 }
 
                 if let exercise {
-                    Section("What counts") {
-                        ForEach(CustomCategoryScorer.Metric.options(for: exercise.type), id: \.self) { option in
-                            choiceRow(isSelected: option == metric) {
-                                metric = option
-                            } title: {
+                    GlassSection("What counts") {
+                        let options = CustomCategoryScorer.Metric.options(for: exercise.type)
+                        ForEach(Array(options.enumerated()), id: \.element) { index, option in
+                            if index > 0 { GlassDivider() }
+                            GlassChoiceRow(isSelected: option == metric, action: { metric = option }) {
                                 Text(option.displayName)
                             } detail: {
                                 Text(option.explanation)
                             }
                         }
                         if metric.usesMinReps {
-                            Stepper("Minimum reps: \(minReps)", value: $minReps, in: 1...30)
+                            GlassDivider()
+                            Stepper("Minimum reps: \(minReps)", value: $minReps, in: 1...30).font(.subheadline)
                         }
-                        Label(metric.example(unit: env.unit), systemImage: "lightbulb")
+                        GlassDivider()
+                        Label(metric.example(unit: env.unit), systemImage: "lightbulb.fill")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
-                    Section("How to compare") {
-                        ForEach([CustomCategoryScorer.Comparison.absolute, .improvement], id: \.self) { option in
-                            choiceRow(isSelected: option == comparison) {
-                                comparison = option
-                            } title: {
+                    GlassSection("How to compare") {
+                        let options: [CustomCategoryScorer.Comparison] = [.absolute, .improvement]
+                        ForEach(Array(options.enumerated()), id: \.element) { index, option in
+                            if index > 0 { GlassDivider() }
+                            GlassChoiceRow(isSelected: option == comparison, action: { comparison = option }) {
                                 Text(option.title)
                             } detail: {
                                 VStack(alignment: .leading, spacing: 4) {
@@ -435,7 +458,7 @@ struct CategoryEditorView: View {
                     }
                 }
             }
-            .listRowBackground(Theme.listRow)
+            .padding()
         }
         .screenBackground()
         .navigationTitle(category == nil ? "New category" : "Edit category")
@@ -458,28 +481,6 @@ struct CategoryEditorView: View {
             }
         }
     }
-
-    private func choiceRow<Title: View, Detail: View>(
-        isSelected: Bool,
-        action: @escaping () -> Void,
-        @ViewBuilder title: () -> Title,
-        @ViewBuilder detail: () -> Detail
-    ) -> some View {
-        Button(action: action) {
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected ? Theme.accent : Color.secondary)
-                    .font(.title3)
-                VStack(alignment: .leading, spacing: 2) {
-                    title().font(.body.weight(isSelected ? .semibold : .regular)).foregroundStyle(.primary)
-                    detail().font(.caption).foregroundStyle(.secondary)
-                }
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
 }
 
 /// Group settings: change the league mode, effective next Monday (SOC-12).
@@ -496,25 +497,24 @@ struct GroupSettingsView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Group {
-                    Section {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    GlassCard {
                         HStack(spacing: 12) {
                             GroupEmoji(emoji: group.emoji, size: 44)
-                            VStack(alignment: .leading) {
+                            VStack(alignment: .leading, spacing: 2) {
                                 Text(group.name).font(.headline)
                                 Text("Code \(group.inviteCode) · \(group.memberCount) members").font(.subheadline).foregroundStyle(.secondary)
                             }
                         }
                     }
                     LeagueModeSections(draft: $draft)
-                    Section {
-                        Text("Changes start next Monday. This week stays \(group.mode.displayName) so nobody loses points mid-week.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text("Changes start next Monday. This week stays \(group.mode.displayName) so nobody loses points mid-week.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 4)
                 }
-                .listRowBackground(Theme.listRow)
+                .padding()
             }
             .screenBackground()
             .navigationTitle("Group settings")
@@ -545,62 +545,90 @@ struct LeagueModeExplainer: View {
             ScoringExplainerView()
         case .strength(let setup):
             explainer(title: "Strength league") {
-                Section {
+                GlassCard {
                     Text(setup.comparison == .relative
                          ? "Your score is the average % gain in estimated 1RM on the group's lifts, compared with your own best of the previous 8 weeks."
                          : "Your score is the total of your best estimated 1RM on the group's lifts this week.")
+                        .font(.subheadline)
+                    GlassDivider()
                     HStack {
-                        Text("What is estimated 1RM?")
+                        Text("What is estimated 1RM?").font(.subheadline)
                         Spacer()
                         OneRepMaxInfoButton(unit: env.unit)
                     }
+                    GlassDivider()
                     StrengthExample(comparison: setup.comparison)
                 }
-                Section("Lifts") {
-                    ForEach(setup.exerciseKeys, id: \.self) { Text(env.exercises.exercise(key: $0)?.name ?? $0) }
-                }
-                Section("Fair play") {
-                    Text("Only working sets of 1–12 reps count.")
-                    if setup.comparison == .relative {
-                        Text("A lift without 8 weeks of history is a baseline week and counts from next week.")
-                        Text("A drop below your baseline counts as 0, never negative.")
+                GlassSection("Lifts") {
+                    ForEach(Array(setup.exerciseKeys.enumerated()), id: \.element) { index, key in
+                        if index > 0 { GlassDivider() }
+                        let exercise = env.exercises.exercise(key: key)
+                        HStack(spacing: 12) {
+                            ExercisePhoto(exercise: exercise, width: 52, height: 38)
+                            Text(exercise?.name ?? key).font(.subheadline)
+                        }
                     }
-                    Text("Jumps of more than 25% over your previous best are saved to your log but don't count here.")
+                }
+                GlassSection("Fair play") {
+                    bullet("Only working sets of 1–12 reps count.")
+                    if setup.comparison == .relative {
+                        bullet("A lift without 8 weeks of history is a baseline week and counts from next week.")
+                        bullet("A drop below your baseline counts as 0, never negative.")
+                    }
+                    bullet("Jumps of more than 25% over your previous best are saved to your log but don't count here.")
                 }
             }
         case .custom(let categories):
             explainer(title: "Custom league") {
-                Section {
+                GlassCard {
                     Text("Every category has its own ranking. With 4 people who logged it, 1st place earns 4 points, 2nd earns 3, 3rd earns 2 and 4th earns 1. No entry earns 0.")
+                        .font(.subheadline)
+                    GlassDivider()
                     Text("The Overall tab adds up those points. A tie goes to whoever won more categories, then to the first category.")
+                        .font(.subheadline)
                 }
-                Section("Categories") {
-                    ForEach(categories, id: \.id) { category in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(env.exercises.exercise(key: category.exerciseKey)?.name ?? category.exerciseKey)
-                            Text(CategorySummary.text(category)).font(.caption).foregroundStyle(.secondary)
-                            Text(category.metric.explanation).font(.caption)
-                            Text(category.metric.example(unit: env.unit)).font(.caption).foregroundStyle(.secondary)
+                GlassSection("Categories") {
+                    ForEach(Array(categories.enumerated()), id: \.element.id) { index, category in
+                        if index > 0 { GlassDivider() }
+                        let exercise = env.exercises.exercise(key: category.exerciseKey)
+                        HStack(alignment: .top, spacing: 12) {
+                            ExercisePhoto(exercise: exercise, width: 52, height: 38)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(exercise?.name ?? category.exerciseKey).font(.subheadline)
+                                Text(CategorySummary.text(category)).font(.caption).foregroundStyle(.secondary)
+                                Text(category.metric.explanation).font(.caption)
+                                Text(category.metric.example(unit: env.unit)).font(.caption).foregroundStyle(.secondary)
+                            }
                         }
                     }
                 }
-                Section("Fair play") {
-                    Text("Only the built-in exercise counts, not a custom one with the same name.")
-                    Text("Jumps of more than 25% (weight) or 50% (reps, time) over your previous best don't count here.")
+                GlassSection("Fair play") {
+                    bullet("Only the built-in exercise counts, not a custom one with the same name.")
+                    bullet("Jumps of more than 25% (weight) or 50% (reps, time) over your previous best don't count here.")
                 }
             }
         }
     }
 
+    private func bullet(_ text: LocalizedStringKey) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Circle().fill(Theme.heat).frame(width: 6, height: 6).accessibilityHidden(true)
+            Text(text).font(.subheadline)
+        }
+    }
+
     private func explainer<Content: View>(title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         NavigationStack {
-            List { Group { content() }.listRowBackground(Theme.listRow) }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) { content() }
+                    .padding()
+            }
             .screenBackground()
-                .navigationTitle(title)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
-                }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+            }
         }
     }
 }

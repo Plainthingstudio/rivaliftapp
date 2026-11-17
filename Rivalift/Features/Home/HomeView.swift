@@ -111,7 +111,7 @@ struct HomeView: View {
                     NavigationLink {
                         ExerciseDetailView(exercise: exercise)
                     } label: {
-                        recordRow(record, name: exercise.name, fraction: best > 0 ? record.valueKg / best : 1)
+                        recordRow(record, exercise: exercise, fraction: best > 0 ? record.valueKg / best : 1)
                     }
                     .buttonStyle(.plain)
                 }
@@ -124,10 +124,11 @@ struct HomeView: View {
         .glassCard()
     }
 
-    private func recordRow(_ record: PersonalRecord, name: String, fraction: Double) -> some View {
-        HStack(alignment: .top, spacing: 14) {
+    private func recordRow(_ record: PersonalRecord, exercise: Exercise, fraction: Double) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            ExercisePhoto(exercise: exercise, width: 52, height: 38)
             VStack(alignment: .leading, spacing: 6) {
-                Text(name).font(.subheadline)
+                Text(exercise.name).font(.subheadline)
                 RecordBar(fraction: fraction)
             }
             HStack(spacing: 12) {

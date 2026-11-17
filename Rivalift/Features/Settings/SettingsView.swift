@@ -80,6 +80,23 @@ struct SettingsView: View {
                         toggle("Rest timer finished", $settings.notifyRestTimer)
                         divider
                         toggle("Workout reminders", $settings.notifyWorkoutReminder)
+                        if settings.notifyWorkoutReminder {
+                            WeekdayPicker(selection: $settings.trainingWeekdays)
+                            HStack {
+                                Text(settings.trainingWeekdays.isEmpty ? "Pick your training days" : "Remind me at")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                Spacer(minLength: 8)
+                                Menu {
+                                    Picker("Reminder time", selection: $settings.reminderHour) {
+                                        ForEach(5..<23, id: \.self) { Text(hourLabel($0)).tag($0) }
+                                    }
+                                } label: {
+                                    pill(hourLabel(settings.reminderHour))
+                                }
+                                .accessibilityLabel("Reminder time")
+                            }
+                        }
                         divider
                         toggle("Overtaken in a league", $settings.notifyOvertaken)
                         divider
@@ -127,6 +144,18 @@ struct SettingsView: View {
         .onChange(of: settings.isolationRestSec) { _, _ in applyRestDefaults() }
         .onChange(of: settings.restSoundEnabled) { _, _ in env.saveSettings() }
         .onChange(of: settings.restHapticsEnabled) { _, _ in env.saveSettings() }
+        .onChange(of: settings.notifyWorkoutReminder) { _, on in
+            env.saveSettings()
+            if on && notificationStatus == .notDetermined {
+                Task {
+                    _ = await env.notifications.requestAuthorization()
+                    notificationStatus = await env.notifications.authorizationStatus()
+                    env.refreshWorkoutReminders()
+                }
+            }
+        }
+        .onChange(of: settings.reminderWeekdaysRaw) { _, _ in env.saveSettings() }
+        .onChange(of: settings.reminderHour) { _, _ in env.saveSettings() }
         .onDisappear { env.saveSettings() }
         .alert("Export failed", isPresented: Binding(get: { exportError != nil }, set: { if !$0 { exportError = nil } })) {
             Button("OK", role: .cancel) {}
@@ -141,9 +170,7 @@ struct SettingsView: View {
 
     // MARK: Building blocks (Figma "Settings")
 
-    private var divider: some View {
-        Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
-    }
+    private var divider: some View { GlassDivider() }
 
     private var fieldBackground: some View {
         RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -152,28 +179,15 @@ struct SettingsView: View {
     }
 
     private func card(@ViewBuilder _ content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: 12) { content() }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .dotTexture(alignment: .center, x: 14, y: -79.96)
-            .glassCard()
+        GlassCard(content: content)
     }
 
     private func section(_ title: LocalizedStringKey, @ViewBuilder _ content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title).padding(.horizontal, 4)
-            card(content)
-        }
+        GlassSection(title, content: content)
     }
 
     private func row(_ icon: String, _ title: LocalizedStringKey, @ViewBuilder trailing: () -> some View) -> some View {
-        HStack(spacing: 10) {
-            RingIcon(image: icon, strong: true)
-            Text(title).font(.subheadline)
-            Spacer(minLength: 8)
-            trailing()
-        }
+        GlassRow(icon: icon, title: title, trailing: trailing)
     }
 
     private func notice(_ icon: String, _ text: LocalizedStringKey, @ViewBuilder action: () -> some View = { EmptyView() }) -> some View {
@@ -190,15 +204,10 @@ struct SettingsView: View {
         .glassCard()
     }
 
-    /// Value in a boxed capsule with the up/down glyph, as a menu label.
-    private func pill(_ text: String) -> some View {
-        HStack(spacing: 8) {
-            Text(text).font(.subheadline).foregroundStyle(.white).lineLimit(1)
-            Image("Icon_set_updown").accessibilityHidden(true)
-        }
-        .padding(.horizontal, 13)
-        .frame(minHeight: Theme.minTap)
-        .background(fieldBackground)
+    private func pill(_ text: String) -> some View { PillMenuLabel(text: text) }
+
+    private func hourLabel(_ hour: Int) -> String {
+        Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: Date())?.formatted(date: .omitted, time: .shortened) ?? "\(hour):00"
     }
 
     private func restMenu(_ value: Binding<Int>) -> some View {

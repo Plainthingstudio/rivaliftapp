@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import Testing
 @testable import Rivalift
 
@@ -242,6 +243,23 @@ struct SeedDataTests {
         #expect(Set(exercises.map(\.key)).count == exercises.count)
         for equipment in Equipment.allCases {
             #expect(exercises.contains { $0.equipment == equipment }, "missing \(equipment)")
+        }
+    }
+
+    @Test func everyExerciseHasAPhoto() throws {
+        let bundle = Bundle(for: BundleToken.self).appBundle
+        for exercise in try SeedLoader.loadExercises(bundle: bundle) {
+            #expect(UIImage(named: "Exercise_\(exercise.key)", in: bundle, with: nil) != nil, "\(exercise.key)")
+        }
+    }
+
+    @Test func everyExerciseHasAGuide() throws {
+        let bundle = Bundle(for: BundleToken.self).appBundle
+        let guides = try SeedLoader.loadGuides(bundle: bundle)
+        for exercise in try SeedLoader.loadExercises(bundle: bundle) {
+            let guide = guides[exercise.key]
+            #expect(guide != nil, "\(exercise.key)")
+            #expect((guide?.steps.count ?? 0) >= 3 && !(guide?.about.isEmpty ?? true), "\(exercise.key)")
         }
     }
 

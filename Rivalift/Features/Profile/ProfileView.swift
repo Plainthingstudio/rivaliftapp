@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 
 /// AUTH-04 / appendix A.12. Layout follows Figma "Profile" (node 163:44596).
@@ -27,13 +28,7 @@ struct ProfileView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 24) {
-                // ponytail: one dummy photo for the user until photo avatars land (AUTH-04)
-                Image("ProfilePhoto")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 64, height: 64)
-                    .clipShape(Circle())
-                    .accessibilityHidden(true)
+                ProfileAvatar(data: env.settings.avatarImageData, size: 64)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(displayName).font(.body.weight(.medium)).lineLimit(1)
                     Button { isEditPresented = true } label: {
@@ -294,31 +289,59 @@ private struct WeeklyVolumeChart: View {
     }
 }
 
+/// The user's photo, or the default dummy photo when none is set.
+struct ProfileAvatar: View {
+    var data: Data?
+    var size: CGFloat
+
+    var body: some View {
+        Group {
+            if let data, let image = UIImage(data: data) {
+                Image(uiImage: image).resizable()
+            } else {
+                Image("ProfilePhoto").resizable()
+            }
+        }
+        .scaledToFill()
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .accessibilityHidden(true)
+    }
+}
+
 struct EditProfileView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
+    @State private var photoData: Data?
+    @State private var photoItem: PhotosPickerItem?
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    HStack {
-                        Spacer()
-                        AvatarView(name: name.isEmpty ? "?" : name, size: 80)
-                        Spacer()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    VStack(spacing: 12) {
+                        ProfileAvatar(data: photoData, size: 96)
+                        HStack(spacing: 16) {
+                            PhotosPicker(photoData == nil ? "Choose photo" : "Change photo", selection: $photoItem, matching: .images)
+                            if photoData != nil {
+                                Button("Remove", role: .destructive) { photoData = nil }
+                            }
+                        }
+                        .font(.subheadline)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    GlassSection("Display name", footer: Text("Shown to friends in your leagues. Up to 30 characters.")) {
+                        TextField("Display name", text: $name)
+                            .textInputAutocapitalization(.words)
+                            .glassField()
+                            .onChange(of: name) { _, value in
+                                if value.count > 30 { name = String(value.prefix(30)) }
+                            }
                     }
                 }
-                .listRowBackground(Color.clear)
-                Section {
-                    TextField("Display name", text: $name)
-                        .textInputAutocapitalization(.words)
-                        .onChange(of: name) { _, value in
-                            if value.count > 30 { name = String(value.prefix(30)) }
-                        }
-                } footer: {
-                    Text("Shown to friends in your leagues. Up to 30 characters.")
-                }
+                .padding()
             }
             .screenBackground()
             .navigationTitle("Edit profile")
@@ -328,13 +351,35 @@ struct EditProfileView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         env.settings.displayName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                        env.settings.avatarImageData = photoData
                         env.saveSettings()
                         dismiss()
                     }
                 }
             }
         }
-        .onAppear { name = env.settings.displayName }
+        .onAppear {
+            name = env.settings.displayName
+            photoData = env.settings.avatarImageData
+        }
+        .onChange(of: photoItem) { _, item in
+            Task {
+                guard let data = try? await item?.loadTransferable(type: Data.self) else { return }
+                photoData = Self.downscaled(data)
+            }
+        }
+    }
+
+    /// Longest side 400 px as JPEG keeps the iCloud record small.
+    private static func downscaled(_ data: Data) -> Data? {
+        guard let image = UIImage(data: data) else { return nil }
+        let scale = min(1, 400 / max(image.size.width, image.size.height))
+        let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format)
+            .image { _ in image.draw(in: CGRect(origin: .zero, size: size)) }
+            .jpegData(compressionQuality: 0.8)
     }
 }
 
@@ -377,20 +422,7 @@ struct ExerciseLibraryView: View {
                         ForEach(MuscleFilter.allCases) { option in
                             let selected = option == filter
                             Button { filter = option } label: {
-                                Text(LocalizedStringKey(option.rawValue))
-                                    .font(.caption)
-                                    .foregroundStyle(.white.opacity(selected ? 1 : 0.7))
-                                    .padding(.horizontal, 14)
-                                    .frame(minHeight: 30)
-                                    .background {
-                                        if selected {
-                                            Capsule().fill(Theme.primaryGradient)
-                                        } else {
-                                            Capsule().fill(Color(red: 64 / 255, green: 87 / 255, blue: 235 / 255).opacity(0.2))
-                                        }
-                                    }
-                                    .frame(minHeight: Theme.minTap)
-                                    .contentShape(Rectangle())
+                                FilterPill(title: String(localized: String.LocalizationValue(option.rawValue)), isSelected: selected)
                             }
                             .buttonStyle(.plain)
                             .accessibilityAddTraits(selected ? .isSelected : [])
@@ -446,9 +478,11 @@ struct ExerciseLibraryView: View {
     }
 }
 
-/// Figma "Exercises / Card": photo, name, muscle and equipment, chevron.
+/// Figma "Exercises / Card": photo, name, muscle and equipment, then a chevron, or a
+/// check ring when the card is used to pick exercises.
 struct ExerciseRowCard: View {
     let exercise: Exercise
+    var isSelected: Bool?
 
     var body: some View {
         HStack(spacing: 24) {
@@ -458,7 +492,14 @@ struct ExerciseRowCard: View {
                 DividedText(parts: [exercise.primaryMuscle.displayName, exercise.equipment.displayName])
             }
             Spacer(minLength: 0)
-            Image("IconChevronCircle").accessibilityHidden(true)
+            if let isSelected {
+                Image(isSelected ? "Icon_ob_check" : "Icon_ob_uncheck")
+                    .resizable()
+                    .frame(width: 24, height: 24)
+                    .accessibilityHidden(true)
+            } else {
+                Image("IconChevronCircle").accessibilityHidden(true)
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -466,5 +507,6 @@ struct ExerciseRowCard: View {
         .glassCard(cornerRadius: 24)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(isSelected == true ? .isSelected : [])
     }
 }

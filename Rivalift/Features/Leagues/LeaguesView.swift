@@ -5,8 +5,7 @@ import SwiftUI
 struct LeaguesView: View {
     @Environment(AppEnvironment.self) private var env
     @State private var isScoringPresented = false
-    @State private var isCreatePresented = false
-    @State private var isJoinPresented = false
+    @State private var isCreating = false
 
     var body: some View {
         let store = env.leagues
@@ -25,7 +24,7 @@ struct LeaguesView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                Button { isCreatePresented = true } label: {
+                Button { isCreating = true } label: {
                     HStack(spacing: 6) {
                         Image("Icon_create").accessibilityHidden(true)
                         Text("Create Leagues")
@@ -33,7 +32,7 @@ struct LeaguesView: View {
                 }
                 .buttonStyle(.primary)
                 .accessibilityIdentifier("createGroupButton")
-                Button { isJoinPresented = true } label: {
+                NavigationLink { JoinGroupView() } label: {
                     HStack(spacing: 6) {
                         Image("Icon_join").accessibilityHidden(true)
                         Text("Join with code")
@@ -58,9 +57,10 @@ struct LeaguesView: View {
         .navigationDestination(for: String.self) { id in
             GroupLeaderboardView(groupID: id)
         }
+        .navigationDestination(isPresented: $isCreating) {
+            CreateGroupView(onFinish: { isCreating = false })
+        }
         .sheet(isPresented: $isScoringPresented) { ScoringExplainerView() }
-        .sheet(isPresented: $isCreatePresented) { CreateGroupView().environment(env) }
-        .sheet(isPresented: $isJoinPresented) { JoinGroupView().environment(env) }
     }
 
     /// Empty state (appendix A.9, Figma "Intro").
@@ -235,29 +235,31 @@ struct ScoringExplainerView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Group {
-                    Section {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    GlassCard {
                         Text("Up to \(config.maxScore) points per week. How much you lift doesn't matter, so beginners can win too.")
+                            .font(.subheadline)
                     }
-                    Section("Points") {
-                        LabeledContent("Each valid workout", value: "\(config.sessionPoints) pts")
-                        Text("At least 15 minutes and 6 working sets. One per day, up to \(config.maxSessionsPerWeek) per week.")
-                            .font(.footnote).foregroundStyle(.secondary)
-                        LabeledContent("Each personal record", value: "\(config.prPoints) pts")
-                        Text("Heaviest weight or estimated 1RM (the most you could lift for one rep, estimated from your sets). Up to \(config.maxPRsPerSession) per workout and \(config.maxPRsPerWeek) per week. Your first log of an exercise is a baseline, not a record.")
-                            .font(.footnote).foregroundStyle(.secondary)
-                        LabeledContent("Weekly target met", value: "\(config.targetBonus) pts")
-                        LabeledContent("Streak", value: "\(config.streakPointsPerWeek) pts / week")
-                        Text("For each previous week in a row you hit your target, up to \(config.maxStreakWeeks) weeks.")
-                            .font(.footnote).foregroundStyle(.secondary)
+                    GlassSection("Points") {
+                        points("Each valid workout", "\(config.sessionPoints) pts",
+                               detail: "At least 15 minutes and 6 working sets. One per day, up to \(config.maxSessionsPerWeek) per week.")
+                        GlassDivider()
+                        points("Each personal record", "\(config.prPoints) pts",
+                               detail: "Heaviest weight or estimated 1RM (the most you could lift for one rep, estimated from your sets). Up to \(config.maxPRsPerSession) per workout and \(config.maxPRsPerWeek) per week. Your first log of an exercise is a baseline, not a record.")
+                        GlassDivider()
+                        points("Weekly target met", "\(config.targetBonus) pts")
+                        GlassDivider()
+                        points("Streak", "\(config.streakPointsPerWeek) pts / week",
+                               detail: "For each previous week in a row you hit your target, up to \(config.maxStreakWeeks) weeks.")
                     }
-                    Section("Fair play") {
-                        Text("Jumps of more than 25% over your previous best are saved to your log but don't earn league points.")
-                        Text("Workouts backdated by more than 48 hours don't count.")
+                    GlassSection("Fair play") {
+                        Text("Jumps of more than 25% over your previous best are saved to your log but don't earn league points.").font(.subheadline)
+                        GlassDivider()
+                        Text("Workouts backdated by more than 48 hours don't count.").font(.subheadline)
                     }
                 }
-                .listRowBackground(Theme.listRow)
+                .padding()
             }
             .screenBackground()
             .navigationTitle("How scoring works")
@@ -266,5 +268,17 @@ struct ScoringExplainerView: View {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
         }
+    }
+
+    private func points(_ title: LocalizedStringKey, _ value: String, detail: LocalizedStringKey? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(title).font(.subheadline)
+                Spacer()
+                Text(value).font(.subheadline.weight(.semibold)).monospacedDigit()
+            }
+            if let detail { Text(detail).font(.footnote).foregroundStyle(.secondary) }
+        }
+        .accessibilityElement(children: .combine)
     }
 }

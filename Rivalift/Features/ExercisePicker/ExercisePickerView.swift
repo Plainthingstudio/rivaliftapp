@@ -20,29 +20,22 @@ struct ExercisePickerView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 8) {
                     filterChips
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                }
-                Group {
                     if query.isEmpty, muscles.isEmpty, equipment.isEmpty, !recent.isEmpty {
-                        Section("Recent") {
-                            ForEach(recent) { row($0) }
-                        }
+                        Text("Recent").padding(.horizontal, 4).padding(.top, 6)
+                        ForEach(recent) { row($0) }
                     }
-                    Section(query.isEmpty ? "All exercises" : "Results") {
-                        if results.isEmpty {
-                            Text("No exercises found").foregroundStyle(.secondary)
-                        }
-                        ForEach(results) { row($0) }
+                    Text(query.isEmpty ? "All exercises" : "Results").padding(.horizontal, 4).padding(.top, 6)
+                    if results.isEmpty {
+                        Text("No exercises found").font(.subheadline).foregroundStyle(.secondary).padding(.horizontal, 4)
                     }
+                    ForEach(results) { row($0) }
                 }
-                .listRowBackground(Theme.listRow)
+                .padding()
             }
             .screenBackground()
-            .listStyle(.insetGrouped)
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search exercises")
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
@@ -115,25 +108,12 @@ struct ExercisePickerView: View {
         return Button {
             toggle(exercise)
         } label: {
-            HStack(spacing: 12) {
-                ExerciseIcon(muscle: exercise.primaryMuscle, size: 36)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(exercise.name).foregroundStyle(.primary)
-                    Text(exercise.subtitle).font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(isSelected ? Theme.accent : Color.secondary)
-            }
-            .frame(minHeight: Theme.minTap)
-            .contentShape(Rectangle())
+            ExerciseRowCard(exercise: exercise, isSelected: allowsMultipleSelection ? isSelected : nil)
         }
         .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .swipeActions {
+        .contextMenu {
             if exercise.isCustom {
-                Button("Delete", role: .destructive) {
+                Button("Delete", systemImage: "trash", role: .destructive) {
                     env.exercises.deleteCustom(exercise)
                     reload()
                 }
@@ -180,15 +160,7 @@ struct ChipLabel: View {
     var systemImage: String?
 
     var body: some View {
-        HStack(spacing: 4) {
-            Text(title)
-            if let systemImage { Image(systemName: systemImage).font(.caption2.weight(.bold)) }
-        }
-        .font(.subheadline.weight(.medium))
-        .padding(.horizontal, 12)
-        .frame(minHeight: 36)
-        .foregroundStyle(isActive ? Color.white : Color.primary)
-        .background(isActive ? Theme.accent : Theme.card, in: Capsule())
+        FilterPill(title: title, isSelected: isActive, systemImage: systemImage)
     }
 }
 
@@ -207,44 +179,56 @@ struct CreateExerciseView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Group {
-                    TextField("Name", text: $name)
-                    Picker("Primary muscle", selection: $primary) {
-                        ForEach(MuscleGroup.allCases) { Text($0.displayName).tag($0) }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    GlassSection("Name") {
+                        TextField("Name", text: $name).glassField()
                     }
-                    NavigationLink {
-                        List(MuscleGroup.allCases.filter { $0 != primary }) { muscle in
-                            Button {
-                                if secondary.contains(muscle) { secondary.remove(muscle) } else { secondary.insert(muscle) }
-                            } label: {
-                                HStack {
-                                    Text(muscle.displayName).foregroundStyle(.primary)
-                                    Spacer()
-                                    if secondary.contains(muscle) { Image(systemName: "checkmark").foregroundStyle(Theme.accent) }
+                    GlassSection("Details", footer: Text("Custom exercises can't be used as league categories because they can't be matched between friends.")) {
+                        GlassRow(title: "Primary muscle") {
+                            Menu {
+                                Picker("Primary muscle", selection: $primary) {
+                                    ForEach(MuscleGroup.allCases) { Text($0.displayName).tag($0) }
                                 }
-                            }
-                            .listRowBackground(Theme.listRow)
+                            } label: { PillMenuLabel(text: primary.displayName) }
                         }
-                        .screenBackground()
-                        .navigationTitle("Secondary muscles")
-                    } label: {
-                        LabeledContent("Secondary muscles", value: secondary.isEmpty ? "None" : secondary.map(\.displayName).sorted().joined(separator: ", "))
-                    }
-                    Picker("Equipment", selection: $equipment) {
-                        ForEach(Equipment.allCases) { Text($0.displayName).tag($0) }
-                    }
-                    Picker("Type", selection: $type) {
-                        ForEach(ExerciseType.allCases) { Text($0.displayName).tag($0) }
-                    }
-                    Toggle("Compound movement", isOn: $isCompound)
-                    Section {
-                        Text("Custom exercises can't be used as league categories because they can't be matched between friends.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                        GlassDivider()
+                        NavigationLink {
+                            SecondaryMusclesView(primary: primary, selection: $secondary)
+                        } label: {
+                            GlassRow(title: "Secondary muscles") {
+                                Text(secondary.isEmpty ? String(localized: "None") : secondary.map(\.displayName).sorted().joined(separator: ", "))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                                Image("IconChevronCircle").accessibilityHidden(true)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        GlassDivider()
+                        GlassRow(title: "Equipment") {
+                            Menu {
+                                Picker("Equipment", selection: $equipment) {
+                                    ForEach(Equipment.allCases) { Text($0.displayName).tag($0) }
+                                }
+                            } label: { PillMenuLabel(text: equipment.displayName) }
+                        }
+                        GlassDivider()
+                        GlassRow(title: "Type") {
+                            Menu {
+                                Picker("Type", selection: $type) {
+                                    ForEach(ExerciseType.allCases) { Text($0.displayName).tag($0) }
+                                }
+                            } label: { PillMenuLabel(text: type.displayName) }
+                        }
+                        GlassDivider()
+                        GlassRow(title: "Compound movement") {
+                            Toggle("Compound movement", isOn: $isCompound).labelsHidden().tint(.green)
+                        }
                     }
                 }
-                .listRowBackground(Theme.listRow)
+                .padding()
             }
             .screenBackground()
             .navigationTitle("New exercise")
@@ -268,5 +252,33 @@ struct CreateExerciseView: View {
                 }
             }
         }
+    }
+}
+
+/// Secondary muscles for a custom exercise, as check rows in a glass card.
+private struct SecondaryMusclesView: View {
+    let primary: MuscleGroup
+    @Binding var selection: Set<MuscleGroup>
+
+    var body: some View {
+        let options = MuscleGroup.allCases.filter { $0 != primary }
+        ScrollView {
+            GlassCard {
+                ForEach(Array(options.enumerated()), id: \.element) { index, muscle in
+                    if index > 0 { GlassDivider() }
+                    GlassChoiceRow(isSelected: selection.contains(muscle), action: {
+                        if selection.contains(muscle) { selection.remove(muscle) } else { selection.insert(muscle) }
+                    }) {
+                        Text(muscle.displayName)
+                    } detail: {
+                        EmptyView()
+                    }
+                }
+            }
+            .padding()
+        }
+        .screenBackground()
+        .navigationTitle("Secondary muscles")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

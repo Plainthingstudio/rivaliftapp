@@ -228,8 +228,6 @@ private struct ScheduleStep: View {
     @Environment(AppEnvironment.self) private var env
     var next: () -> Void
 
-    private let weekdays: [(iso: Int, label: String)] = [(1, "M"), (2, "T"), (3, "W"), (4, "T"), (5, "F"), (6, "S"), (7, "S")]
-
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("How often do you want to train?").font(.title)
@@ -248,20 +246,11 @@ private struct ScheduleStep: View {
             Text("sessions per week").font(.callout).foregroundStyle(.secondary)
 
             Text("Which days work best?").font(.callout.weight(.medium)).padding(.top, 20)
-            Text("Optional. We'll plan around these days.").font(.callout).foregroundStyle(.secondary)
-            HStack(spacing: 6) {
-                ForEach(weekdays, id: \.iso) { day in
-                    let isOn = env.settings.trainingWeekdays.contains(day.iso)
-                    pill(day.label, selected: isOn) {
-                        var days = env.settings.trainingWeekdays
-                        if isOn { days.remove(day.iso) } else { days.insert(day.iso) }
-                        env.settings.trainingWeekdays = days
-                        env.saveSettings()
-                    }
-                    .accessibilityLabel(Calendar(identifier: .iso8601).weekdaySymbols[day.iso % 7])
-                }
-            }
-            .modifier(PillTrack())
+            Text("Optional. We'll remind you on these days.").font(.callout).foregroundStyle(.secondary)
+            WeekdayPicker(selection: Binding(
+                get: { env.settings.trainingWeekdays },
+                set: { env.settings.trainingWeekdays = $0; env.saveSettings() }
+            ))
             Spacer()
             Button("Continue", action: next)
                 .buttonStyle(.primary)
@@ -376,9 +365,8 @@ private struct PlanStep: View {
                     Text("Building your plan…").font(.title)
                 }
                 .frame(maxWidth: .infinity)
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 20) {
                     ForEach(Array(checks.enumerated()), id: \.offset) { index, text in
-                        if index > 0 { Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5) }
                         HStack(spacing: 8) {
                             Image(index < revealed ? "Icon_ob_done" : "Icon_ob_pending").accessibilityHidden(true)
                             Text(text).font(.callout).foregroundStyle(index < revealed ? .primary : .secondary)

@@ -77,6 +77,26 @@ final class AppEnvironment {
 
     func dataDidChange() {
         dataVersion &+= 1
+        refreshWorkoutReminders()
+    }
+
+    /// Reminders for the next two weeks (NOT-02). Runs on every data or settings change and
+    /// when the app becomes active, so a finished workout cancels today's reminder.
+    func refreshWorkoutReminders(now: Date = Date()) {
+        var dates: [Date] = []
+        if settings.onboardingDone && settings.notifyWorkoutReminder {
+            let calendar = WeekCalendar().calendar
+            let today = calendar.startOfDay(for: now)
+            let tomorrow = calendar.date(byAdding: .day, value: 1, to: today) ?? now
+            dates = ReminderPlanner.dates(
+                weekdays: settings.trainingWeekdays,
+                hour: settings.reminderHour,
+                trainedToday: !sessions.completedSessions(from: today, to: tomorrow).isEmpty,
+                now: now,
+                calendar: calendar
+            )
+        }
+        notifications.scheduleWorkoutReminders(at: dates)
     }
 
     func saveSettings() {

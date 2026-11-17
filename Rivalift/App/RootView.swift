@@ -15,6 +15,7 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 env.workout.checkStaleSession()
+                env.refreshWorkoutReminders()
                 Task { await env.sync.processQueue() }
             }
         }

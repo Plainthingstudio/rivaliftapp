@@ -67,3 +67,35 @@ struct TrainingStatsTests {
         #expect(TrainingStats.percentChange(current: 500, previous: 0) == nil)
     }
 }
+
+@Suite("ReminderPlanner")
+struct ReminderPlannerTests {
+    let calendar = WeekCalendar(timeZone: TimeZone(identifier: "Asia/Jakarta")!).calendar
+
+    /// Wednesday 2026-10-14 at `hour`:00 Jakarta time.
+    func wednesday(_ hour: Int) -> Date {
+        calendar.date(from: DateComponents(year: 2026, month: 10, day: 14, hour: hour))!
+    }
+
+    func days(_ dates: [Date]) -> [Int] { dates.map { calendar.component(.day, from: $0) } }
+
+    @Test func remindsOnTrainingDaysAtHour() {
+        // Mon, Wed, Fri at 18:00, from Wednesday morning, one week ahead.
+        let dates = ReminderPlanner.dates(weekdays: [1, 3, 5], hour: 18, trainedToday: false, now: wednesday(9), days: 7, calendar: calendar)
+        #expect(days(dates) == [14, 16, 19])
+        #expect(dates.allSatisfy { calendar.component(.hour, from: $0) == 18 })
+    }
+
+    @Test func skipsTodayWhenTrainedOrHourPassed() {
+        let trained = ReminderPlanner.dates(weekdays: [3, 5], hour: 18, trainedToday: true, now: wednesday(9), days: 7, calendar: calendar)
+        #expect(days(trained) == [16])
+        let late = ReminderPlanner.dates(weekdays: [3, 5], hour: 18, trainedToday: false, now: wednesday(19), days: 7, calendar: calendar)
+        #expect(days(late) == [16])
+    }
+
+    @Test func sundayIsSeven() {
+        let dates = ReminderPlanner.dates(weekdays: [7], hour: 8, trainedToday: false, now: wednesday(9), days: 7, calendar: calendar)
+        #expect(days(dates) == [18])
+        #expect(ReminderPlanner.dates(weekdays: [], hour: 8, trainedToday: false, now: wednesday(9), calendar: calendar).isEmpty)
+    }
+}

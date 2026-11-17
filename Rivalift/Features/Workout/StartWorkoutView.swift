@@ -57,9 +57,12 @@ struct StartWorkoutView: View {
                 Text(template.name).font(.title2)
                 DividedText(parts: recommendation.reason.components(separatedBy: " · "))
             }
-            VStack(alignment: .leading, spacing: 2) {
-                ForEach(template.orderedExercises.compactMap(\.exercise?.name), id: \.self) { name in
-                    Text("•  \(name)").font(.subheadline)
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(template.orderedExercises.compactMap(\.exercise), id: \.id) { exercise in
+                    HStack(spacing: 10) {
+                        ExercisePhoto(exercise: exercise, width: 40, height: 29)
+                        Text(exercise.name).font(.subheadline)
+                    }
                 }
             }
             HStack {

@@ -86,8 +86,8 @@ supabase/         migrations/, functions/ (M4+)
 - [x] M1 Logging: LOG-01…LOG-14, exercise picker, rest timer
 - [x] M2 History/records/progress: PROG-01…06, PRG-01…04, LIB-04…06
 - [~] M3 Onboarding/settings: AUTH-04 (name + initials avatar), AUTH-05 (6 steps + program
-      recommendation via `PlanRecommender`), start-workout chooser, Home metrics, SET-01…04 done;
-      photo avatar and workout-reminder scheduling (NOT-02) still to do
+      recommendation via `PlanRecommender`), start-workout chooser, Home metrics, SET-01…04,
+      photo avatar and workout reminders (NOT-02, `ReminderPlanner`) done; TestFlight build to do
 - [ ] M4 Backend and accounts (Supabase, AUTH-01…03, AUTH-06, SyncService)
 - [ ] M5 Groups and leagues (SOC-01…18; domain scorers + vectors already exist)
 - [ ] M6 Remote notifications and release (NOT-03…06, SET-05, SET-06 legal pages)

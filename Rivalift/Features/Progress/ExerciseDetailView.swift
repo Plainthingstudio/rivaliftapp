@@ -45,6 +45,14 @@ struct ExerciseDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
+                Image(ownPhoto)
+                    .resizable()
+                    .aspectRatio(3 / 2, contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+                    .dotTexture("DotGridWeek", alignment: .center, x: 14, y: -143.46)
+                    .glassCard(cornerRadius: Theme.cornerRadius)
+                    .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous).strokeBorder(.white.opacity(0.1)))
+                    .accessibilityHidden(true)
                 PillPicker(selection: $tab, options: DetailTab.allCases.map { ($0, LocalizedStringKey($0.rawValue)) })
                     .frame(maxWidth: .infinity)
                 switch tab {
@@ -64,6 +72,37 @@ struct ExerciseDetailView: View {
 
     @ViewBuilder
     private var summary: some View {
+        if let guide = env.exercises.guide(for: exercise) {
+            sectionTitle("How to do it")
+            card {
+                Text(guide.about).font(.subheadline).foregroundStyle(.secondary)
+                divider
+                ForEach(Array(guide.steps.enumerated()), id: \.offset) { index, step in
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Text("\(index + 1)")
+                            .font(.caption.weight(.semibold))
+                            .monospacedDigit()
+                            .frame(width: 24, height: 24)
+                            .background(Theme.heat.opacity(0.3), in: Circle())
+                            .overlay(Circle().strokeBorder(Theme.heat))
+                            .accessibilityHidden(true)
+                        Text(step).font(.subheadline)
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(String(localized: "Step \(index + 1): \(step)"))
+                }
+            }
+            sectionTitle("Tips")
+            card {
+                ForEach(guide.tips, id: \.self) { tip in
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Image(systemName: "lightbulb.fill").font(.caption).foregroundStyle(Theme.heat).accessibilityHidden(true)
+                        Text(tip).font(.subheadline)
+                    }
+                }
+            }
+        }
+
         sectionTitle("Exercise info")
         VStack(spacing: 8) {
             infoCard(photo: primaryPhoto, title: "Primary", value: exercise.primaryMuscle.displayName)
@@ -191,7 +230,6 @@ struct ExerciseDetailView: View {
                 .resizable()
                 .scaledToFill()
                 .frame(width: 96, height: 71)
-                .background(Color.black)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {

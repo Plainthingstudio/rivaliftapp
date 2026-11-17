@@ -193,33 +193,6 @@ struct EmptyStateView: View {
     }
 }
 
-/// Muscle-group icon used instead of per-exercise illustrations for the MVP (appendix A.4).
-struct ExerciseIcon: View {
-    var muscle: MuscleGroup
-    var size: CGFloat = 40
-
-    var symbol: String {
-        switch muscle {
-        case .chest: "figure.strengthtraining.traditional"
-        case .back, .traps: "figure.rower"
-        case .shoulders: "figure.arms.open"
-        case .biceps, .triceps, .forearms: "dumbbell.fill"
-        case .core: "figure.core.training"
-        case .quads, .hamstrings, .glutes, .calves: "figure.strengthtraining.functional"
-        case .fullBody: "figure.cross.training"
-        }
-    }
-
-    var body: some View {
-        Image(systemName: symbol)
-            .font(.system(size: size * 0.45))
-            .foregroundStyle(Theme.accent)
-            .frame(width: size, height: size)
-            .background(Theme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: size * 0.28, style: .continuous))
-            .accessibilityHidden(true)
-    }
-}
-
 enum DurationFormatter {
     /// "1:05:09" or "5:09".
     static func clock(_ seconds: Int) -> String {
@@ -373,18 +346,11 @@ struct RingIcon: View {
     }
 }
 
-/// Photo for an exercise: its own illustration from the design when there is one,
-/// otherwise one that shows the same muscle group.
+/// Photo for an exercise: every built-in exercise has its own (`Exercise_<key>`); custom
+/// exercises get one that shows the same muscle group.
 enum ExerciseArt {
-    private static let photos: Set<String> = [
-        "ab_wheel_rollout", "arnold_press", "assisted_pull_up", "back_extension", "band_curl",
-        "band_pull_apart", "barbell_back_squat", "barbell_bench_press", "barbell_curl", "barbell_hip_thrust",
-        "deadlift", "incline_dumbbell_press", "leg_press", "lying_leg_curl", "pull_up",
-        "romanian_deadlift", "seated_dumbbell_shoulder_press", "standing_calf_raise",
-    ]
-
     static func imageName(key: String?, muscle: MuscleGroup?) -> String {
-        if let key, photos.contains(key) { return "Exercise_\(key)" }
+        if let key, UIImage(named: "Exercise_\(key)") != nil { return "Exercise_\(key)" }
         let fallback: String = switch muscle {
         case .chest, .triceps, nil: "barbell_bench_press"
         case .back: "pull_up"
@@ -411,8 +377,7 @@ struct ExercisePhoto: View {
             .resizable()
             .scaledToFill()
             .frame(width: width, height: height)
-            .background(Color.black)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: height * 0.17, style: .continuous))
             .accessibilityHidden(true)
     }
 }
@@ -535,5 +500,44 @@ struct DividedText: View {
         .font(.caption.weight(.light))
         .foregroundStyle(.secondary)
         .lineLimit(1)
+    }
+}
+
+/// M T W T F S S toggles for training days (ISO weekdays, 1 = Monday), used in onboarding
+/// and Settings for workout reminders (NOT-02).
+struct WeekdayPicker: View {
+    @Binding var selection: Set<Int>
+
+    private let days: [(iso: Int, label: String)] = [(1, "M"), (2, "T"), (3, "W"), (4, "T"), (5, "F"), (6, "S"), (7, "S")]
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(days, id: \.iso) { day in
+                let isOn = selection.contains(day.iso)
+                Button {
+                    if isOn { selection.remove(day.iso) } else { selection.insert(day.iso) }
+                } label: {
+                    Text(day.label)
+                        .font(.callout)
+                        .frame(maxWidth: .infinity, minHeight: 37)
+                        .foregroundStyle(isOn ? Color.white : Color.white.opacity(0.6))
+                        .background {
+                            if isOn {
+                                Capsule().fill(Theme.primaryGradient)
+                            } else {
+                                Capsule().fill(Color.black.opacity(0.24).shadow(.inner(color: .white.opacity(0.25), radius: 1)))
+                            }
+                        }
+                        .frame(minHeight: Theme.minTap)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Calendar(identifier: .iso8601).weekdaySymbols[day.iso % 7])
+                .accessibilityAddTraits(isOn ? .isSelected : [])
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 4)
+        .background(Color.black.shadow(.inner(color: .white.opacity(0.2), radius: 7, y: 2)), in: Capsule())
     }
 }

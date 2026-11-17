@@ -31,7 +31,11 @@ struct TemplateDetailView: View {
                 Text("Exercises").padding(.horizontal, 4)
                 ForEach(Array(template.orderedExercises.enumerated()), id: \.element.id) { index, item in
                     if index > 0 { Rectangle().fill(.white.opacity(0.1)).frame(height: 0.5) }
-                    row(item)
+                    if let exercise = item.exercise {
+                        NavigationLink { ExerciseDetailView(exercise: exercise) } label: { row(item) }
+                            .buttonStyle(.plain)
+                            .accessibilityHint("Shows how to do this exercise")
+                    }
                 }
             }
             .padding()
@@ -73,7 +77,9 @@ struct TemplateDetailView: View {
                 }
             }
             Spacer(minLength: 0)
+            Image("IconChevronCircle").accessibilityHidden(true)
         }
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 

@@ -4,79 +4,83 @@ import UIKit
 /// Create a group (SOC-01): name and emoji, then the invite screen.
 struct CreateGroupView: View {
     @Environment(AppEnvironment.self) private var env
-    @Environment(\.dismiss) private var dismiss
+    /// Pops back to Leagues from the invite step (Leagues owns the push, so this survives
+    /// the list updating behind the form).
+    var onFinish: () -> Void
     @State private var name = ""
     @State private var emoji = "🏋️"
     @State private var created: LeagueGroup?
     @State private var draft = LeagueModeDraft()
     @FocusState private var nameFocused: Bool
+    /// Focus the name once; coming back from a category editor shouldn't reopen the keyboard.
+    @State private var didFocusName = false
 
     static let emojis = ["🏋️", "💪", "🔥", "🏆", "⚡️", "🦍", "🐺", "🥇", "🏢", "🎓", "🏃", "🧗"]
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Group {
-                    Section {
-                        HStack(spacing: 12) {
-                            GroupEmoji(emoji: emoji, size: 44)
-                            TextField("Group name", text: $name)
-                                .font(.title3)
-                                .focused($nameFocused)
-                                .submitLabel(.done)
-                                .accessibilityIdentifier("groupNameField")
-                        }
-                    } footer: {
-                        Text("\(name.trimmingCharacters(in: .whitespacesAndNewlines).count)/\(LeagueStore.nameRange.upperBound) · for example Office Lifters")
-                            .monospacedDigit()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                GlassSection(footer: Text("\(name.trimmingCharacters(in: .whitespacesAndNewlines).count)/\(LeagueStore.nameRange.upperBound) · for example Office Lifters").monospacedDigit()) {
+                    HStack(spacing: 12) {
+                        GroupEmoji(emoji: emoji, size: 44)
+                        TextField("Group name", text: $name)
+                            .font(.title3)
+                            .focused($nameFocused)
+                            .submitLabel(.done)
+                            .glassField()
+                            .accessibilityIdentifier("groupNameField")
                     }
-                    Section("Icon") {
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 10) {
-                            ForEach(Self.emojis, id: \.self) { option in
-                                Button {
-                                    emoji = option
-                                } label: {
-                                    Text(option)
-                                        .font(.title2)
-                                        .frame(maxWidth: .infinity, minHeight: Theme.minTap)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                                .fill(option == emoji ? Theme.accent.opacity(0.18) : .clear)
-                                        )
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityAddTraits(option == emoji ? .isSelected : [])
+                }
+                GlassSection("Icon") {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 10) {
+                        ForEach(Self.emojis, id: \.self) { option in
+                            let selected = option == emoji
+                            Button {
+                                emoji = option
+                            } label: {
+                                Text(option)
+                                    .font(.title2)
+                                    .frame(maxWidth: .infinity, minHeight: Theme.minTap)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                            .fill(selected ? Theme.heat.opacity(0.3) : .white.opacity(0.05))
+                                            .strokeBorder(selected ? Theme.heat : .clear)
+                                    )
                             }
+                            .buttonStyle(.plain)
+                            .accessibilityAddTraits(selected ? .isSelected : [])
                         }
-                        .padding(.vertical, 4)
-                    }
-                    LeagueModeSections(draft: $draft)
-                    Section {
-                        Text("You become the group's admin and can change the league later; changes start the following Monday.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
                     }
                 }
-                .listRowBackground(Theme.listRow)
+                LeagueModeSections(draft: $draft)
+                Text("You become the group's admin and can change the league later; changes start the following Monday.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 4)
             }
-            .screenBackground()
-            .navigationTitle("New group")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") {
-                        created = env.leagues.createGroup(name: name, emoji: emoji, mode: draft.mode)
-                    }
-                    .disabled(!LeagueStore.isValidName(name) || !draft.isValid)
-                    .accessibilityIdentifier("createGroupConfirm")
-                }
+            .padding()
+        }
+        .screenBackground()
+        .navigationTitle("New group")
+        .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .bottom) {
+            Button("Create group") {
+                created = env.leagues.createGroup(name: name, emoji: emoji, mode: draft.mode)
             }
-            .navigationDestination(item: $created) { group in
-                InviteView(group: group, onDone: { dismiss() })
-                    .navigationBarBackButtonHidden()
-            }
-            .onAppear { nameFocused = true }
+            .buttonStyle(.primary)
+            .disabled(!LeagueStore.isValidName(name) || !draft.isValid)
+            .accessibilityIdentifier("createGroupConfirm")
+            .padding()
+            .background(Theme.bottomFade)
+        }
+        .navigationDestination(item: $created) { group in
+            InviteView(group: group, onDone: onFinish)
+                .navigationBarBackButtonHidden()
+        }
+        .onAppear {
+            guard !didFocusName else { return }
+            didFocusName = true
+            nameFocused = true
         }
     }
 }
@@ -104,7 +108,11 @@ struct InviteView: View {
                     Text(String(character))
                         .font(.system(size: 30, weight: .bold, design: .monospaced))
                         .frame(width: 44, height: 56)
-                        .background(Theme.card, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(.white.opacity(0.1))
+                                .strokeBorder(.white.opacity(0.2))
+                        )
                 }
             }
             .accessibilityElement(children: .ignore)
@@ -148,41 +156,36 @@ struct JoinGroupView: View {
 
     var body: some View {
         let preview = env.leagues.preview(code: code)
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    Text("Enter the 6-character code a friend shared with you.")
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+        ScrollView {
+            VStack(spacing: 20) {
+                Text("Enter the 6-character code a friend shared with you.")
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
 
-                    codeBoxes
-                        .onTapGesture { focused = true }
+                codeBoxes
+                    .onTapGesture { focused = true }
 
-                    PasteButton(payloadType: String.self) { strings in
-                        if let text = strings.first { code = InviteCode.normalize(text) }
-                    }
-                    .labelStyle(.titleAndIcon)
-
-                    if code.count == InviteCode.length && preview == nil {
-                        Text("Code not found. Check the letters and try again.")
-                            .font(.subheadline)
-                            .foregroundStyle(.red)
-                    }
-
-                    if let preview {
-                        groupPreview(preview)
-                    }
+                PasteButton(payloadType: String.self) { strings in
+                    if let text = strings.first { code = InviteCode.normalize(text) }
                 }
-                .padding(24)
+                .labelStyle(.titleAndIcon)
+
+                if code.count == InviteCode.length && preview == nil {
+                    Text("Code not found. Check the letters and try again.")
+                        .font(.subheadline)
+                        .foregroundStyle(.red)
+                }
+
+                if let preview {
+                    groupPreview(preview)
+                }
             }
-            .screenBackground()
-            .navigationTitle("Join a group")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-            }
-            .onAppear { focused = true }
+            .padding(24)
         }
+        .screenBackground()
+        .navigationTitle("Join a group")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { focused = true }
     }
 
     /// Six boxes over a hidden text field, so typing, paste and autofill all work.
@@ -203,10 +206,10 @@ struct JoinGroupView: View {
                     Text(character)
                         .font(.system(size: 30, weight: .bold, design: .monospaced))
                         .frame(width: 44, height: 56)
-                        .background(Theme.card, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .stroke(focused && index == min(code.count, InviteCode.length - 1) ? Theme.accent : .clear, lineWidth: 2)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(.white.opacity(0.1))
+                                .strokeBorder(focused && index == min(code.count, InviteCode.length - 1) ? Theme.heat : .white.opacity(0.2), lineWidth: focused && index == min(code.count, InviteCode.length - 1) ? 2 : 1)
                         )
                 }
             }
