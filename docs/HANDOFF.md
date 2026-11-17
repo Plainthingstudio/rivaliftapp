@@ -14,11 +14,8 @@ Ringkasan supaya sesi Claude berikutnya bisa langsung lanjut. Spesifikasi produk
 
 ## Status kode
 
-Commit terakhir `5a1208a` (redesign dark glass, liga data contoh, 18 foto latihan).
-**Semua pekerjaan di bawah belum di-commit.** Run penuh terakhir: **67 unit + 8 UI test lulus.**
-
-**Langkah pertama sesi baru:** tanyakan ke Herdetya apakah boleh commit. Kalau ya, commit semuanya,
-lalu pindahkan issue Notion yang In Review ke Done dan isi kolom Commit (lihat bagian Notion).
+Semua pekerjaan di bawah sudah di-commit di `0f9e0b7` (di atas `5a1208a`), belum di-push.
+Run penuh terakhir: **67 unit + 8 UI test lulus.** Issue Notion terkait sudah Done.
 
 ### Yang dikerjakan sejak `5a1208a`
 
@@ -117,7 +114,7 @@ Workspace Plainthing Studio, teamspace "Rivalift App". Database **Issues**
 `collection://b005560f-90aa-4c71-8522-0bbcbd2476e8`. Aturan: setiap pekerjaan jadi issue,
 setiap langkah selesai jadi update; "In Review" = sudah dites tapi belum di-commit.
 
-Issue In Review yang menunggu commit (pindahkan ke Done + isi Commit):
+Issue yang selesai di `0f9e0b7` (sudah Done):
 
 | Issue | Page ID |
 |---|---|
@@ -131,8 +128,7 @@ Audit retensi + riset Mobbin: `3fbb3ea8-1081-818c-8f0b-edad2aa9eed2` (Done, beri
 
 ## Langkah berikutnya
 
-1. Commit (setelah Herdetya setuju), perbarui Notion.
-2. Ganti 2 foto latihan begitu gambar barunya ada.
-3. TestFlight: ikon app, Info.plist, app record, CloudKit production, archive + upload.
-4. Retensi sebelum M4: layar streak, kartu share.
-5. M4: proyek Supabase "rivalift" (organisasi "animos app"), login Apple + Google, sinkronisasi; lalu M5.
+1. Ganti 2 foto latihan begitu gambar barunya ada.
+2. TestFlight: ikon app, Info.plist, app record, CloudKit production, archive + upload.
+3. Retensi sebelum M4: layar streak, kartu share.
+4. M4: proyek Supabase "rivalift" (organisasi "animos app"), login Apple + Google, sinkronisasi; lalu M5.
