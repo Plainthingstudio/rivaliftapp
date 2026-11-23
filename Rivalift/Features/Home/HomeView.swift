@@ -4,6 +4,8 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppEnvironment.self) private var env
     @State private var progress: WeekProgress?
+    /// Personal streak with rest weeks (the league streak has none).
+    @State private var streak: PersonalStreak?
     @State private var quickTemplates: [WorkoutTemplate] = []
     @State private var recentRecords: [PersonalRecord] = []
     @State private var overview: AppEnvironment.TrainingOverview?
@@ -73,17 +75,22 @@ struct HomeView: View {
                 }
             }
             Spacer()
-            if let progress {
-                HStack(spacing: 4) {
-                    Image(systemName: "flame.fill").foregroundStyle(Theme.heat)
-                    Text("\(progress.streakWeeks)").font(.callout.weight(.medium)).monospacedDigit()
+            if let streak {
+                NavigationLink { StreakView() } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "flame.fill").foregroundStyle(Theme.heat)
+                        Text("\(streak.current)").font(.callout.weight(.medium)).monospacedDigit()
+                    }
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: Theme.minTap)
+                    .background(Theme.glassFill, in: Capsule())
+                    .overlay(Capsule().strokeBorder(Theme.border))
+                    .contentShape(Capsule())
                 }
-                .padding(.horizontal, 14)
-                .frame(minHeight: Theme.minTap)
-                .background(Theme.glassFill, in: Capsule())
-                .overlay(Capsule().strokeBorder(Theme.border))
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(progress.streakWeeks) week streak")
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(streak.current) week streak")
+                .accessibilityHint("Shows your streak and rest weeks")
+                .accessibilityIdentifier("streakButton")
             }
         }
         .padding(.top, 12)
@@ -204,6 +211,7 @@ struct HomeView: View {
 
     private func reload() {
         progress = env.weekProgress()
+        streak = env.streakOverview().streak
         quickTemplates = env.templates.recentlyUsed()
         if quickTemplates.isEmpty {
             let plan = env.templates.programs().first { $0.name == env.settings.planProgram }?.templates
@@ -222,22 +230,13 @@ struct HomeView: View {
     }
 }
 
-/// "This week": Monday–Sunday dots, sessions vs target, weekly streak.
+/// "This week": Monday–Sunday dots and sessions vs target.
 struct WeekCard: View {
     let progress: WeekProgress
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("This week")
-                Spacer()
-                HStack(spacing: 4) {
-                    Image(systemName: "flame.fill").foregroundStyle(Theme.heat)
-                    Text("\(progress.streakWeeks)").font(.callout.weight(.medium))
-                }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(progress.streakWeeks) week streak")
-            }
+            Text("This week")
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 0) {
                     ForEach(Array(progress.days.enumerated()), id: \.element) { index, day in

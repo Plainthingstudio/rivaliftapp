@@ -132,6 +132,41 @@ final class AppEnvironment {
 }
 
 extension AppEnvironment {
+    /// The personal streak with rest weeks and the weeks behind it (Streak screen, Home 🔥).
+    struct StreakOverview {
+        var streak: PersonalStreak
+        /// Week starts of `streak.history`, oldest first.
+        var weeks: [Date]
+        var thisWeek: Date
+        var sessionsThisWeek: Int
+        var target: Int
+    }
+
+    /// From the week of the first workout up to now. Each week is judged by the target in
+    /// effect that week. League points keep using `WeekCalendar.streak` (no rest weeks).
+    func streakOverview(now: Date = Date()) -> StreakOverview {
+        let calendar = WeekCalendar()
+        let thisWeek = calendar.weekStart(for: now)
+        var perWeek: [Date: Int] = [:]
+        for session in sessions.completedSessions() {
+            perWeek[calendar.weekStart(for: session.startedAt), default: 0] += 1
+        }
+        var weeks: [Date] = []
+        if var week = perWeek.keys.min() {
+            while week < thisWeek {
+                weeks.append(week)
+                guard let next = calendar.calendar.date(byAdding: .weekOfYear, value: 1, to: week) else { break }
+                week = next
+            }
+        }
+        let target = settings.effectiveWeeklyTarget(at: now)
+        let streak = PersonalStreak.make(
+            completedWeeks: weeks.map { (perWeek[$0] ?? 0) >= settings.effectiveWeeklyTarget(at: $0) },
+            thisWeekMet: (perWeek[thisWeek] ?? 0) >= target
+        )
+        return StreakOverview(streak: streak, weeks: weeks, thisWeek: thisWeek, sessionsThisWeek: perWeek[thisWeek] ?? 0, target: target)
+    }
+
     struct Recommendation {
         var template: WorkoutTemplate
         var reason: String

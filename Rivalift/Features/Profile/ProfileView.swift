@@ -53,7 +53,7 @@ struct ProfileView: View {
             StatStrip(items: [
                 ("\(sessions.count)", sessions.count == 1 ? "Workout" : "Workouts"),
                 (WeightFormatter.volume(kg: sessions.reduce(0) { $0 + $1.totalVolumeKg }, unit: env.unit), "Total Volume"),
-                ("\(longestStreak)", "Best streak"),
+                ("\(env.streakOverview().streak.best)", "Best streak"),
             ])
         }
         .padding(.horizontal, 24)
@@ -125,26 +125,6 @@ struct ProfileView: View {
 
     private var displayName: String {
         env.settings.displayName.isEmpty ? String(localized: "Lifter") : env.settings.displayName
-    }
-
-    private var longestStreak: Int {
-        let calendar = WeekCalendar()
-        let target = env.settings.weeklyTarget
-        var perWeek: [Date: Int] = [:]
-        for session in sessions { perWeek[calendar.weekStart(for: session.startedAt), default: 0] += 1 }
-        let weeks = perWeek.filter { $0.value >= target }.keys.sorted()
-        var best = 0, current = 0
-        var previous: Date?
-        for week in weeks {
-            if let previous, calendar.calendar.date(byAdding: .weekOfYear, value: 1, to: previous) == week {
-                current += 1
-            } else {
-                current = 1
-            }
-            best = max(best, current)
-            previous = week
-        }
-        return best
     }
 
     private func reload() {

@@ -101,6 +101,16 @@ final class RivaliftUITests: XCTestCase {
     }
 
     @MainActor
+    func testStreakScreenOpensFromHome() throws {
+        let app = launchAndOnboard()
+
+        let streak = app.buttons["streakButton"]
+        XCTAssertTrue(streak.waitForExistence(timeout: 5))
+        streak.tap()
+        XCTAssertTrue(labelled(app, "Rest weeks").waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testBrowseTemplateDetailThenStart() throws {
         let app = launchAndOnboard()
 
