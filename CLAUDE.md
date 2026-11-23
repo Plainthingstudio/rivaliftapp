@@ -44,11 +44,14 @@ Rivalift/
     Models/       SwiftData @Model types + versioned schema (RivaliftSchemaV1)
     Domain/       Pure logic, no SwiftData/UI: UnitConverter, OneRepMax, PRCalculator,
                   ProgressionEngine, LeagueScoreEstimator, StrengthScorer,
-                  CustomCategoryScorer, WeekCalendar, SetValidator
+                  CustomCategoryScorer, WeekCalendar, SetValidator, PlanWeek,
+                  PlanCatalog (goal-named plans), ExerciseSwap
     Data/         Repositories, SeedLoader, CSVExporter, SyncService (stub until M4)
     Services/     RestTimerService, NotificationService, Haptics
     DesignSystem/ Theme, shared components
-  Features/       One folder per screen group; stores live next to their views
+  Features/       One folder per screen group; stores live next to their views.
+                  Tabs: Home (My Plan / Custom), Library (plans, exercises, my
+                  workouts), Leagues, Profile (History lives here)
   Resources/      exercises.json, templates.json, Localizable.xcstrings, Assets
 RivaliftTests/    Domain tests, scoring vector tests, repository integration tests
 RivaliftUITests/  Main flows
@@ -77,6 +80,11 @@ supabase/         migrations/, functions/ (M4+)
   the SQL, and all must pass `scoring_vectors.json`.
 - User-facing strings are English and go through `LocalizedStringKey` /
   `String(localized:)` so they land in the String Catalog.
+- Design system (`Core/DesignSystem`): cards use `.glassCard()` (white 10% fill, thin
+  border), buttons `.buttonStyle(.primary)` (white pill) or `.secondary`, accent and gradients
+  are blue. Use the `Theme` tokens; don't add red cards, inner glows or dot textures.
+- Plans are named for the goal (`PlanCatalog`); the split is what is inside. Never show a
+  split name as the plan's title.
 - Accessibility: 44×44 pt tap targets, VoiceOver labels on icon buttons, Dynamic Type
   (the set table switches to a stacked layout at accessibility sizes).
 
@@ -87,7 +95,9 @@ supabase/         migrations/, functions/ (M4+)
 - [x] M2 History/records/progress: PROG-01…06, PRG-01…04, LIB-04…06
 - [~] M3 Onboarding/settings: AUTH-04 (name + initials avatar), AUTH-05 (6 steps + program
       recommendation via `PlanRecommender`), start-workout chooser, Home metrics, SET-01…04,
-      photo avatar and workout reminders (NOT-02, `ReminderPlanner`) done; TestFlight build to do
+      photo avatar and workout reminders (NOT-02, `ReminderPlanner`) done; TestFlight build to do.
+      Beginner rework (branch `claude/minimal-design-system`, see `docs/HANDOFF.md`): My Plan
+      Home, goal-named plans, exercise swap, Plan screen, Library tab, minimal design system
 - [ ] M4 Backend and accounts (Supabase, AUTH-01…03, AUTH-06, SyncService)
 - [ ] M5 Groups and leagues (SOC-01…18; domain scorers + vectors already exist)
 - [ ] M6 Remote notifications and release (NOT-03…06, SET-05, SET-06 legal pages)
