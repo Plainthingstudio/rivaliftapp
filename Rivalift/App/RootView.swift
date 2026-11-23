@@ -34,11 +34,11 @@ struct MainTabView: View {
                 .workoutMiniBar()
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(AppTab.home)
-            NavigationStack { HistoryView() }
+            NavigationStack { LibraryView() }
                 .tint(Theme.accent)
                 .workoutMiniBar()
-                .tabItem { Label("History", systemImage: "calendar") }
-                .tag(AppTab.history)
+                .tabItem { Label("Library", systemImage: "books.vertical.fill") }
+                .tag(AppTab.library)
             NavigationStack { LeaguesView() }
                 .tint(Theme.accent)
                 .workoutMiniBar()

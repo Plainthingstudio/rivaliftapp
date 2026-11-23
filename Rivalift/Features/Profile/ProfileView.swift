@@ -12,6 +12,7 @@ struct ProfileView: View {
             VStack(alignment: .leading, spacing: 14) {
                 ScreenTitle(title: "Profile")
                 header
+                historyCard
                 ProgressCard(sessions: sessions, unit: env.unit)
                 menu
             }
@@ -63,10 +64,6 @@ struct ProfileView: View {
 
     private var menu: some View {
         VStack(spacing: 12) {
-            menuRow("Icon_menu_templates", "Templates", "Save and reuse your workouts plan.") { TemplatesView() }
-            divider
-            menuRow("Icon_menu_exercises", "Exercises", "Browse and manage exercises.") { ExerciseLibraryView() }
-            divider
             menuRow("Icon_menu_settings", "Settings", "Account, preference and more.", iconSize: 16) { SettingsView() }
         }
         .padding(.horizontal, 20)
@@ -74,8 +71,40 @@ struct ProfileView: View {
         .glassCard()
     }
 
-    private var divider: some View {
-        Rectangle().fill(Theme.border).frame(height: 0.5)
+    /// History moved here from its own tab: this month's count and the latest workout.
+    private var historyCard: some View {
+        let calendar = Calendar.current
+        let thisMonth = sessions.filter { calendar.isDate($0.startedAt, equalTo: Date(), toGranularity: .month) }.count
+        return NavigationLink { HistoryView() } label: {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("History").font(.headline.weight(.medium))
+                        Text("^[\(thisMonth) workout](inflect: true) in \(Date().formatted(.dateTime.month(.wide)))")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    HStack(spacing: 2) {
+                        Text("See all")
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                }
+                if let last = sessions.first {
+                    RecentWorkoutRow(session: last, unit: env.unit)
+                } else {
+                    Text("Your finished workouts show up here.").font(.subheadline).foregroundStyle(.secondary)
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .glassCard()
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("profileHistory")
     }
 
     private func menuRow(_ icon: String, _ title: LocalizedStringKey, _ subtitle: LocalizedStringKey, iconSize: CGFloat = 18, @ViewBuilder destination: () -> some View) -> some View {
@@ -453,7 +482,7 @@ struct ExerciseLibraryView: View {
         }
         .screenBackground()
         .searchable(text: $query)
-        .navigationTitle("Exercises")
+        .navigationTitle("Library")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("Create", systemImage: "plus") { isCreatePresented = true }

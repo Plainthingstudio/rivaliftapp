@@ -84,6 +84,23 @@ final class RivaliftUITests: XCTestCase {
         XCTAssertTrue(app.buttons["changePlanButton"].waitForExistence(timeout: 5))
     }
 
+    @MainActor
+    func testLibraryStartsAnotherPlanAndProfileShowsHistory() throws {
+        let app = launchAndOnboard()
+
+        app.tabBars.buttons["Library"].tap()
+        let program = app.buttons["program-Full Body 3×"]
+        XCTAssertTrue(program.waitForExistence(timeout: 5))
+        program.tap()
+        app.buttons["startThisPlan"].tap()
+        XCTAssertTrue(app.buttons["startPlanWorkout"].waitForExistence(timeout: 5))
+        XCTAssertTrue(labelled(app, "Full Body A").exists)
+
+        app.tabBars.buttons["Profile"].tap()
+        XCTAssertTrue(app.buttons["profileHistory"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testBrowseTemplateDetailThenStart() throws {
         let app = launchAndOnboard()
 

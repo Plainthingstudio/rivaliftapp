@@ -3,6 +3,8 @@ import SwiftUI
 /// LIB-04 … LIB-06 / appendix A.8.
 struct TemplatesView: View {
     @Environment(AppEnvironment.self) private var env
+    /// False in Library, where plans have their own tab.
+    var showsPrograms = true
     @State private var segment: Segment = .mine
     @State private var mine: [WorkoutTemplate] = []
     @State private var programs: [TemplateRepository.Program] = []
@@ -14,8 +16,10 @@ struct TemplatesView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                PillPicker(selection: $segment, options: [(.mine, "My templates"), (.programs, "Programs")])
-                    .frame(maxWidth: .infinity)
+                if showsPrograms {
+                    PillPicker(selection: $segment, options: [(.mine, "My templates"), (.programs, "Programs")])
+                        .frame(maxWidth: .infinity)
+                }
                 switch segment {
                 case .mine:
                     if mine.isEmpty {
@@ -35,7 +39,7 @@ struct TemplatesView: View {
             .padding()
         }
         .screenBackground()
-        .navigationTitle("Templates")
+        .navigationTitle(showsPrograms ? "Templates" : "Library")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("New template", systemImage: "plus") {
@@ -55,7 +59,7 @@ struct TemplatesView: View {
         }
         .onAppear {
             reload()
-            if mine.isEmpty { segment = .programs }
+            if mine.isEmpty && showsPrograms { segment = .programs }
         }
     }
 

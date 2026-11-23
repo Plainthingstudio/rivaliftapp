@@ -3,7 +3,7 @@ import Observation
 import SwiftData
 
 enum AppTab: Hashable {
-    case home, history, leagues, profile
+    case home, library, leagues, profile
 }
 
 /// Dependency container shared through the SwiftUI environment. Views talk to stores and
@@ -421,6 +421,22 @@ extension AppEnvironment {
         case PlanRecommender.pushPullLegs: String(localized: "Push / Pull / Legs")
         case PlanRecommender.fiveByFive: String(localized: "Strength basics")
         default: program
+        }
+    }
+
+    /// What a built-in plan is for, in plain words (Library).
+    static func programInfo(for program: String) -> (summary: String, chips: [String]) {
+        switch program {
+        case PlanRecommender.fullBody:
+            (String(localized: "Your whole body every workout. The easiest way to start."), [String(localized: "3 days"), String(localized: "Beginner")])
+        case PlanRecommender.upperLower:
+            (String(localized: "Upper body one day, legs the next. More time for each muscle."), [String(localized: "4 days"), String(localized: "All levels")])
+        case PlanRecommender.pushPullLegs:
+            (String(localized: "Pushing, pulling and leg days for people who train often."), [String(localized: "3–6 days"), String(localized: "Experienced")])
+        case PlanRecommender.fiveByFive:
+            (String(localized: "Five sets of five on the big lifts. Get stronger, fast."), [String(localized: "3 days"), String(localized: "Beginner")])
+        default:
+            ("", [])
         }
     }
 

@@ -47,7 +47,7 @@ struct HistoryView: View {
         }
         .screenBackground()
         .navigationTitle("History")
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: reload)
         .onChange(of: env.dataVersion) { _, _ in reload() }
     }
@@ -56,7 +56,7 @@ struct HistoryView: View {
         VStack(alignment: .leading, spacing: 14) {
             PillPicker(selection: $mode, options: [(.list, "List"), (.calendar, "Calendar")])
                 .frame(maxWidth: .infinity)
-            ScreenTitle(title: "History", subtitle: weekRange)
+            Text(weekRange).font(.caption).foregroundStyle(.secondary).padding(.horizontal, 4)
         }
     }
 
