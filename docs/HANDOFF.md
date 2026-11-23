@@ -18,7 +18,7 @@ Ringkasan supaya sesi Claude berikutnya bisa langsung lanjut. Spesifikasi produk
 | `claude/determined-shannon-e2byic` | Pekerjaan sampai `54b5381` (My Plan Home pertama) | Belum di-push |
 | `claude/minimal-design-system` | Dibuat dari `54b5381`, berisi semua pekerjaan sesi 23 Nov | **Branch aktif.** Belum di-push, belum ada PR |
 
-Run penuh terakhir di `claude/minimal-design-system`: **81 unit + 10 UI test lulus.**
+Run penuh terakhir di `claude/minimal-design-system`: **86 unit + 11 UI test lulus.**
 
 Commit di branch aktif (lama → baru):
 
@@ -31,6 +31,8 @@ Commit di branch aktif (lama → baru):
 | `7828a3d` | Tab Library menggantikan History; History pindah ke Profile |
 | `4ef2191` | Plan bernama tujuan (PlanCatalog); split jadi isi plan |
 | `3839565` | Program sendiri untuk Get Lean ("Full body burn") |
+| `2aed1ea`, `b557b14` | Dokumen handoff |
+| `7562d66` | Layar Streak dengan rest week (RIV-58) |
 
 ## Latar belakang keputusan (sesi 23 Nov)
 
@@ -50,9 +52,10 @@ https://claude.ai/artifact/DbxV2uho7pZvLZdUJYMdo8 (Home penuh, rest day, menu mo
 Custom, Plan, Library, Profile, Swap sheet, dan Home untuk 1×–6× seminggu). Desain itu konsep,
 bukan spesifikasi piksel; app mengikuti alurnya dengan design system dari Figma.
 
-Keputusan streak (belum diimplementasikan): rest week **hanya melindungi streak pribadi**, poin liga
-tidak berubah. Usulan dari riset (belum dikonfirmasi Herdetya): rest week didapat otomatis,
-1 per 4 minggu streak, maksimal 2 disimpan.
+Keputusan streak (sudah diimplementasikan, `7562d66`): streak **mingguan**, bukan harian (hari
+istirahat bagian dari plan; Herdetya setuju tetap mingguan). Rest week **hanya melindungi streak
+pribadi**, poin liga tidak berubah. Rest week didapat otomatis: 1 per 4 minggu yang mencapai target,
+maksimal 2 disimpan.
 
 ## Yang sudah dikerjakan
 
@@ -168,24 +171,34 @@ Semua token terpusat, jadi seluruh app ikut berubah:
 - Baris Goal di layar Plan dihapus (plan = tujuan). `AppEnvironment.planTitle(for:)` dan
   `programInfo(for:)` sudah tidak ada.
 
+### 6. Layar Streak (`7562d66`)
+
+- `Core/Domain/PersonalStreak.swift` (tes `PersonalStreakTests`): minggu terhitung kalau target
+  mingguan tercapai; tiap 4 minggu terhitung memberi 1 rest week (maks 2); minggu terlewat memakai
+  1 rest week dan streak lanjut tanpa bertambah; tanpa rest week streak dan simpanan reset; minggu
+  berjalan tidak pernah memutus streak. `history` = met/rest/missed per minggu selesai.
+- `AppEnvironment.streakOverview()` menghitung dari minggu latihan pertama, target per minggu dari
+  `effectiveWeeklyTarget(at:)`. **Liga tetap memakai `WeekCalendar.streak`** (tanpa rest week) di
+  `leagueEstimate` dan `WorkoutStore.myLeagueEntry`.
+- 🔥 di header Home = streak pribadi, membuka `Features/Streak/StreakView.swift` (hero + best,
+  This week, Rest weeks dengan ikon perisai, 12 minggu terakhir, catatan liga). "Best streak" di
+  Profile memakai aturan yang sama. 🔥 di kartu This week (mode Custom) dihapus.
+
 ### Model data baru di `UserSettings` (langsung di V1, app belum pernah rilis)
 
 `planStartedAt: Date?`, `homeModeRaw`, `daySwapsRaw`, `planID`. Semua punya default (aturan CloudKit).
 
 ## Belum dikerjakan (urutan yang disarankan)
 
-1. **Layar Streak** dengan rest week (lihat keputusan di atas; konfirmasi aturan 1 per 4 minggu,
-   maksimal 2). `streakGoalWeeks` sekarang juga dipakai sebagai panjang plan; pisahkan kalau
-   streak butuh target sendiri.
-2. **Quick Workout**: mode ketiga di menu (My Plan / Quick / Custom), latihan singkat berdasar
+1. **Quick Workout**: mode ketiga di menu (My Plan / Quick / Custom), latihan singkat berdasar
    waktu (20/30/45 menit). Desain di artifact ("Quick Workout").
-3. **Font Figtree** dari Figma.
-4. **Push branch + PR** `claude/minimal-design-system`. Perlu izin Herdetya.
-5. Dari artifact yang sengaja dilewati: fase plan (Foundations/Build/Easy/Push, isi latihan belum
+2. **Font Figtree** dari Figma.
+3. **Push branch + PR** `claude/minimal-design-system`. Perlu izin Herdetya.
+4. Dari artifact yang sengaja dilewati: fase plan (Foundations/Build/Easy/Push, isi latihan belum
    berbeda per fase), baris Equipment dan "Rebuild plan" di layar Plan (belum ada data peralatan).
-6. Update `docs/PRD.md` untuk IA baru (tab Library, History di Profile, plan bernama tujuan,
+5. Update `docs/PRD.md` (termasuk streak + rest week) untuk IA baru (tab Library, History di Profile, plan bernama tujuan,
    tukar latihan) dan requirement ID-nya.
-7. Sisa lama:
+6. Sisa lama:
    - **2 foto latihan** perlu di-generate ulang: `bayesian_cable_curl` (membelakangi mesin kabel,
      satu tangan) dan `wrist_curl` (telapak ke atas). Pakai `scripts/exercise_photos/cutout.py`,
      detail di `docs/EXERCISE_PHOTOS.md`.
@@ -195,7 +208,7 @@ Semua token terpusat, jadi seluruh app ikut berubah:
      Production. Akun developer berbayar, team `RXV32BBK97`.
    - Label salah ketik di Figma "All Exercises" (hanya Figma).
    - Kartu share setelah latihan; setelah M5: badge, rekap bulanan, peta otot, widget.
-8. M4: proyek Supabase "rivalift" (organisasi "animos app"), login Apple + Google, sinkronisasi;
+7. M4: proyek Supabase "rivalift" (organisasi "animos app"), login Apple + Google, sinkronisasi;
    lalu M5.
 
 ## Perangkat
@@ -243,7 +256,7 @@ Workspace Plainthing Studio, teamspace "Rivalift App". Database **Issues**
 setiap langkah selesai jadi update.
 
 Sesi 23 Nov tercatat: **RIV-51 … RIV-57** (Done, kolom Commit terisi), **RIV-58 … RIV-62** (Todo:
-streak, Quick Workout, Figtree, PRD, push + PR), satu entri Updates 23 Nov, baris M3 di tabel
+streak, Quick Workout, Figtree, PRD, push + PR; RIV-58 streak sudah Done), dua entri Updates 23 Nov, baris M3 di tabel
 milestone hub, dan open decision soal aturan rest week.
 
 **Akses:** konektor Notion di Claude masuk ke workspace pribadi, bukan Plainthing Studio. Pakai
