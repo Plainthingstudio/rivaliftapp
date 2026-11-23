@@ -242,6 +242,13 @@ Workspace Plainthing Studio, teamspace "Rivalift App". Database **Issues**
 `collection://b005560f-90aa-4c71-8522-0bbcbd2476e8`. Aturan: setiap pekerjaan jadi issue,
 setiap langkah selesai jadi update.
 
-**Sesi 23 Nov tidak tercatat di Notion:** koneksi Notion di sesi ini mengarah ke workspace lain
-(database Issues tidak ditemukan). Sesi berikutnya sebaiknya membuat issue untuk commit
-`54b5381` sampai `3839565` di atas kalau koneksinya sudah benar.
+Sesi 23 Nov tercatat: **RIV-51 … RIV-57** (Done, kolom Commit terisi), **RIV-58 … RIV-62** (Todo:
+streak, Quick Workout, Figtree, PRD, push + PR), satu entri Updates 23 Nov, baris M3 di tabel
+milestone hub, dan open decision soal aturan rest week.
+
+**Akses:** konektor Notion di Claude masuk ke workspace pribadi, bukan Plainthing Studio. Pakai
+REST API dengan token integration "Rivalift Claude" (workspace Plainthing Studio, akses ke hub
+Rivalift) yang tersimpan di `~/.config/notion/rivalift_token` (izin 600, jangan ditampilkan).
+Header `Notion-Version: 2025-09-03`, parent halaman baru `{"type": "data_source_id", ...}`.
+Python bawaan python.org butuh `ssl.create_default_context(cafile="/etc/ssl/cert.pem")`.
+Di zsh jangan pakai `path` sebagai nama variabel (itu PATH).
