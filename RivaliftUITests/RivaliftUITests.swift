@@ -75,7 +75,12 @@ final class RivaliftUITests: XCTestCase {
         confirm.tap()
         XCTAssertFalse(confirm.waitForExistence(timeout: 2))
 
-        app.buttons["editPlanLink"].tap()
+        // The plan card opens the plan as a preview; Edit unlocks changes.
+        app.buttons["planCard"].tap()
+        let edit = app.buttons["editPlanButton"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["changePlanButton"].exists)
+        edit.tap()
         XCTAssertTrue(app.buttons["changePlanButton"].waitForExistence(timeout: 5))
     }
 

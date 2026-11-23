@@ -19,6 +19,7 @@ struct HomeView: View {
                 if showsPlan, let plan {
                     NavigationLink { PlanView() } label: { PlanCard(plan: plan) }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("planCard")
                     PlanWeekStrip(plan: plan)
                     PlanToday(plan: plan)
                 } else {

@@ -1,10 +1,12 @@
 import SwiftUI
 
-/// "Your plan": the plan's workouts and its settings (schedule, length, goal), and changing plan.
+/// "Your plan": the plan's workouts and settings. Opens as a preview; Edit unlocks the
+/// schedule, length and goal, and changing plan.
 struct PlanView: View {
     @Environment(AppEnvironment.self) private var env
     @State private var plan: AppEnvironment.PlanHome?
     @State private var isChoosingPlan = false
+    @State private var isEditing = false
 
     var body: some View {
         ScrollView {
@@ -19,17 +21,26 @@ struct PlanView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    settings
+                    if isEditing { settings } else { summary }
                 }
-                Button("Change plan") { isChoosingPlan = true }
-                    .buttonStyle(.secondary)
-                    .accessibilityIdentifier("changePlanButton")
+                if isEditing {
+                    Button("Change plan") { isChoosingPlan = true }
+                        .buttonStyle(.secondary)
+                        .accessibilityIdentifier("changePlanButton")
+                }
             }
             .padding()
         }
         .screenBackground()
         .navigationTitle("Your plan")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(isEditing ? "Done" : "Edit") { withAnimation(.snappy) { isEditing.toggle() } }
+                    .fontWeight(isEditing ? .semibold : .regular)
+                    .accessibilityIdentifier("editPlanButton")
+            }
+        }
         .sheet(isPresented: $isChoosingPlan) { ChoosePlanSheet() }
         .onAppear(perform: reload)
         .onChange(of: env.dataVersion) { _, _ in reload() }
@@ -84,6 +95,31 @@ struct PlanView: View {
         .contentShape(Rectangle())
     }
 
+    /// Read-only settings in preview mode.
+    private var summary: some View {
+        let symbols = Calendar(identifier: .iso8601).shortWeekdaySymbols
+        let days = env.planWeekdays().sorted().map { symbols[$0 % 7] }.joined(separator: ", ")
+        return GlassSection("Settings") {
+            summaryRow("Training days", days)
+            GlassDivider()
+            summaryRow("Plan length", String(localized: "\(planWeeks) weeks"))
+            GlassDivider()
+            summaryRow("Goal", AppEnvironment.planTitle(for: env.settings.goal))
+        }
+    }
+
+    private func summaryRow(_ title: LocalizedStringKey, _ value: String) -> some View {
+        HStack {
+            Text(title).font(.subheadline)
+            Spacer()
+            Text(value).font(.subheadline).foregroundStyle(.secondary)
+        }
+        .frame(minHeight: Theme.minTap)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var planWeeks: Int { env.settings.streakGoalWeeks > 0 ? env.settings.streakGoalWeeks : 8 }
+
     private var settings: some View {
         GlassSection("Settings") {
             VStack(alignment: .leading, spacing: 8) {
@@ -95,13 +131,13 @@ struct PlanView: View {
             }
             GlassDivider()
             Stepper(value: Binding(
-                get: { env.settings.streakGoalWeeks > 0 ? env.settings.streakGoalWeeks : 8 },
+                get: { planWeeks },
                 set: { env.settings.streakGoalWeeks = $0; env.saveSettings() }
             ), in: 4...16, step: 2) {
                 HStack {
                     Text("Plan length").font(.subheadline)
                     Spacer()
-                    Text("\(env.settings.streakGoalWeeks > 0 ? env.settings.streakGoalWeeks : 8) weeks")
+                    Text("\(planWeeks) weeks")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }

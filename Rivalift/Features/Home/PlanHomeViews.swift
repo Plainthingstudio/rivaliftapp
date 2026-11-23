@@ -180,13 +180,6 @@ struct PlanToday: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
             .glassCard()
-            NavigationLink { PlanView() } label: {
-                Label("Edit plan", systemImage: "slider.horizontal.3")
-                    .font(.subheadline.weight(.medium))
-                    .frame(maxWidth: .infinity, minHeight: Theme.minTap)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("editPlanLink")
         }
         .sheet(item: $swapping) { SwapSheet(item: $0) }
     }
