@@ -426,6 +426,7 @@ extension AppEnvironment {
         case PlanRecommender.upperLower: String(localized: "Upper / Lower")
         case PlanRecommender.pushPullLegs: String(localized: "Push / Pull / Legs")
         case PlanRecommender.fiveByFive: String(localized: "Strength basics")
+        case PlanRecommender.getLean: String(localized: "Full body burn")
         default: program
         }
     }

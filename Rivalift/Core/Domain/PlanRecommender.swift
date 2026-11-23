@@ -17,6 +17,8 @@ enum PlanRecommender {
     static let upperLower = "Upper/Lower 4×"
     static let pushPullLegs = "Push/Pull/Legs 6×"
     static let fiveByFive = "5×5"
+    /// Higher reps, short rests and a finisher; only offered through the Get Lean plan.
+    static let getLean = "Get Lean 3×"
 
     static func program(goal: TrainingGoal, level: ExperienceLevel, weeklyTarget: Int) -> String {
         if weeklyTarget >= 5, level != .beginner { return pushPullLegs }

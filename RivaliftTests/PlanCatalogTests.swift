@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import Rivalift
 
@@ -11,6 +12,8 @@ struct PlanCatalogTests {
         let shape = try #require(PlanCatalog.plan(id: "get-in-shape"))
         #expect(shape.program(daysPerWeek: 2) == PlanRecommender.fullBody)
         #expect(shape.program(daysPerWeek: 4) == PlanRecommender.upperLower)
+        let lean = try #require(PlanCatalog.plan(id: "get-lean"))
+        #expect(lean.program(daysPerWeek: 3) == PlanRecommender.getLean)
     }
 
     @Test func everyGoalHasAPlanAndIdsAreUnique() {
@@ -21,7 +24,7 @@ struct PlanCatalogTests {
     }
 
     @Test func everyProgramExistsInTheSeed() throws {
-        let names = [PlanRecommender.fullBody, PlanRecommender.upperLower, PlanRecommender.pushPullLegs, PlanRecommender.fiveByFive]
+        let names = Set(try SeedLoader.loadPrograms(bundle: Bundle(for: BundleToken.self).appBundle).map(\.program))
         for plan in PlanCatalog.all {
             for entry in plan.programs { #expect(names.contains(entry.program)) }
         }

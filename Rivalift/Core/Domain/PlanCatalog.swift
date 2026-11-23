@@ -47,9 +47,9 @@ enum PlanCatalog {
         ),
         TrainingPlan(
             id: "get-lean", title: String(localized: "Get Lean"),
-            summary: String(localized: "Burn fat and keep your muscle with steady, short sessions."),
+            summary: String(localized: "Burn fat and keep your muscle: lighter weights, more reps, short rests."),
             weeks: 8, days: 3...4, level: .beginner,
-            programs: [(1, PlanRecommender.fullBody), (4, PlanRecommender.upperLower)]
+            programs: [(1, PlanRecommender.getLean), (4, PlanRecommender.upperLower)]
         ),
         TrainingPlan(
             id: "build-muscle", title: String(localized: "Build Muscle"),
