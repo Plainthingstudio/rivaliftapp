@@ -78,7 +78,8 @@ struct HomeView: View {
                 }
                 .padding(.horizontal, 14)
                 .frame(minHeight: Theme.minTap)
-                .background(Theme.glassControl, in: Capsule())
+                .background(Theme.glassFill, in: Capsule())
+                .overlay(Capsule().strokeBorder(Theme.border))
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("\(progress.streakWeeks) week streak")
             }
@@ -144,53 +145,57 @@ struct HomeView: View {
     }
 
     private var records: some View {
-        let best = recentRecords.map(\.valueKg).max() ?? 1
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 6) {
-                Image("Icon_records_trophy").accessibilityHidden(true)
-                Text("Records this week")
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Personal bests this week").font(.headline.weight(.medium))
                 Spacer()
-                if recentRecords.contains(where: { $0.prType == .e1rm }) {
-                    OneRepMaxInfoButton(unit: env.unit).padding(.vertical, -12)
-                }
+                Text("\(recentRecords.count) new")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Theme.success)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(Theme.success.opacity(0.2), in: Capsule())
             }
+            .padding(.horizontal, 10)
+            .padding(.top, 10)
             ForEach(recentRecords) { record in
                 if let exercise = record.exercise {
-                    NavigationLink {
-                        ExerciseDetailView(exercise: exercise)
-                    } label: {
-                        recordRow(record, exercise: exercise, fraction: best > 0 ? record.valueKg / best : 1)
+                    NavigationLink { ExerciseDetailView(exercise: exercise) } label: {
+                        recordRow(record, exercise: exercise)
                     }
                     .buttonStyle(.plain)
                 }
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 22)
+        .padding(6)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture(opacity: 0.2 / 0.7, x: 14.5, y: -69.6)
         .glassCard()
     }
 
-    private func recordRow(_ record: PersonalRecord, exercise: Exercise, fraction: Double) -> some View {
-        HStack(alignment: .center, spacing: 14) {
-            ExercisePhoto(exercise: exercise, width: 52, height: 38)
-            VStack(alignment: .leading, spacing: 6) {
-                Text(exercise.name).font(.subheadline)
-                RecordBar(fraction: fraction)
+    private func recordRow(_ record: PersonalRecord, exercise: Exercise) -> some View {
+        let weight = WeightFormatter.string(kg: record.valueKg, unit: env.unit, includeUnit: true)
+        return HStack(spacing: 12) {
+            Image(systemName: "trophy.fill")
+                .font(.body)
+                .foregroundStyle(.white)
+                .frame(width: 44, height: 44)
+                .background(Theme.primaryGradient, in: Circle())
+                .overlay(Circle().strokeBorder(Theme.accent.opacity(0.5)))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(exercise.name).font(.callout.weight(.medium))
+                Text(record.achievedAt, format: .dateTime.weekday(.wide))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
-            HStack(spacing: 12) {
-                VStack(spacing: 0) {
-                    Text(record.prType.displayName)
-                        .font(.caption.weight(.light))
-                        .foregroundStyle(.secondary)
-                    Text(WeightFormatter.string(kg: record.valueKg, unit: env.unit, includeUnit: true))
-                        .font(.callout.weight(.medium))
-                        .monospacedDigit()
-                }
-                Image("IconChevronCircle").accessibilityHidden(true)
-            }
+            Spacer(minLength: 8)
+            Text(record.prType == .weight && record.reps > 0 ? "\(weight) × \(record.reps)" : String(localized: "\(weight) 1RM"))
+                .font(.subheadline.weight(.medium))
+                .monospacedDigit()
         }
+        .padding(16)
+        .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.border))
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
@@ -246,7 +251,6 @@ struct WeekCard: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 22)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture("DotGridWeek", y: -48.6)
         .glassCard()
     }
 
@@ -275,80 +279,54 @@ struct WeekCard: View {
     }
 }
 
-/// Training summary on Home: this week vs last week and weekly volume.
+/// Training summary on Home: this week vs last week, and total lifted per week.
 struct MetricsCard: View {
     let overview: AppEnvironment.TrainingOverview
     let unit: WeightUnit
 
     var body: some View {
         let now = overview.thisWeek, last = overview.lastWeek
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Your training")
+                Text("Your training").font(.headline.weight(.medium))
                 Spacer()
-                Text("^[\(overview.totalWorkouts) workout](inflect: true) all time")
-                    .font(.caption)
+                Text("vs last week").font(.subheadline).foregroundStyle(.secondary)
             }
-            HStack(alignment: .top, spacing: 0) {
-                metric(WeightFormatter.string(kg: now.volumeKg, unit: unit, includeUnit: true), "Total Volume", now.volumeKg, last.volumeKg, large: true)
-                Spacer(minLength: 8)
-                divided(metric("\(now.sets)", "Sets", Double(now.sets), Double(last.sets)))
-                Spacer(minLength: 8)
-                divided(metric(DurationFormatter.short(now.durationSec), "Time", Double(now.durationSec), Double(last.durationSec)))
-                Spacer(minLength: 8)
-                divided(metric("\(now.sessions)", "Workouts", Double(now.sessions), Double(last.sessions)))
+            HStack(alignment: .top, spacing: 8) {
+                metric("\(now.sessions)", "Workouts", last: "\(last.sessions)")
+                metric(DurationFormatter.short(now.durationSec), "Time trained", last: DurationFormatter.short(last.durationSec))
+                metric(volume(now.volumeKg), "Total lifted", last: volume(last.volumeKg))
             }
             VolumeBars(weeks: overview.weeklyVolume)
-            HStack(spacing: 0) {
-                let labelled = overview.weeklyVolume.enumerated().filter { $0.offset.isMultiple(of: 2) }
-                ForEach(labelled, id: \.offset) { item in
-                    if item.offset > 0 { Spacer(minLength: 0) }
-                    Text(item.element.weekStart, format: .dateTime.day().month(.abbreviated))
-                }
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .accessibilityHidden(true)
-            Text("This week vs last week · volume over the last 8 weeks")
-                .font(.caption.weight(.light))
+            Text("Total lifted per week, last 8 weeks")
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 32)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture(alignment: .center, x: -0.57, y: 0)
-        .redCard(cornerRadius: 50)
+        .glassCard()
     }
 
-    private func divided(_ content: some View) -> some View {
-        HStack(spacing: 12) {
-            Rectangle().fill(.white.opacity(0.2)).frame(width: 0.5, height: 40)
-            content
-        }
+    private func volume(_ kg: Double) -> String {
+        WeightFormatter.string(kg: kg, unit: unit, includeUnit: true)
     }
 
-    private func metric(_ value: String, _ label: LocalizedStringKey, _ current: Double, _ previous: Double, large: Bool = false) -> some View {
+    private func metric(_ value: String, _ label: LocalizedStringKey, last: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .font(large ? .title2 : .body)
+                .font(.title2.weight(.medium))
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            if let change = TrainingStats.percentChange(current: current, previous: previous), change != 0 {
-                Label("\(abs(change))%", systemImage: change > 0 ? "arrow.up.right" : "arrow.down.right")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(change > 0 ? Color.green : Color.secondary)
-                    .accessibilityLabel(change > 0 ? "Up \(change) percent from last week" : "Down \(-change) percent from last week")
-            }
+            Text(label).font(.caption)
+            Text("last week \(last)").font(.caption).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 }
 
-/// Weekly volume: weeks with volume as red bars, empty weeks as a thin light line.
+/// Weekly volume: weeks with volume as blue bars, empty weeks as a thin line.
 private struct VolumeBars: View {
     let weeks: [TrainingStats.WeekVolume]
 
@@ -358,23 +336,21 @@ private struct VolumeBars: View {
             ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
                 if week.volumeKg > 0 {
                     let height = max(4, 72 * week.volumeKg / peak)
-                    RoundedRectangle(cornerRadius: min(10, height / 2), style: .continuous)
-                        .fill(Theme.barGradient)
+                    RoundedRectangle(cornerRadius: min(6, height / 2), style: .continuous)
+                        .fill(Theme.primaryGradient)
                         .frame(height: height)
                 } else {
-                    RoundedRectangle(cornerRadius: 1, style: .continuous)
-                        .fill(Color(red: 242 / 255, green: 242 / 255, blue: 247 / 255))
-                        .frame(height: 2)
+                    Capsule().fill(.white.opacity(0.16)).frame(height: 2)
                 }
             }
         }
-        .frame(height: 90, alignment: .bottom)
+        .frame(height: 80, alignment: .bottom)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Weekly volume, last 8 weeks")
     }
 }
 
-/// League card on Home: your position in the first group, or an invite when there is none.
+/// League card on Home: the top of the first group's board, or an invite when there is none.
 struct LeagueTeaserCard: View {
     @Environment(AppEnvironment.self) private var env
 
@@ -382,66 +358,87 @@ struct LeagueTeaserCard: View {
         Button {
             env.selectedTab = .leagues
         } label: {
-            HStack(spacing: 14) {
+            Group {
                 if let group = env.leagues.groups.first {
-                    position(in: group)
+                    standings(group)
                 } else {
                     invite
                 }
-                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 22)
-            .dotTexture(opacity: 0.2 / 0.7, x: 14, y: -77.6)
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .glassCard()
         }
         .buttonStyle(.plain)
     }
 
-    /// Appendix A.2: group, rank, score, gap to the next rank and countdown.
+    /// Appendix A.2: group, rank, countdown, the top rows and the gap to the next rank.
     @ViewBuilder
-    private func position(in group: LeagueGroup) -> some View {
+    private func standings(_ group: LeagueGroup) -> some View {
         let board = env.leagueBoards(for: group).first
-        HStack(spacing: -14) {
-            ForEach(board?.rows.prefix(3) ?? []) { AvatarView(name: $0.name, size: 38) }
-        }
-        divider
-        VStack(alignment: .leading, spacing: 4) {
-            Text(group.name)
-            if let me = board?.me {
-                Text(me.rank.map { "#\($0) · \(me.valueText)" } ?? String(localized: "Not ranked yet"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if let gap = me.gapText {
-                    Text(gap).font(.caption).foregroundStyle(.secondary)
+        let rows = board?.rows ?? []
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Weekly league").font(.headline.weight(.medium))
+                    TimelineView(.periodic(from: .now, by: 60)) { context in
+                        Text("\(group.name) · \(CountdownText.ends(from: context.date, to: env.leagues.closesAt(group)))")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+                if let rank = board?.me?.rank {
+                    Text("#\(rank)").font(.title3.weight(.medium))
+                        + Text(" of \(rows.count)").font(.caption).foregroundStyle(.secondary)
                 }
             }
-            TimelineView(.periodic(from: .now, by: 60)) { context in
-                Text(CountdownText.ends(from: context.date, to: env.leagues.closesAt(group)))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
+            VStack(spacing: 4) {
+                ForEach(Self.topRows(rows)) { row in
+                    HStack(spacing: 10) {
+                        Text(row.rank.map(String.init) ?? "–")
+                            .font(.subheadline.weight(.medium))
+                            .monospacedDigit()
+                            .frame(width: 18)
+                        AvatarView(name: row.name, size: 28)
+                        Text(row.isMe ? String(localized: "You") : row.name).font(.subheadline)
+                        Spacer()
+                        Text(row.valueText).font(.subheadline).monospacedDigit().foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(row.isMe ? Theme.accent.opacity(0.16) : .clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+            }
+            if let gap = board?.me?.gapText {
+                Text(gap).font(.caption).foregroundStyle(.secondary)
             }
         }
     }
 
-    @ViewBuilder
-    private var invite: some View {
-        HStack(spacing: -14) {
-            ForEach(1...3, id: \.self) { Image("Avatar\($0)").resizable().frame(width: 38, height: 38) }
-        }
-        .accessibilityHidden(true)
-        divider
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Weekly league")
-            Text("Compete with friends on consistency, not just strength.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.leading)
-        }
+    /// Top three; if you are lower, the top two and you.
+    static func topRows(_ rows: [BoardRow]) -> [BoardRow] {
+        let top = Array(rows.prefix(3))
+        guard let me = rows.first(where: \.isMe), !top.contains(me) else { return top }
+        return Array(rows.prefix(2)) + [me]
     }
 
-    private var divider: some View {
-        Rectangle().fill(.white.opacity(0.1)).frame(width: 1, height: 40)
+    private var invite: some View {
+        HStack(spacing: 14) {
+            HStack(spacing: -14) {
+                ForEach(1...3, id: \.self) { Image("Avatar\($0)").resizable().frame(width: 38, height: 38) }
+            }
+            .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Weekly league").font(.headline.weight(.medium))
+                Text("Compete with friends on consistency, not just strength.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right").foregroundStyle(.secondary).accessibilityHidden(true)
+        }
     }
 }
 
@@ -473,7 +470,6 @@ private struct QuickStartCard: View {
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity, minHeight: 160, alignment: .leading)
         .background { art }
-        .dotTexture("DotGridWeek", x: 14.5, y: -59.6)
         .glassCard()
         .accessibilityElement(children: .combine)
     }
@@ -500,32 +496,6 @@ private struct QuickStartCard: View {
         let muscles = template.orderedExercises.compactMap(\.exercise?.primaryMuscle)
         let lower = muscles.filter { [.quads, .hamstrings, .glutes, .calves].contains($0) }.count
         return lower * 2 > muscles.count
-    }
-}
-
-/// Estimated value relative to the best record shown.
-private struct RecordBar: View {
-    let fraction: Double
-
-    var body: some View {
-        GeometryReader { geo in
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .fill(LinearGradient(stops: [
-                    .init(color: Color(white: 0.6), location: 0.333),
-                    .init(color: .white, location: 1),
-                ], startPoint: .leading, endPoint: .trailing))
-                .overlay { RoundedRectangle(cornerRadius: 3, style: .continuous).stroke(.white.opacity(0.1)) }
-                .frame(width: max(6, geo.size.width * min(fraction, 1)))
-        }
-        .frame(height: 6)
-        .padding(5)
-        .background(
-            Color.white.opacity(0.04)
-                .shadow(.inner(color: .white.opacity(0.1), radius: 27.5, x: 2, y: 4))
-                .shadow(.inner(color: .white.opacity(0.25), radius: 1))
-                .shadow(.inner(color: .white.opacity(0.1), radius: 8, x: 2, y: 4)),
-            in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-        )
     }
 }
 

@@ -77,8 +77,6 @@ struct LeaguesView: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 22)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .blueGlow()
-        .dotTexture(alignment: .center, y: -79.96)
         .glassCard()
     }
 
@@ -86,15 +84,14 @@ struct LeaguesView: View {
     private var howItWorks: some View {
         VStack(alignment: .leading, spacing: 12) {
             step("Icon_num1", "Train as usual", "Every valid workout (15+ min, 6+ working sets) earns points.")
-            Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+            Rectangle().fill(Theme.border).frame(height: 0.5)
             step("Icon_num2", "Beat yourself", "Personal records and hitting your weekly target add bonus points.")
-            Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+            Rectangle().fill(Theme.border).frame(height: 0.5)
             step("Icon_num3", "Win the week", "Fair for every level: consistency counts, not how much you lift.")
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture(alignment: .center, x: 14, y: -79.46)
         .glassCard()
     }
 
@@ -128,8 +125,7 @@ struct EstimateCard: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 32)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture(alignment: .center, x: -0.57, y: -1.5)
-        .redCard()
+        .glassCard()
         .accessibilityElement(children: .combine)
     }
 }

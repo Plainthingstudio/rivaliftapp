@@ -53,7 +53,7 @@ struct TemplateDetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 32)
-        .redCard(cornerRadius: 36)
+        .glassCard(cornerRadius: 36)
         .accessibilityElement(children: .combine)
     }
 
@@ -62,7 +62,6 @@ struct TemplateDetailView: View {
             ExercisePhoto(exercise: item.exercise)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
-                .dotTexture("DotGridWeek", alignment: .center, x: 14, y: -143.46)
                 .glassCard(cornerRadius: 24)
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 4) {

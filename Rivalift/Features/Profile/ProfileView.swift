@@ -58,8 +58,6 @@ struct ProfileView: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 22)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .blueGlow()
-        .dotTexture(alignment: .center, y: -79.96)
         .glassCard()
     }
 
@@ -73,12 +71,11 @@ struct ProfileView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .dotTexture(alignment: .center, x: 14, y: -79.96)
         .glassCard()
     }
 
     private var divider: some View {
-        Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+        Rectangle().fill(Theme.border).frame(height: 0.5)
     }
 
     private func menuRow(_ icon: String, _ title: LocalizedStringKey, _ subtitle: LocalizedStringKey, iconSize: CGFloat = 18, @ViewBuilder destination: () -> some View) -> some View {
@@ -200,8 +197,7 @@ struct ProgressCard: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 32)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture(alignment: .center, x: -0.57, y: -18)
-        .redCard(cornerRadius: 50)
+        .glassCard(cornerRadius: 50)
     }
 }
 
@@ -277,7 +273,7 @@ private struct WeeklyVolumeChart: View {
             shape.fill(Color(red: 9 / 255, green: 9 / 255, blue: 15 / 255).opacity(0.1)
                 .shadow(.inner(color: .white.opacity(0.25), radius: 2.5, y: 1)))
         } else {
-            shape.fill(Theme.barGradient)
+            shape.fill(Theme.primaryGradient)
                 .overlay(shape.strokeBorder(.white.opacity(0.25), lineWidth: 1))
         }
     }
@@ -503,7 +499,6 @@ struct ExerciseRowCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture("DotGridWeek", alignment: .center, x: 14, y: -143.46)
         .glassCard(cornerRadius: 24)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)

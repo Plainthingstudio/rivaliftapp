@@ -3,14 +3,14 @@ import SwiftUI
 // Form building blocks in the dark glass style (Figma "Settings"). Screens that used
 // `Form`/`List` sections build on these instead, so every sub-screen looks the same.
 
-/// Thin red rule between rows inside a glass card.
+/// Thin rule between rows inside a glass card.
 struct GlassDivider: View {
     var body: some View {
-        Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+        Rectangle().fill(Theme.border).frame(height: 0.5)
     }
 }
 
-/// Rows stacked in a glass card with the dot texture.
+/// Rows stacked in a glass card.
 struct GlassCard<Content: View>: View {
     @ViewBuilder var content: Content
 
@@ -19,7 +19,6 @@ struct GlassCard<Content: View>: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .dotTexture(alignment: .center, x: 14, y: -79.96)
             .glassCard()
     }
 }
@@ -47,7 +46,7 @@ struct GlassSection<Content: View>: View {
     }
 }
 
-/// Dashed ring icon, title and a trailing control.
+/// Ring icon, title and a trailing control.
 struct GlassRow<Trailing: View>: View {
     var icon: String?
     let title: LocalizedStringKey
@@ -73,8 +72,8 @@ struct GlassAddLabel: View {
             Image(systemName: "plus")
                 .font(.subheadline.weight(.semibold))
                 .frame(width: 28, height: 28)
-                .background(Theme.heat.opacity(0.3), in: Circle())
-                .overlay(Circle().strokeBorder(Theme.heat))
+                .background(Theme.accent.opacity(0.3), in: Circle())
+                .overlay(Circle().strokeBorder(Theme.accent))
                 .accessibilityHidden(true)
             Text(title).font(.subheadline)
             Spacer()
@@ -95,7 +94,7 @@ struct GlassRemoveButton: View {
         Button(action: action) {
             Image(systemName: "minus.circle.fill")
                 .font(.title3)
-                .foregroundStyle(Theme.heat)
+                .foregroundStyle(Theme.accent)
                 .frame(width: Theme.minTap, height: Theme.minTap)
                 .contentShape(Rectangle())
         }

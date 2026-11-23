@@ -26,7 +26,7 @@ struct ExerciseCardView: View {
                     .onChange(of: notesDraft) { _, value in store.setNotes(entry, value) }
             }
             columnHeader
-            Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+            Rectangle().fill(Theme.border).frame(height: 0.5)
             ForEach(entry.orderedSets) { set in
                 SetRowView(set: set, entry: entry)
                     .swipeToDelete { store.removeSet(set) }
@@ -73,8 +73,8 @@ struct ExerciseCardView: View {
                 .scaledToFill()
                 .frame(width: 42, height: 42)
                 .clipShape(Circle())
-                .overlay(Circle().fill(Theme.heat.opacity(0.2)))
-                .overlay(Circle().strokeBorder(Theme.heat, style: StrokeStyle(lineWidth: 2, dash: [4, 3])))
+                .overlay(Circle().fill(Theme.accent.opacity(0.2)))
+                .overlay(Circle().strokeBorder(Theme.accent))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 if let exercise = entry.exercise {

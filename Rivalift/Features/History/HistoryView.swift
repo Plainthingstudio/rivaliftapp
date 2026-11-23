@@ -138,8 +138,7 @@ struct HistoryWeekCard: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 32)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture(alignment: .center, x: -0.57, y: -21.5)
-        .redCard()
+        .glassCard()
     }
 }
 
@@ -218,7 +217,6 @@ struct RecentWorkoutRow: View {
             ExercisePhoto(exercise: first)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
-                .dotTexture("DotGridWeek", x: 14, y: -138.6)
                 .glassCard(cornerRadius: 24)
             VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -350,7 +348,7 @@ struct CalendarHistoryView: View {
                                         .font(.subheadline.weight(trained ? .bold : .regular))
                                         .frame(width: 36, height: 36)
                                         .foregroundStyle(.white)
-                                        .background(trained ? AnyShapeStyle(Theme.redFill) : AnyShapeStyle(Color.white.opacity(0.06)), in: Circle())
+                                        .background(trained ? AnyShapeStyle(Theme.primaryGradient) : AnyShapeStyle(Color.white.opacity(0.06)), in: Circle())
                                         .overlay(Circle().strokeBorder(selectedDay == key ? Color.white : .clear, lineWidth: 2))
                                 }
                                 .buttonStyle(.plain)

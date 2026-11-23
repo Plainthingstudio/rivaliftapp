@@ -50,7 +50,7 @@ struct MainTabView: View {
                 .tabItem { Label("Profile", systemImage: "person.crop.circle") }
                 .tag(AppTab.profile)
         }
-        .tint(Theme.heat) // selected tab; content below keeps the app accent
+        .tint(Theme.accent) // selected tab; content below keeps the app accent
         .fullScreenCover(isPresented: $workout.isPresented) {
             ActiveWorkoutView()
                 .environment(env)

@@ -12,40 +12,32 @@ struct CardBackground: ViewModifier {
 extension View {
     func card() -> some View { modifier(CardBackground()) }
 
-    /// Dark glass card; callers set their own padding.
+    /// Translucent card with a thin border (Figma "Card"); callers set their own padding.
     func glassCard(cornerRadius: CGFloat = 32) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        return background(Theme.glassFill, in: shape).clipShape(shape)
+        return background(Theme.glassFill, in: shape)
+            .clipShape(shape)
+            .overlay(shape.strokeBorder(Theme.border))
+            .shadow(color: .black.opacity(0.25), radius: 4, y: 4)
     }
 }
 
-/// Black screen background with the blurred blue-to-red glow from the Home design ("blur top").
+/// Black screen background with the blurred blue glow at the top (Figma "Home" > "Bg").
 struct ScreenBackground: View {
     var body: some View {
         Theme.background
             .overlay(alignment: .topLeading) {
                 GlowShape()
                     .fill(LinearGradient(
-                        colors: [Color(red: 0x22 / 255, green: 0x2C / 255, blue: 0x71 / 255), Color(red: 0xD2 / 255, green: 0x3F / 255, blue: 0x46 / 255)],
+                        colors: [Color(red: 0, green: 0x72 / 255, blue: 0xBE / 255), Color(red: 0x27 / 255, green: 0xA9 / 255, blue: 1)],
                         startPoint: UnitPoint(x: 488.367 / 976.734, y: 530.242 / 720.97),
                         endPoint: UnitPoint(x: 562.521 / 976.734, y: 394.879 / 720.97)
                     ))
-                    .opacity(0.5)
+                    .opacity(0.6)
                     .frame(width: 976.734, height: 720.97)
                     .blur(radius: 75)
                     .offset(x: -279.5, y: -342)
                     .allowsHitTesting(false)
-            }
-            .overlay {
-                // "red shine": a soft red light in the middle of every screen.
-                GeometryReader { geo in
-                    Circle()
-                        .fill(Color(red: 0xAC / 255, green: 0x2A / 255, blue: 0x2F / 255).opacity(0.5))
-                        .frame(width: 215, height: 215)
-                        .blur(radius: 100)
-                        .position(x: geo.size.width / 2, y: geo.size.height * 0.62)
-                }
-                .allowsHitTesting(false)
             }
             .ignoresSafeArea()
             .accessibilityHidden(true)
@@ -56,7 +48,7 @@ struct ScreenBackground: View {
         func path(in rect: CGRect) -> Path {
             var p = Path()
             p.move(to: .init(x: 295.005, y: 478.828))
-            p.addCurve(to: .init(x: 177.263, y: 570.97), control1: .init(x: 276.472, y: 502.656), control2: .init(x: 213.873, y: 554.396))
+            p.addCurve(to: .init(x: 175.263, y: 534.97), control1: .init(x: 276.472, y: 502.656), control2: .init(x: 211.873, y: 518.396))
             p.addLine(to: .init(x: 150, y: 150))
             p.addLine(to: .init(x: 826.734, y: 150))
             p.addLine(to: .init(x: 826.734, y: 478.828))
@@ -88,9 +80,9 @@ struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.medium))
-            .frame(maxWidth: .infinity, minHeight: 52)
-            .foregroundStyle(.white)
-            .background(Theme.primaryGradient, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .foregroundStyle(.black)
+            .background(.white, in: Capsule())
             .opacity(isEnabled ? 1 : 0.4)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
@@ -101,9 +93,10 @@ struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.medium))
-            .frame(maxWidth: .infinity, minHeight: 52)
+            .frame(maxWidth: .infinity, minHeight: 48)
             .foregroundStyle(.white)
-            .background(Theme.glassControl, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .background(Theme.glassControl, in: Capsule())
+            .overlay(Capsule().strokeBorder(.white.opacity(0.3)))
             .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
@@ -265,69 +258,7 @@ struct OneRepMaxExplainer: View {
     }
 }
 
-// MARK: - Glass kit (Figma "Screens", dark designs)
-
-extension Theme {
-    /// Red-to-black card with a red inner glow (Figma "MetricsCard", "Week Card", "Estimate").
-    static var redFill: some ShapeStyle {
-        LinearGradient(stops: [
-            .init(color: Theme.heat.opacity(0.8), location: 0.127),
-            .init(color: .black.opacity(0.8), location: 0.251),
-        ], startPoint: .top, endPoint: .bottom)
-        .shadow(.inner(color: Color(red: 229 / 255, green: 0, blue: 0).opacity(0.54), radius: 21.7, y: 10.9))
-        .shadow(.inner(color: Color(red: 230 / 255, green: 127 / 255, blue: 127 / 255).opacity(0.45), radius: 31.2, y: 25.3))
-        .shadow(.inner(color: Color(red: 249 / 255, green: 76 / 255, blue: 76 / 255).opacity(0.34), radius: 27, y: 100))
-        .shadow(.inner(color: .white.opacity(0.05), radius: 24.9, x: 1.8, y: 3.6))
-        .shadow(.inner(color: .white.opacity(0.25), radius: 2.3, y: 0.9))
-        .shadow(.inner(color: .white.opacity(0.26), radius: 7.2, x: 1.8, y: 3.6))
-    }
-
-    /// Bar fill for weekly charts: dark red at the top to bright red at the bottom.
-    static var barGradient: LinearGradient {
-        LinearGradient(stops: [
-            .init(color: Color(red: 117 / 255, green: 15 / 255, blue: 0), location: 0.0125),
-            .init(color: Theme.heat, location: 0.883),
-        ], startPoint: .top, endPoint: .bottom)
-    }
-}
-
-extension View {
-    /// Red gradient card; callers set their own padding.
-    func redCard(cornerRadius: CGFloat = 42) -> some View {
-        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        return background(Theme.redFill, in: shape)
-            .clipShape(shape)
-            .shadow(color: .black.opacity(0.25), radius: 15.8, y: 14.5)
-    }
-
-    /// Blurred blue light in the lower right of a glass card (rendered from the Figma blob).
-    /// Apply before `glassCard()` so it sits between the black fill and the content.
-    func blueGlow() -> some View {
-        background {
-            Image("BlueGlow")
-                .resizable()
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
-        }
-    }
-
-    /// Faint dot texture from the design, placed relative to the card and clipped by it.
-    /// Drawn in a Canvas so the offset image never enlarges the card's frame or tap target.
-    func dotTexture(_ name: String = "DotGrid", opacity: Double = 1, alignment: Alignment = .top, x: CGFloat = 0, y: CGFloat) -> some View {
-        overlay {
-            Canvas { context, size in
-                let image = context.resolve(Image(name))
-                let anchorY: CGFloat = alignment.vertical == .top ? image.size.height / 2 : size.height / 2
-                context.opacity = opacity
-                context.draw(image, at: CGPoint(x: size.width / 2 + x, y: anchorY + y))
-            }
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-        }
-    }
-}
-
-/// Icon in a dashed red ring (Profile menu, league steps, settings rows).
+/// Icon in a blue circle (Profile menu, league steps, settings rows).
 struct RingIcon: View {
     let image: String
     var iconSize: CGFloat = 18
@@ -340,8 +271,8 @@ struct RingIcon: View {
             .scaledToFit()
             .frame(width: iconSize, height: iconSize)
             .frame(width: 42, height: 42)
-            .background(Circle().fill(Theme.heat.opacity(strong ? 0.2 : 0.1).shadow(.inner(color: .white.opacity(0.1), radius: 12.5))))
-            .overlay(Circle().strokeBorder(Theme.heat.opacity(strong ? 1 : 0.5), style: StrokeStyle(lineWidth: 2, dash: [4, 3])))
+            .background(Circle().fill(strong ? AnyShapeStyle(Theme.primaryGradient) : AnyShapeStyle(Theme.accent.opacity(0.2))))
+            .overlay(Circle().strokeBorder(Theme.accent.opacity(0.5)))
             .accessibilityHidden(true)
     }
 }
@@ -460,12 +391,8 @@ struct PillPicker<Value: Hashable>: View {
             }
         }
         .padding(4)
-        .background(
-            Color.black
-                .shadow(.inner(color: .white.opacity(0.1), radius: 4.5, x: 2, y: 4))
-                .shadow(.inner(color: .white.opacity(0.2), radius: 7, y: 2)),
-            in: Capsule()
-        )
+        .background(Theme.glassFill, in: Capsule())
+        .overlay(Capsule().strokeBorder(Theme.border))
     }
 }
 
@@ -473,7 +400,7 @@ struct PillPicker<Value: Hashable>: View {
 struct InfoChip: View {
     let icon: String
     let text: String
-    var fill: Color = .white.opacity(0.12)
+    var fill: Color = .clear
 
     var body: some View {
         HStack(spacing: 4) {
@@ -483,6 +410,7 @@ struct InfoChip: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(fill, in: Capsule())
+        .overlay(Capsule().strokeBorder(Theme.border))
     }
 }
 
@@ -525,7 +453,7 @@ struct WeekdayPicker: View {
                             if isOn {
                                 Capsule().fill(Theme.primaryGradient)
                             } else {
-                                Capsule().fill(Color.black.opacity(0.24).shadow(.inner(color: .white.opacity(0.25), radius: 1)))
+                                Capsule().fill(.white.opacity(0.06))
                             }
                         }
                         .frame(minHeight: Theme.minTap)
@@ -538,6 +466,7 @@ struct WeekdayPicker: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 4)
-        .background(Color.black.shadow(.inner(color: .white.opacity(0.2), radius: 7, y: 2)), in: Capsule())
+        .background(Theme.glassFill, in: Capsule())
+        .overlay(Capsule().strokeBorder(Theme.border))
     }
 }

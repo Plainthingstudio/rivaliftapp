@@ -49,7 +49,6 @@ struct ExerciseDetailView: View {
                     .resizable()
                     .aspectRatio(3 / 2, contentMode: .fit)
                     .frame(maxWidth: .infinity)
-                    .dotTexture("DotGridWeek", alignment: .center, x: 14, y: -143.46)
                     .glassCard(cornerRadius: Theme.cornerRadius)
                     .overlay(RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous).strokeBorder(.white.opacity(0.1)))
                     .accessibilityHidden(true)
@@ -83,8 +82,8 @@ struct ExerciseDetailView: View {
                             .font(.caption.weight(.semibold))
                             .monospacedDigit()
                             .frame(width: 24, height: 24)
-                            .background(Theme.heat.opacity(0.3), in: Circle())
-                            .overlay(Circle().strokeBorder(Theme.heat))
+                            .background(Theme.accent.opacity(0.3), in: Circle())
+                            .overlay(Circle().strokeBorder(Theme.accent))
                             .accessibilityHidden(true)
                         Text(step).font(.subheadline)
                     }
@@ -96,7 +95,7 @@ struct ExerciseDetailView: View {
             card {
                 ForEach(guide.tips, id: \.self) { tip in
                     HStack(alignment: .firstTextBaseline, spacing: 12) {
-                        Image(systemName: "lightbulb.fill").font(.caption).foregroundStyle(Theme.heat).accessibilityHidden(true)
+                        Image(systemName: "lightbulb.fill").font(.caption).foregroundStyle(Theme.accent).accessibilityHidden(true)
                         Text(tip).font(.subheadline)
                     }
                 }
@@ -149,7 +148,7 @@ struct ExerciseDetailView: View {
                 Chart(points) { point in
                     LineMark(x: .value("Date", point.date), y: .value(metric.rawValue, UnitConverter.fromKg(point.valueKg, to: env.unit)))
                         .interpolationMethod(.monotone)
-                        .foregroundStyle(Theme.heat)
+                        .foregroundStyle(Theme.accent)
                     PointMark(x: .value("Date", point.date), y: .value(metric.rawValue, UnitConverter.fromKg(point.valueKg, to: env.unit)))
                         .foregroundStyle(.white)
                 }
@@ -240,7 +239,6 @@ struct ExerciseDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture("DotGridWeek", alignment: .center, x: 14, y: -143.46)
         .glassCard(cornerRadius: 24)
         .accessibilityElement(children: .combine)
     }
@@ -257,7 +255,7 @@ struct ExerciseDetailView: View {
     }
 
     private var divider: some View {
-        Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+        Rectangle().fill(Theme.border).frame(height: 0.5)
     }
 
     private func card(@ViewBuilder _ content: () -> some View) -> some View {
@@ -265,7 +263,6 @@ struct ExerciseDetailView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .dotTexture(alignment: .center, x: 14, y: -79.46)
             .glassCard()
     }
 

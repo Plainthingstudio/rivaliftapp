@@ -88,8 +88,6 @@ struct WorkoutSummaryView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .blueGlow()
-        .dotTexture(alignment: .center, y: -79.46)
         .glassCard()
     }
 
@@ -107,8 +105,7 @@ struct WorkoutSummaryView: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 32)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture(alignment: .center, x: -0.57, y: 7)
-        .redCard()
+        .glassCard()
     }
 
     private var recordsCard: some View {
@@ -134,7 +131,6 @@ struct WorkoutSummaryView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture(alignment: .center, x: 14, y: -79.46)
         .glassCard()
     }
 
@@ -185,7 +181,6 @@ struct WorkoutSummaryView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture(alignment: .center, x: 14, y: -79.46)
         .glassCard()
     }
 
@@ -225,7 +220,6 @@ struct RecordRow: View {
             ExercisePhoto(exercise: exercise)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
-                .dotTexture("DotGridWeek", alignment: .center, x: 14, y: -143.46)
                 .glassCard(cornerRadius: 24)
             VStack(alignment: .leading, spacing: 12) {
                 Text(record.exerciseName).font(.subheadline).lineLimit(2)

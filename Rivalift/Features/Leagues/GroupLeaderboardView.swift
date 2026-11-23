@@ -169,8 +169,8 @@ struct ModeBadge: View {
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background(Theme.heat.opacity(0.3), in: Capsule())
-            .overlay(Capsule().strokeBorder(Theme.heat))
+            .background(Theme.accent.opacity(0.3), in: Capsule())
+            .overlay(Capsule().strokeBorder(Theme.accent))
     }
 }
 
@@ -198,7 +198,7 @@ struct MyPositionCard: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .redCard(cornerRadius: Theme.cornerRadius)
+        .glassCard(cornerRadius: Theme.cornerRadius)
         .accessibilityElement(children: .combine)
     }
 }
@@ -221,7 +221,7 @@ struct StandingRow: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Theme.heat, in: Capsule())
+                            .background(Theme.accent, in: Capsule())
                     }
                 }
                 Text(row.detail).font(.caption).foregroundStyle(.secondary).lineLimit(2)
@@ -232,7 +232,7 @@ struct StandingRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(row.isMe ? Theme.heat.opacity(0.15) : .clear)
+        .background(row.isMe ? Theme.accent.opacity(0.15) : .clear)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
     }

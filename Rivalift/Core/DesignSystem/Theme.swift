@@ -13,34 +13,21 @@ enum Theme {
     static let silver = Color(red: 0.66, green: 0.69, blue: 0.73)
     static let bronze = Color(red: 0.78, green: 0.50, blue: 0.28)
 
-    /// Flame and trophy red from the Home redesign (Figma "Home Update").
+    /// Flame red for the streak icon.
     static let heat = Color(red: 194 / 255, green: 29 / 255, blue: 58 / 255)
 
-    /// Blue primary gradient (Figma "Button/Primary"), also used for trained days.
+    /// Blue primary gradient (Figma "Home" progress bars and icon circles), also used for trained days.
     static var primaryGradient: LinearGradient {
-        LinearGradient(stops: [
-            .init(color: Color(red: 64 / 255, green: 87 / 255, blue: 235 / 255), location: 0.025),
-            .init(color: Color(red: 26 / 255, green: 32 / 255, blue: 80 / 255), location: 0.79),
-            .init(color: Color(red: 20 / 255, green: 26 / 255, blue: 69 / 255), location: 1),
-        ], startPoint: .top, endPoint: .bottom)
+        LinearGradient(colors: [Color(red: 0, green: 0x72 / 255, blue: 0xBE / 255), Color(red: 0x27 / 255, green: 0xA9 / 255, blue: 1)], startPoint: .top, endPoint: .bottom)
     }
 
-    /// Black card lit by soft inner rim shadows (dark glass cards on Home).
-    static var glassFill: some ShapeStyle {
-        Color.black
-            .shadow(.inner(color: Color(white: 0.16).opacity(0.5), radius: 24, y: 12))
-            .shadow(.inner(color: Color(white: 0.22).opacity(0.2), radius: 34.5, y: 28))
-            .shadow(.inner(color: Color(red: 21 / 255, green: 0, blue: 158 / 255).opacity(0.12), radius: 27.5, x: 2, y: 4))
-            .shadow(.inner(color: .white.opacity(0.1), radius: 4.5, x: 2, y: 4))
-            .shadow(.inner(color: .white.opacity(0.2), radius: 7, y: 2))
-    }
+    /// Card fill (Figma "bg-card-primary") and thin border ("border-primary").
+    static let glassFill = Color.white.opacity(0.1)
+    static let border = Color.white.opacity(0.16)
+    static let success = Color(red: 0x17 / 255, green: 0xB2 / 255, blue: 0x6A / 255)
 
-    /// Translucent fill for secondary buttons, chips and inputs on dark glass screens.
-    static var glassControl: some ShapeStyle {
-        Color.white.opacity(0.08)
-            .shadow(.inner(color: .white.opacity(0.1), radius: 4.5, x: 2, y: 4))
-            .shadow(.inner(color: .white.opacity(0.2), radius: 7, y: 2))
-    }
+    /// Fill for secondary buttons, chips and inputs (Figma "Start Training" button).
+    static let glassControl = Color(white: 0x29 / 255)
 
     /// Fade behind floating bottom buttons so scrolled content dims under them.
     static var bottomFade: LinearGradient {

@@ -174,8 +174,7 @@ struct WorkoutHeaderView: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 32)
         .frame(maxWidth: .infinity)
-        .dotTexture(alignment: .center, x: -0.57, y: 22.5)
-        .redCard()
+        .glassCard()
         .contentShape(Rectangle())
         .accessibilityHint("Double tap to rename the workout")
     }

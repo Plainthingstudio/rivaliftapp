@@ -29,8 +29,6 @@ struct PlanCard: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 22)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .blueGlow()
-        .dotTexture(alignment: .center, y: -79.96)
         .glassCard()
         .accessibilityElement(children: .combine)
     }

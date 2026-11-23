@@ -88,8 +88,6 @@ struct StartWorkoutView: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 22)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .blueGlow()
-        .dotTexture(alignment: .center, y: -79.96)
         .glassCard()
         Button {
             env.workout.requestStart(.template(template.id))
@@ -127,12 +125,11 @@ struct StartWorkoutView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .dotTexture(alignment: .center, x: 14, y: -79.96)
         .glassCard()
     }
 
     private var divider: some View {
-        Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+        Rectangle().fill(Theme.border).frame(height: 0.5)
     }
 
     private func choiceRow(_ icon: String, _ title: String, _ subtitle: String) -> some View {

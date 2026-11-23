@@ -122,7 +122,6 @@ struct TemplateRowCard: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture("DotGridWeek", alignment: .center, x: 14, y: -143.46)
         .glassCard(cornerRadius: 24)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)

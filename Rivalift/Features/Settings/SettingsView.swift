@@ -200,7 +200,6 @@ struct SettingsView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .dotTexture(alignment: .center, x: 14, y: -79.46)
         .glassCard()
     }
 

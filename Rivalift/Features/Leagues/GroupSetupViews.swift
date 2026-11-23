@@ -43,8 +43,8 @@ struct CreateGroupView: View {
                                     .frame(maxWidth: .infinity, minHeight: Theme.minTap)
                                     .background(
                                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                            .fill(selected ? Theme.heat.opacity(0.3) : .white.opacity(0.05))
-                                            .strokeBorder(selected ? Theme.heat : .clear)
+                                            .fill(selected ? Theme.accent.opacity(0.3) : .white.opacity(0.05))
+                                            .strokeBorder(selected ? Theme.accent : .clear)
                                     )
                             }
                             .buttonStyle(.plain)
@@ -209,7 +209,7 @@ struct JoinGroupView: View {
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .fill(.white.opacity(0.1))
-                                .strokeBorder(focused && index == min(code.count, InviteCode.length - 1) ? Theme.heat : .white.opacity(0.2), lineWidth: focused && index == min(code.count, InviteCode.length - 1) ? 2 : 1)
+                                .strokeBorder(focused && index == min(code.count, InviteCode.length - 1) ? Theme.accent : .white.opacity(0.2), lineWidth: focused && index == min(code.count, InviteCode.length - 1) ? 2 : 1)
                         )
                 }
             }

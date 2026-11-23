@@ -88,14 +88,13 @@ struct OnboardingView: View {
             }
             VStack(alignment: .leading, spacing: 12) {
                 feature("Icon_ob_n1", "Log sets in seconds", "Previous weights and rest timer built in.")
-                Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+                Rectangle().fill(Theme.border).frame(height: 0.5)
                 feature("Icon_ob_n2", "See yourself get stronger", "Records and your estimated one-rep max (1RM) tracked automatically.")
-                Rectangle().fill(Theme.heat.opacity(0.3)).frame(height: 0.5)
+                Rectangle().fill(Theme.border).frame(height: 0.5)
                 feature("Icon_ob_n3", "Compete every week", "Leagues reward showing up, not just lifting heavy.")
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .dotTexture(alignment: .center, x: 14, y: -79.46)
             .glassCard()
             Spacer()
             Button("Get Started") { setStep(1) }
@@ -375,7 +374,6 @@ private struct PlanStep: View {
                 }
                 .padding(20)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .dotTexture(alignment: .center, x: 14, y: -79.96)
                 .glassCard()
                 .padding(.top, 8)
                 Spacer()
@@ -416,8 +414,7 @@ private struct PlanStep: View {
                     .padding(.horizontal, 24)
                     .padding(.vertical, 32)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .dotTexture(alignment: .center, x: -0.57, y: 5)
-                    .redCard()
+                    .glassCard()
                     ForEach(program.templates) { template in
                         TemplateRowCard(template: template)
                     }
@@ -493,7 +490,6 @@ struct BigChoice: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 18)
             .frame(maxWidth: .infinity, minHeight: 64)
-            .dotTexture("DotGridWeek", alignment: .center, x: 14, y: -143.46)
             .glassCard(cornerRadius: 24)
             .overlay {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -528,8 +524,8 @@ private struct HeroRing: View {
             .resizable()
             .frame(width: 36, height: 36)
             .frame(width: 80, height: 80)
-            .background(Circle().fill(Theme.heat.opacity(0.2).shadow(.inner(color: .white.opacity(0.1), radius: 24))))
-            .overlay(Circle().strokeBorder(Theme.heat, style: StrokeStyle(lineWidth: 3.8, dash: [6, 4])))
+            .background(Circle().fill(Theme.accent.opacity(0.2).shadow(.inner(color: .white.opacity(0.1), radius: 24))))
+            .overlay(Circle().strokeBorder(Theme.accent))
             .accessibilityHidden(true)
     }
 }

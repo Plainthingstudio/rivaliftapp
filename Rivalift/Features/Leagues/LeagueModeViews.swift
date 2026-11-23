@@ -241,7 +241,7 @@ struct LeagueModeSections: View {
                         HStack {
                             CategoryLabel(category: preset)
                             Spacer(minLength: 4)
-                            Image(systemName: "plus.circle.fill").font(.title3).foregroundStyle(Theme.heat)
+                            Image(systemName: "plus.circle.fill").font(.title3).foregroundStyle(Theme.accent)
                         }
                         .contentShape(Rectangle())
                     }
@@ -612,7 +612,7 @@ struct LeagueModeExplainer: View {
 
     private func bullet(_ text: LocalizedStringKey) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
-            Circle().fill(Theme.heat).frame(width: 6, height: 6).accessibilityHidden(true)
+            Circle().fill(Theme.accent).frame(width: 6, height: 6).accessibilityHidden(true)
             Text(text).font(.subheadline)
         }
     }
