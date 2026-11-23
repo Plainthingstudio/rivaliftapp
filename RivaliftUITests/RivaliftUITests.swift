@@ -111,6 +111,22 @@ final class RivaliftUITests: XCTestCase {
     }
 
     @MainActor
+    func testQuickWorkoutFromModeMenu() throws {
+        let app = launchAndOnboard()
+
+        let menu = app.buttons["homeModeMenu"]
+        XCTAssertTrue(menu.waitForExistence(timeout: 5))
+        menu.tap()
+        // The menu item's label includes its subtitle.
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Quick Workout")).firstMatch.tap()
+        let start = app.buttons["startQuickWorkout"]
+        XCTAssertTrue(start.waitForExistence(timeout: 5))
+        app.buttons["shuffleQuickWorkout"].tap()
+        start.tap()
+        XCTAssertTrue(app.buttons["finishWorkoutButton"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
     func testBrowseTemplateDetailThenStart() throws {
         let app = launchAndOnboard()
 

@@ -164,7 +164,7 @@ struct FilterPill: View {
             if isSelected {
                 Capsule().fill(Theme.primaryGradient)
             } else {
-                Capsule().fill(Color(red: 64 / 255, green: 87 / 255, blue: 235 / 255).opacity(0.2))
+                Capsule().fill(Theme.glassFill).overlay(Capsule().strokeBorder(Theme.border))
             }
         }
         .frame(minHeight: Theme.minTap)

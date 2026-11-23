@@ -125,6 +125,25 @@ final class SessionRepository {
         return (session, skipped)
     }
 
+    /// A session with no template (Quick Workout): exercises with their sets and target reps
+    /// (0 = no rep target, e.g. a plank).
+    func start(name: String, items: [(exercise: Exercise, sets: Int, reps: Int)]) -> WorkoutSession {
+        let session = WorkoutSession(name: name)
+        context.insert(session)
+        for (order, item) in items.enumerated() {
+            let entry = SessionExercise(order: order, exercise: item.exercise, restSec: item.exercise.defaultRestSec, targetReps: item.reps > 0 ? item.reps : nil)
+            entry.session = session
+            context.insert(entry)
+            for index in 0..<max(item.sets, 1) {
+                let set = SetEntry(order: index)
+                set.sessionExercise = entry
+                context.insert(set)
+            }
+        }
+        save()
+        return session
+    }
+
     /// "Repeat last session": same exercises and set structure as the latest completed session.
     func repeatLast() -> WorkoutSession? {
         guard let last = completedSessions().first else { return nil }

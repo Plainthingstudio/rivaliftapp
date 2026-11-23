@@ -167,6 +167,24 @@ extension AppEnvironment {
         return StreakOverview(streak: streak, weeks: weeks, thisWeek: thisWeek, sessionsThisWeek: perWeek[thisWeek] ?? 0, target: target)
     }
 
+    /// Quick Workout for today. Lifts the built-in programs use most come first, so a beginner
+    /// gets squats, presses and rows before niche moves.
+    func quickWorkout(kit: QuickWorkout.Kit, minutes: Int, focus: QuickWorkout.Focus, shuffle: Int) -> [(item: QuickWorkout.Item, exercise: Exercise)] {
+        var uses: [UUID: Int] = [:]
+        for template in templates.builtInTemplates() {
+            for item in template.orderedExercises { if let id = item.exercise?.id { uses[id, default: 0] += 1 } }
+        }
+        let all = exercises.activeExercises()
+            .filter { !QuickWorkout.advancedKeys.contains($0.key) }
+            .sorted { (uses[$0.id] ?? 0, $1.name) > (uses[$1.id] ?? 0, $0.name) }
+        let options = all.map {
+            QuickWorkout.Option(id: $0.id, primary: $0.primaryMuscle, equipment: $0.equipment, isCompound: $0.isCompound, isDuration: $0.type == .duration)
+        }
+        let byID = Dictionary(uniqueKeysWithValues: all.map { ($0.id, $0) })
+        return QuickWorkout.build(kit: kit, minutes: minutes, focus: focus, from: options, shuffle: shuffle)
+            .compactMap { item in byID[item.id].map { (item, $0) } }
+    }
+
     struct Recommendation {
         var template: WorkoutTemplate
         var reason: String

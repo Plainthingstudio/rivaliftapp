@@ -34,6 +34,8 @@ final class WorkoutStore {
         case repeatLast
         /// Empty session prefilled with exercises picked before starting.
         case exercises([UUID])
+        /// Quick Workout: exercises with sets and reps, no template (the plan does not move).
+        case quick([QuickWorkout.Item])
     }
 
     enum CompletionOutcome: Equatable {
@@ -150,6 +152,9 @@ final class WorkoutStore {
                 sessions.addExercise(exercise, to: session)
             }
             self.session = session
+        case .quick(let items):
+            let planned = items.compactMap { item in exercises.exercise(id: item.id).map { (exercise: $0, sets: item.sets, reps: item.reps) } }
+            session = sessions.start(name: String(localized: "Quick Workout"), items: planned)
         }
         isPresented = true
         isStartScreenPresented = false

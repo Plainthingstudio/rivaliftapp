@@ -10,6 +10,7 @@ struct HomeView: View {
     @State private var recentRecords: [PersonalRecord] = []
     @State private var overview: AppEnvironment.TrainingOverview?
     @State private var plan: AppEnvironment.PlanHome?
+    @State private var isQuickPresented = false
 
     /// My Plan needs a plan; without one (onboarding skipped) Home is always Custom.
     private var showsPlan: Bool { plan != nil && env.settings.homeMode == .plan }
@@ -44,6 +45,9 @@ struct HomeView: View {
         .navigationDestination(isPresented: Bindable(env.workout).isStartScreenPresented) {
             StartWorkoutView()
         }
+        .navigationDestination(isPresented: $isQuickPresented) {
+            QuickWorkoutView()
+        }
         .onAppear(perform: reload)
         .onChange(of: env.dataVersion) { _, _ in reload() }
     }
@@ -60,6 +64,11 @@ struct HomeView: View {
                         Picker("Home mode", selection: homeMode) {
                             Label("My Plan", systemImage: "sparkles").tag(HomeMode.plan)
                             Label("Custom", systemImage: "square.and.pencil").tag(HomeMode.custom)
+                        }
+                        Divider()
+                        Button { isQuickPresented = true } label: {
+                            Label("Quick Workout", systemImage: "bolt.fill")
+                            Text("One workout for today. Your plan stays as it is.")
                         }
                     } label: {
                         HStack(spacing: 6) {
