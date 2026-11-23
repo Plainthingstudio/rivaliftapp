@@ -17,7 +17,8 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 14) {
                 header
                 if showsPlan, let plan {
-                    PlanCard(plan: plan)
+                    NavigationLink { PlanView() } label: { PlanCard(plan: plan) }
+                        .buttonStyle(.plain)
                     PlanWeekStrip(plan: plan)
                     PlanToday(plan: plan)
                 } else {

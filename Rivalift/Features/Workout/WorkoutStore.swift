@@ -29,7 +29,8 @@ struct WorkoutSummary: Identifiable {
 final class WorkoutStore {
     enum StartRequest: Equatable {
         case empty
-        case template(UUID)
+        /// `swaps`: template exercise ID → exercise ID to use instead, today only.
+        case template(UUID, swaps: [UUID: UUID] = [:])
         case repeatLast
         /// Empty session prefilled with exercises picked before starting.
         case exercises([UUID])
@@ -134,9 +135,9 @@ final class WorkoutStore {
         switch request {
         case .empty:
             session = sessions.startEmpty(name: defaultName())
-        case .template(let id):
+        case .template(let id, let swaps):
             guard let template = templates.template(id: id) else { return }
-            let result = sessions.start(from: template)
+            let result = sessions.start(from: template, swaps: swaps.compactMapValues(exercises.exercise(id:)))
             session = result.session
             if !result.skipped.isEmpty {
                 notice = String(localized: "Skipped archived exercises: \(result.skipped.joined(separator: ", "))")

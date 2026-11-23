@@ -140,6 +140,7 @@ struct PlanWeekStrip: View {
 struct PlanToday: View {
     @Environment(AppEnvironment.self) private var env
     let plan: AppEnvironment.PlanHome
+    @State private var swapping: TemplateExercise?
 
     var body: some View {
         switch plan.week.today.state {
@@ -170,34 +171,53 @@ struct PlanToday: View {
             .padding(.horizontal, 8)
             VStack(spacing: 0) {
                 ForEach(Array(workout.orderedExercises.enumerated()), id: \.element.id) { index, item in
-                    if index > 0 { Rectangle().fill(.white.opacity(0.08)).frame(height: 0.5) }
-                    if let exercise = item.exercise {
-                        NavigationLink { ExerciseDetailView(exercise: exercise) } label: {
-                            exerciseRow(exercise, prescription: env.prescription(for: item))
-                        }
-                        .buttonStyle(.plain)
+                    if index > 0 { Rectangle().fill(Theme.border).frame(height: 0.5) }
+                    if let exercise = env.planExercise(for: item) {
+                        exerciseRow(item, exercise: exercise)
                     }
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
             .glassCard()
+            NavigationLink { PlanView() } label: {
+                Label("Edit plan", systemImage: "slider.horizontal.3")
+                    .font(.subheadline.weight(.medium))
+                    .frame(maxWidth: .infinity, minHeight: Theme.minTap)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("editPlanLink")
         }
+        .sheet(item: $swapping) { SwapSheet(item: $0) }
     }
 
-    private func exerciseRow(_ exercise: Exercise, prescription: String) -> some View {
-        HStack(spacing: 12) {
-            ExercisePhoto(exercise: exercise, width: 56, height: 42)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(exercise.name).font(.subheadline)
-                Text(prescription).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+    private func exerciseRow(_ item: TemplateExercise, exercise: Exercise) -> some View {
+        HStack(spacing: 4) {
+            NavigationLink { ExerciseDetailView(exercise: exercise) } label: {
+                HStack(spacing: 12) {
+                    ExercisePhoto(exercise: exercise, width: 56, height: 42)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(exercise.name).font(.subheadline)
+                        Text(env.prescription(for: item)).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
+                .accessibilityElement(children: .combine)
             }
-            Spacer(minLength: 0)
-            Image("IconChevronCircle").accessibilityHidden(true)
+            .buttonStyle(.plain)
+            Button { swapping = item } label: {
+                Image(systemName: "arrow.left.arrow.right")
+                    .font(.subheadline)
+                    .frame(width: Theme.minTap, height: Theme.minTap)
+                    .background(Theme.glassFill, in: Circle())
+                    .overlay(Circle().strokeBorder(Theme.border))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Swap \(exercise.name)")
+            .accessibilityIdentifier("swapExercise")
         }
-        .padding(.vertical, 10)
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
     }
 
     private func status(icon: String, title: LocalizedStringKey, text: LocalizedStringKey) -> some View {
@@ -270,7 +290,7 @@ struct PlanStartButton: View {
                 Button("Resume workout") { env.workout.isPresented = true }
                     .buttonStyle(.primary)
             } else if plan.week.today.state == .today, let workout = plan.workout(plan.week.today.workoutID) {
-                Button { env.workout.requestStart(.template(workout.id)) } label: {
+                Button { env.workout.requestStart(.template(workout.id, swaps: env.todaySwaps())) } label: {
                     HStack(spacing: 6) {
                         Image("IconPlay").accessibilityHidden(true)
                         Text("Start today's workout")
@@ -279,7 +299,7 @@ struct PlanStartButton: View {
                 .buttonStyle(.primary)
                 .accessibilityIdentifier("startPlanWorkout")
             } else if let workout = plan.workout(plan.week.nextWorkoutID) {
-                Button("Train anyway · \(workout.name)") { env.workout.requestStart(.template(workout.id)) }
+                Button("Train anyway · \(workout.name)") { env.workout.requestStart(.template(workout.id, swaps: env.todaySwaps())) }
                     .buttonStyle(.secondary)
                     .accessibilityIdentifier("startPlanWorkout")
             }

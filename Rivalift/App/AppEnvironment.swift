@@ -368,9 +368,7 @@ extension AppEnvironment {
             settingsRepository.save()
         }
         let start = settings.planStartedAt ?? now
-        let weekdays = settings.trainingWeekdays.isEmpty
-            ? PlanWeek.defaultWeekdays(count: settings.effectiveWeeklyTarget(at: now))
-            : settings.trainingWeekdays
+        let weekdays = planWeekdays(now: now)
         let weekStart = calendar.weekStart(for: now)
         let thisWeek = planSessions.filter { $0.startedAt >= weekStart }
         let week = PlanWeek.make(
@@ -399,6 +397,13 @@ extension AppEnvironment {
         )
     }
 
+    /// Training days picked in onboarding or on the Plan screen, else spread over the week for the target.
+    func planWeekdays(now: Date = Date()) -> Set<Int> {
+        settings.trainingWeekdays.isEmpty
+            ? PlanWeek.defaultWeekdays(count: settings.effectiveWeeklyTarget(at: now))
+            : settings.trainingWeekdays
+    }
+
     /// Beginner-friendly plan names: the goal, not the split.
     static func planTitle(for goal: TrainingGoal) -> String {
         switch goal {
@@ -423,7 +428,7 @@ extension AppEnvironment {
     func prescription(for item: TemplateExercise) -> String {
         var parts = [String(localized: "\(item.setCount) sets")]
         if item.targetReps > 0 { parts.append(String(localized: "\(item.targetReps) reps")) }
-        if let exercise = item.exercise, exercise.type == .weightReps,
+        if let exercise = planExercise(for: item), exercise.type == .weightReps,
            let suggestion = ProgressionEngine.suggest(
                recentSessions: sessions.recentSamples(for: exercise, excluding: nil),
                targetReps: item.targetReps,
@@ -433,6 +438,47 @@ extension AppEnvironment {
             parts.append(WeightFormatter.string(kg: suggestion.weightKg, unit: unit, includeUnit: true))
         }
         return parts.joined(separator: " · ")
+    }
+
+    // MARK: Swaps (the ⇄ sheet)
+
+    /// Today's "just today" swaps: template exercise ID → exercise ID.
+    func todaySwaps(now: Date = Date()) -> [UUID: UUID] {
+        ExerciseSwap.DaySwaps(raw: settings.daySwapsRaw).active(on: WeekCalendar().localDateString(for: now))
+    }
+
+    /// What a plan row does today: the swap if there is one, else the plan's exercise.
+    func planExercise(for item: TemplateExercise) -> Exercise? {
+        todaySwaps()[item.id].flatMap(exercises.exercise(id:)) ?? item.exercise
+    }
+
+    /// Up to four exercises for the same muscle that are not already in this workout.
+    func swapCandidates(for item: TemplateExercise) -> [Exercise] {
+        guard let current = planExercise(for: item) else { return [] }
+        let inWorkout = Set((item.template?.orderedExercises ?? []).compactMap { planExercise(for: $0)?.id })
+        let all = exercises.activeExercises()
+        func option(_ e: Exercise) -> ExerciseSwap.Option {
+            .init(id: e.id, primary: e.primaryMuscle, secondary: e.secondaryMuscles, isCompound: e.isCompound)
+        }
+        let ids = ExerciseSwap.candidates(for: option(current), from: all.map(option), excluding: inWorkout)
+        return ids.compactMap { id in all.first { $0.id == id } }
+    }
+
+    /// "Always in my plan" changes the plan's workout; "Just today" only today's.
+    // ponytail: edits the built-in template in place (the seeder never overwrites it); copy the program per user if plans get shared
+    func swap(_ item: TemplateExercise, to exercise: Exercise, always: Bool, now: Date = Date()) {
+        let today = WeekCalendar().localDateString(for: now)
+        var swaps = ExerciseSwap.DaySwaps(raw: settings.daySwapsRaw)
+        if swaps.day != today { swaps = .init(day: today) }
+        if always {
+            item.exercise = exercise
+            templates.save()
+            swaps.map[item.id] = nil
+        } else {
+            swaps.map[item.id] = exercise.id == item.exercise?.id ? nil : exercise.id
+        }
+        settings.daySwapsRaw = swaps.raw
+        saveSettings()
     }
 }
 

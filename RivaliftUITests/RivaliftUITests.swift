@@ -64,6 +64,21 @@ final class RivaliftUITests: XCTestCase {
     }
 
     @MainActor
+    func testSwapPlanExerciseAndOpenPlan() throws {
+        let app = launchAndOnboard()
+
+        let swap = app.buttons["swapExercise"].firstMatch
+        XCTAssertTrue(swap.waitForExistence(timeout: 5))
+        swap.tap()
+        let confirm = app.buttons["confirmSwap"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        confirm.tap()
+        XCTAssertFalse(confirm.waitForExistence(timeout: 2))
+
+        app.buttons["editPlanLink"].tap()
+        XCTAssertTrue(app.buttons["changePlanButton"].waitForExistence(timeout: 5))
+    }
+
     func testBrowseTemplateDetailThenStart() throws {
         let app = launchAndOnboard()
 

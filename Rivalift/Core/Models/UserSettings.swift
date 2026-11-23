@@ -42,6 +42,8 @@ final class UserSettings {
     var planStartedAt: Date?
     /// Home mode: `HomeMode` raw value.
     var homeModeRaw: String = HomeMode.plan.rawValue
+    /// Plan exercises swapped "just today" (`ExerciseSwap.DaySwaps`).
+    var daySwapsRaw: String = ""
     /// Weekly streak the user committed to during onboarding (0 = none).
     var streakGoalWeeks: Int = 0
     /// 0 = not started; then the step reached; persisted so closing the app keeps choices (AUTH-05).

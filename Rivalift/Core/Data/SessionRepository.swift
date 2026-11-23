@@ -100,13 +100,13 @@ final class SessionRepository {
 
     /// Starts from a template. Archived exercises are skipped and returned so the UI can
     /// mention them (section 14.2).
-    func start(from template: WorkoutTemplate) -> (session: WorkoutSession, skipped: [String]) {
+    func start(from template: WorkoutTemplate, swaps: [UUID: Exercise] = [:]) -> (session: WorkoutSession, skipped: [String]) {
         let session = WorkoutSession(name: template.name, templateID: template.id)
         context.insert(session)
         var skipped: [String] = []
         var order = 0
         for item in template.orderedExercises {
-            guard let exercise = item.exercise, !exercise.isArchived else {
+            guard let exercise = swaps[item.id] ?? item.exercise, !exercise.isArchived else {
                 if let name = item.exercise?.name { skipped.append(name) }
                 continue
             }
