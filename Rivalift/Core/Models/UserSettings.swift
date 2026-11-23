@@ -38,6 +38,8 @@ final class UserSettings {
     var experienceRaw: String = ExperienceLevel.beginner.rawValue
     /// Program name from templates.json, e.g. "Full Body 3×"; empty until onboarding ends.
     var planProgram: String = ""
+    /// `TrainingPlan.id` of the chosen plan ("build-muscle"); empty means the one for `goal`.
+    var planID: String = ""
     /// When the current plan started ("Week 2 of 8"); nil until Home first shows the plan.
     var planStartedAt: Date?
     /// Home mode: `HomeMode` raw value.

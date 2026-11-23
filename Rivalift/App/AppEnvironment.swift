@@ -388,7 +388,7 @@ extension AppEnvironment {
         )
         return PlanHome(
             program: program,
-            title: Self.planTitle(for: settings.goal),
+            title: currentPlan.title,
             subtitle: String(localized: "\(Self.splitName(for: program.name)) · \(weekdays.count) days a week"),
             progress: progress,
             week: week,
@@ -404,14 +404,20 @@ extension AppEnvironment {
             : settings.trainingWeekdays
     }
 
-    /// Beginner-friendly plan names: the goal, not the split.
-    static func planTitle(for goal: TrainingGoal) -> String {
-        switch goal {
-        case .strength: String(localized: "Get Stronger")
-        case .muscle: String(localized: "Build Muscle")
-        case .consistency: String(localized: "Get in Shape")
-        case .fitness: String(localized: "Overall Fitness")
-        }
+    /// The chosen plan; users from before plans had names get the one for their goal.
+    var currentPlan: TrainingPlan {
+        PlanCatalog.plan(id: settings.planID) ?? PlanCatalog.plan(for: settings.goal)
+    }
+
+    /// Switch plan: its program for the weekly target, its length, starting this week on Home.
+    func startPlan(_ plan: TrainingPlan, now: Date = Date()) {
+        settings.planID = plan.id
+        settings.planProgram = plan.program(daysPerWeek: settings.effectiveWeeklyTarget(at: now))
+        settings.streakGoalWeeks = plan.weeks
+        settings.planStartedAt = now
+        settings.daySwapsRaw = ""
+        settings.homeMode = .plan
+        saveSettings()
     }
 
     static func splitName(for program: String) -> String {
@@ -421,22 +427,6 @@ extension AppEnvironment {
         case PlanRecommender.pushPullLegs: String(localized: "Push / Pull / Legs")
         case PlanRecommender.fiveByFive: String(localized: "Strength basics")
         default: program
-        }
-    }
-
-    /// What a built-in plan is for, in plain words (Library).
-    static func programInfo(for program: String) -> (summary: String, chips: [String]) {
-        switch program {
-        case PlanRecommender.fullBody:
-            (String(localized: "Your whole body every workout. The easiest way to start."), [String(localized: "3 days"), String(localized: "Beginner")])
-        case PlanRecommender.upperLower:
-            (String(localized: "Upper body one day, legs the next. More time for each muscle."), [String(localized: "4 days"), String(localized: "All levels")])
-        case PlanRecommender.pushPullLegs:
-            (String(localized: "Pushing, pulling and leg days for people who train often."), [String(localized: "3–6 days"), String(localized: "Experienced")])
-        case PlanRecommender.fiveByFive:
-            (String(localized: "Five sets of five on the big lifts. Get stronger, fast."), [String(localized: "3 days"), String(localized: "Beginner")])
-        default:
-            ("", [])
         }
     }
 

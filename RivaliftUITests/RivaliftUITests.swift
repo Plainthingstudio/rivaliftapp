@@ -89,7 +89,7 @@ final class RivaliftUITests: XCTestCase {
         let app = launchAndOnboard()
 
         app.tabBars.buttons["Library"].tap()
-        let program = app.buttons["program-Full Body 3×"]
+        let program = app.buttons["plan-overall-fitness"]
         XCTAssertTrue(program.waitForExistence(timeout: 5))
         program.tap()
         app.buttons["startThisPlan"].tap()

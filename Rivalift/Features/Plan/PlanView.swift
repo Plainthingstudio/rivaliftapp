@@ -103,8 +103,6 @@ struct PlanView: View {
             summaryRow("Training days", days)
             GlassDivider()
             summaryRow("Plan length", String(localized: "\(planWeeks) weeks"))
-            GlassDivider()
-            summaryRow("Goal", AppEnvironment.planTitle(for: env.settings.goal))
         }
     }
 
@@ -143,20 +141,6 @@ struct PlanView: View {
                 }
             }
             .frame(minHeight: Theme.minTap)
-            GlassDivider()
-            HStack {
-                Text("Goal").font(.subheadline)
-                Spacer()
-                Picker("Goal", selection: Binding(
-                    get: { env.settings.goal },
-                    set: { env.settings.goal = $0; env.saveSettings() }
-                )) {
-                    ForEach(TrainingGoal.allCases) { Text(AppEnvironment.planTitle(for: $0)).tag($0) }
-                }
-                .labelsHidden()
-                .tint(.secondary)
-            }
-            .frame(minHeight: Theme.minTap)
         }
     }
 
@@ -165,37 +149,24 @@ struct PlanView: View {
     }
 }
 
-/// Built-in programs to switch to; the new plan starts this week.
+/// Plans to switch to; the new plan starts this week.
 private struct ChoosePlanSheet: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
+        let current = env.currentPlan.id
         NavigationStack {
             ScrollView {
                 VStack(spacing: 8) {
-                    ForEach(env.templates.programs()) { program in
-                        let current = program.name == env.settings.planProgram
-                        Button { choose(program) } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(AppEnvironment.splitName(for: program.name)).font(.headline.weight(.medium))
-                                    Text("^[\(program.templates.count) workout](inflect: true): \(program.templates.map(\.name).joined(separator: ", "))")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .multilineTextAlignment(.leading)
-                                }
-                                Spacer()
-                                if current {
-                                    Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.accent).accessibilityHidden(true)
-                                }
-                            }
-                            .padding(16)
-                            .glassCard(cornerRadius: 24)
-                            .contentShape(Rectangle())
+                    ForEach(PlanCatalog.all) { plan in
+                        Button {
+                            if plan.id != current { env.startPlan(plan) }
+                            dismiss()
+                        } label: {
+                            PlanCatalogCard(plan: plan, isCurrent: plan.id == current)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityAddTraits(current ? .isSelected : [])
                     }
                 }
                 .padding()
@@ -207,15 +178,5 @@ private struct ChoosePlanSheet: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             }
         }
-    }
-
-    private func choose(_ program: TemplateRepository.Program) {
-        if program.name != env.settings.planProgram {
-            env.settings.planProgram = program.name
-            env.settings.planStartedAt = Date()
-            env.settings.daySwapsRaw = ""
-            env.saveSettings()
-        }
-        dismiss()
     }
 }

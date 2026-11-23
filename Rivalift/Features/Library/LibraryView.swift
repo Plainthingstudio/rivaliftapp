@@ -25,51 +25,60 @@ struct LibraryView: View {
     }
 }
 
-/// Your current plan, then every built-in plan with what it is for.
+/// Your current plan, then every plan named for what it does.
 private struct LibraryPlansView: View {
     @Environment(AppEnvironment.self) private var env
-    @State private var plan: AppEnvironment.PlanHome?
+    @State private var home: AppEnvironment.PlanHome?
 
     var body: some View {
+        let current = env.currentPlan
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                if let plan {
+                if let home {
                     caption("CURRENT PLAN")
                     NavigationLink { PlanView() } label: {
-                        card(title: plan.title, subtitle: String(localized: "Week \(plan.progress.week) of \(plan.progress.weeks) · \(plan.subtitle)"), chips: [], highlighted: true)
+                        PlanCatalogCard(plan: current, detail: String(localized: "Week \(home.progress.week) of \(home.progress.weeks) · \(home.subtitle)"), isCurrent: true)
                     }
                     .buttonStyle(.plain)
                 }
                 caption("ALL PLANS").padding(.top, 8)
-                ForEach(env.templates.programs()) { program in
-                    let info = AppEnvironment.programInfo(for: program.name)
-                    NavigationLink { ProgramDetailView(program: program) } label: {
-                        card(title: AppEnvironment.splitName(for: program.name), subtitle: info.summary, chips: info.chips, highlighted: false)
+                ForEach(PlanCatalog.all.filter { $0.id != current.id || home == nil }) { plan in
+                    NavigationLink { PlanDetailView(plan: plan) } label: {
+                        PlanCatalogCard(plan: plan)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityIdentifier("program-\(program.name)")
+                    .accessibilityIdentifier("plan-\(plan.id)")
                 }
             }
             .padding()
         }
         .screenBackground()
-        .onAppear { plan = env.planHome() }
+        .onAppear { home = env.planHome() }
+        .onChange(of: env.dataVersion) { _, _ in home = env.planHome() }
     }
 
     private func caption(_ text: LocalizedStringKey) -> some View {
         Text(text).font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.horizontal, 4)
     }
+}
 
-    private func card(title: String, subtitle: String, chips: [String], highlighted: Bool) -> some View {
+/// A plan in a list: name, what it does, and days, weeks and level chips.
+struct PlanCatalogCard: View {
+    let plan: TrainingPlan
+    /// Replaces the chips, e.g. "Week 2 of 8 · Full body · 3 days a week" for the current plan.
+    var detail: String?
+    var isCurrent = false
+
+    var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.headline.weight(.medium))
-                    Text(subtitle).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.leading)
+                    Text(plan.title).font(.headline.weight(.medium))
+                    Text(detail ?? plan.summary).font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.leading)
                 }
-                if !chips.isEmpty {
+                if detail == nil {
                     HStack(spacing: 6) {
-                        ForEach(chips, id: \.self) { chip in
+                        ForEach([plan.daysText, String(localized: "\(plan.weeks) weeks"), plan.levelName], id: \.self) { chip in
                             Text(chip)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -81,34 +90,44 @@ private struct LibraryPlansView: View {
                 }
             }
             Spacer(minLength: 8)
-            Image(systemName: "chevron.right").foregroundStyle(.secondary).accessibilityHidden(true)
+            Image(systemName: isCurrent ? "checkmark.circle.fill" : "chevron.right")
+                .foregroundStyle(isCurrent ? Theme.accent : .secondary)
+                .accessibilityHidden(true)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background { if highlighted { Theme.accent.opacity(0.12) } }
+        .background { if isCurrent { Theme.accent.opacity(0.12) } }
         .glassCard(cornerRadius: 24)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(isCurrent ? .isSelected : [])
     }
 }
 
-/// A built-in plan: what it is for, its workouts, and starting it.
-struct ProgramDetailView: View {
+/// A plan before starting it: what it does and the workouts inside it for your weekly target.
+struct PlanDetailView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.dismiss) private var dismiss
-    let program: TemplateRepository.Program
+    let plan: TrainingPlan
 
     var body: some View {
-        let info = AppEnvironment.programInfo(for: program.name)
-        let isCurrent = program.name == env.settings.planProgram
+        let isCurrent = plan.id == env.currentPlan.id && env.planHome() != nil
+        let programName = plan.program(daysPerWeek: env.settings.effectiveWeeklyTarget())
+        let program = env.templates.programs().first { $0.name == programName }
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(AppEnvironment.splitName(for: program.name)).font(.largeTitle)
-                    Text(info.summary).font(.subheadline).foregroundStyle(.secondary)
-                    Text(info.chips.joined(separator: " · ")).font(.caption).foregroundStyle(.secondary).padding(.top, 4)
+                    Text(plan.title).font(.largeTitle)
+                    Text(plan.summary).font(.subheadline).foregroundStyle(.secondary)
+                    Text("\(plan.daysText) · \(plan.weeks) weeks · \(plan.levelName)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 4)
                 }
-                ForEach(Array(program.templates.enumerated()), id: \.element.id) { index, workout in
+                Text("What's inside: \(AppEnvironment.splitName(for: programName))")
+                    .font(.headline.weight(.medium))
+                    .padding(.top, 8)
+                ForEach(Array((program?.templates ?? []).enumerated()), id: \.element.id) { index, workout in
                     NavigationLink { TemplateDetailView(template: workout) } label: {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
@@ -140,9 +159,13 @@ struct ProgramDetailView: View {
                 if isCurrent {
                     Button("This is your plan") {}.buttonStyle(.secondary).disabled(true)
                 } else {
-                    Button("Start this plan") { start() }
-                        .buttonStyle(.primary)
-                        .accessibilityIdentifier("startThisPlan")
+                    Button("Start this plan") {
+                        env.startPlan(plan)
+                        dismiss()
+                        env.selectedTab = .home
+                    }
+                    .buttonStyle(.primary)
+                    .accessibilityIdentifier("startThisPlan")
                 }
             }
             .padding(.horizontal)
@@ -152,16 +175,5 @@ struct ProgramDetailView: View {
         }
         .screenBackground()
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    /// The new plan starts this week and shows on Home.
-    private func start() {
-        env.settings.planProgram = program.name
-        env.settings.planStartedAt = Date()
-        env.settings.daySwapsRaw = ""
-        env.settings.homeMode = .plan
-        env.saveSettings()
-        dismiss()
-        env.selectedTab = .home
     }
 }
