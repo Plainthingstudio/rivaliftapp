@@ -18,7 +18,7 @@ Ringkasan supaya sesi Claude berikutnya bisa langsung lanjut. Spesifikasi produk
 | `claude/determined-shannon-e2byic` | Pekerjaan sampai `54b5381` (My Plan Home pertama) | Belum di-push |
 | `claude/minimal-design-system` | Dibuat dari `54b5381`, berisi semua pekerjaan sesi 23 Nov | **Branch aktif.** Belum di-push, belum ada PR |
 
-Run penuh terakhir di `claude/minimal-design-system`: **86 unit + 11 UI test lulus.**
+Run penuh terakhir di `claude/minimal-design-system`: **91 unit + 12 UI test lulus.** Semua sudah di-push; PR: https://github.com/Plainthingstudio/rivaliftapp/pull/1 (ke `claude/determined-shannon-e2byic`, belum di-merge).
 
 Commit di branch aktif (lama → baru):
 
@@ -33,6 +33,7 @@ Commit di branch aktif (lama → baru):
 | `3839565` | Program sendiri untuk Get Lean ("Full body burn") |
 | `2aed1ea`, `b557b14` | Dokumen handoff |
 | `7562d66` | Layar Streak dengan rest week (RIV-58) |
+| `b608f3b` | Quick Workout dari menu mode Home (RIV-59) |
 
 ## Latar belakang keputusan (sesi 23 Nov)
 
@@ -184,21 +185,35 @@ Semua token terpusat, jadi seluruh app ikut berubah:
   This week, Rest weeks dengan ikon perisai, 12 minggu terakhir, catatan liga). "Best streak" di
   Profile memakai aturan yang sama. 🔥 di kartu This week (mode Custom) dihapus.
 
+### 7. Quick Workout (`b608f3b`)
+
+- `Core/Domain/QuickWorkout.swift` (tes `QuickWorkoutTests`): `Kit` (gym, dumbbells, none, bands →
+  peralatan yang boleh), `Focus` (full body, upper, legs, core → slot otot berurutan), jumlah latihan
+  15/30/45/60 menit → 3/4/5/6. Tiap slot diisi satu latihan, compound dulu, tanpa duplikat;
+  compound 3×10, isolasi 2×12, durasi 2 set. `shuffle` memilih kandidat lain per slot.
+  `advancedKeys` (pistol squat, sissy squat, nordic curl) tidak ditawarkan.
+- `AppEnvironment.quickWorkout(...)` mengurutkan latihan berdasar seberapa sering dipakai template
+  bawaan (squat/bench/row dulu). `createdAt` tidak bisa dipakai untuk urutan seed (semua sama).
+- Mulai: `StartRequest.quick([Item])` → `SessionRepository.start(name:items:)`, sesi tanpa template
+  sehingga plan tidak bergeser; tetap dihitung untuk streak dan liga.
+- UI: menu mode Home (My Plan / Custom / ⚡ Quick Workout) membuka `Features/Home/QuickWorkoutView.swift`
+  (pill peralatan, durasi, fokus; daftar dengan foto; tombol acak; Start workout). `FilterPill` tidak
+  terpilih sekarang bergaya kartu (putih 10% + border).
+- UI test: item menu dicari dengan `label BEGINSWITH "Quick Workout"` karena label-nya ikut subtitle.
+
 ### Model data baru di `UserSettings` (langsung di V1, app belum pernah rilis)
 
 `planStartedAt: Date?`, `homeModeRaw`, `daySwapsRaw`, `planID`. Semua punya default (aturan CloudKit).
 
 ## Belum dikerjakan (urutan yang disarankan)
 
-1. **Quick Workout**: mode ketiga di menu (My Plan / Quick / Custom), latihan singkat berdasar
-   waktu (20/30/45 menit). Desain di artifact ("Quick Workout").
-2. **Font Figtree** dari Figma.
-3. **Push branch + PR** `claude/minimal-design-system`. Perlu izin Herdetya.
-4. Dari artifact yang sengaja dilewati: fase plan (Foundations/Build/Easy/Push, isi latihan belum
+1. **Font Figtree** dari Figma.
+2. **Merge PR #1** setelah Herdetya review (push dan PR sudah).
+3. Dari artifact yang sengaja dilewati: fase plan (Foundations/Build/Easy/Push, isi latihan belum
    berbeda per fase), baris Equipment dan "Rebuild plan" di layar Plan (belum ada data peralatan).
-5. Update `docs/PRD.md` (termasuk streak + rest week) untuk IA baru (tab Library, History di Profile, plan bernama tujuan,
+4. Update `docs/PRD.md` (termasuk streak + rest week) untuk IA baru (tab Library, History di Profile, plan bernama tujuan,
    tukar latihan) dan requirement ID-nya.
-6. Sisa lama:
+5. Sisa lama:
    - **2 foto latihan** perlu di-generate ulang: `bayesian_cable_curl` (membelakangi mesin kabel,
      satu tangan) dan `wrist_curl` (telapak ke atas). Pakai `scripts/exercise_photos/cutout.py`,
      detail di `docs/EXERCISE_PHOTOS.md`.
@@ -208,7 +223,7 @@ Semua token terpusat, jadi seluruh app ikut berubah:
      Production. Akun developer berbayar, team `RXV32BBK97`.
    - Label salah ketik di Figma "All Exercises" (hanya Figma).
    - Kartu share setelah latihan; setelah M5: badge, rekap bulanan, peta otot, widget.
-7. M4: proyek Supabase "rivalift" (organisasi "animos app"), login Apple + Google, sinkronisasi;
+6. M4: proyek Supabase "rivalift" (organisasi "animos app"), login Apple + Google, sinkronisasi;
    lalu M5.
 
 ## Perangkat
