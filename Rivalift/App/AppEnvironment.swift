@@ -338,6 +338,104 @@ extension AppEnvironment {
     }
 }
 
+extension AppEnvironment {
+    /// Home in My Plan mode: the onboarding plan, how far along it is and this week's days.
+    struct PlanHome {
+        var program: TemplateRepository.Program
+        var title: String
+        var subtitle: String
+        var progress: PlanProgress
+        var week: PlanWeek
+        var daysPerWeek: Int
+        /// Plan workouts done this week.
+        var doneThisWeek: Int
+
+        func workout(_ id: UUID?) -> WorkoutTemplate? {
+            guard let id else { return nil }
+            return program.templates.first { $0.id == id }
+        }
+    }
+
+    func planHome(now: Date = Date()) -> PlanHome? {
+        guard let program = templates.programs().first(where: { $0.name == settings.planProgram }) else { return nil }
+        let calendar = WeekCalendar()
+        let ids = Set(program.templates.map(\.id))
+        // Most recent first.
+        let planSessions = sessions.completedSessions().filter { $0.templateID.map(ids.contains) ?? false }
+        if settings.planStartedAt == nil {
+            // Users who onboarded before plans had a start: count from their first plan workout.
+            settings.planStartedAt = planSessions.last?.startedAt ?? now
+            settingsRepository.save()
+        }
+        let start = settings.planStartedAt ?? now
+        let weekdays = settings.trainingWeekdays.isEmpty
+            ? PlanWeek.defaultWeekdays(count: settings.effectiveWeeklyTarget(at: now))
+            : settings.trainingWeekdays
+        let weekStart = calendar.weekStart(for: now)
+        let thisWeek = planSessions.filter { $0.startedAt >= weekStart }
+        let week = PlanWeek.make(
+            rotation: program.templates.map(\.id),
+            weekdays: weekdays,
+            done: thisWeek.reversed().compactMap { session in session.templateID.map { PlanWeek.Done(date: session.startedAt, workoutID: $0) } },
+            lastDone: planSessions.first?.templateID,
+            now: now,
+            calendar: calendar
+        )
+        let progress = PlanProgress.make(
+            start: start, now: now,
+            weeks: settings.streakGoalWeeks > 0 ? settings.streakGoalWeeks : 8,
+            perWeek: weekdays.count,
+            done: planSessions.filter { $0.startedAt >= start }.count,
+            calendar: calendar
+        )
+        return PlanHome(
+            program: program,
+            title: Self.planTitle(for: settings.goal),
+            subtitle: String(localized: "\(Self.splitName(for: program.name)) · \(weekdays.count) days a week"),
+            progress: progress,
+            week: week,
+            daysPerWeek: weekdays.count,
+            doneThisWeek: thisWeek.count
+        )
+    }
+
+    /// Beginner-friendly plan names: the goal, not the split.
+    static func planTitle(for goal: TrainingGoal) -> String {
+        switch goal {
+        case .strength: String(localized: "Get Stronger")
+        case .muscle: String(localized: "Build Muscle")
+        case .consistency: String(localized: "Get in Shape")
+        case .fitness: String(localized: "Overall Fitness")
+        }
+    }
+
+    static func splitName(for program: String) -> String {
+        switch program {
+        case PlanRecommender.fullBody: String(localized: "Full body")
+        case PlanRecommender.upperLower: String(localized: "Upper / Lower")
+        case PlanRecommender.pushPullLegs: String(localized: "Push / Pull / Legs")
+        case PlanRecommender.fiveByFive: String(localized: "Strength basics")
+        default: program
+        }
+    }
+
+    /// "3 sets · 8 reps · 40 kg": the template's sets and reps plus the suggested weight (PRG-01).
+    func prescription(for item: TemplateExercise) -> String {
+        var parts = [String(localized: "\(item.setCount) sets")]
+        if item.targetReps > 0 { parts.append(String(localized: "\(item.targetReps) reps")) }
+        if let exercise = item.exercise, exercise.type == .weightReps,
+           let suggestion = ProgressionEngine.suggest(
+               recentSessions: sessions.recentSamples(for: exercise, excluding: nil),
+               targetReps: item.targetReps,
+               region: exercise.primaryMuscle.bodyRegion,
+               unit: unit
+           ) {
+            parts.append(WeightFormatter.string(kg: suggestion.weightKg, unit: unit, includeUnit: true))
+        }
+        return parts.joined(separator: " · ")
+    }
+}
+
 struct WeekProgress {
     var days: [Date]
     var trainedDays: Set<String>

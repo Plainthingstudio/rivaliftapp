@@ -17,6 +17,15 @@ final class RivaliftUITests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
     }
 
+    /// The start screen (pick exercises, templates) lives in Custom mode; Home opens in My Plan.
+    private func openStartScreen(_ app: XCUIApplication) {
+        let menu = app.buttons["homeModeMenu"]
+        XCTAssertTrue(menu.waitForExistence(timeout: 5))
+        menu.tap()
+        app.buttons["Custom"].tap()
+        app.buttons["startWorkoutButton"].tap()
+    }
+
     private func launchAndOnboard() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-ui-testing"]
@@ -45,12 +54,11 @@ final class RivaliftUITests: XCTestCase {
     func testOnboardingPlanIsRecommendedOnStart() throws {
         let app = launchAndOnboard()
 
-        XCTAssertTrue(app.staticTexts["Hi, Sam"].waitForExistence(timeout: 5))
-        app.buttons["startWorkoutButton"].tap()
-        let recommended = app.buttons["startRecommended"]
-        XCTAssertTrue(recommended.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["5×5 Workout A"].exists)
-        recommended.tap()
+        // My Plan Home shows the plan's first workout: today's, or "Train anyway" on a rest day.
+        let start = app.buttons["startPlanWorkout"]
+        XCTAssertTrue(start.waitForExistence(timeout: 5))
+        XCTAssertTrue(labelled(app, "5×5 Workout A").exists)
+        start.tap()
 
         XCTAssertTrue(app.buttons["finishWorkoutButton"].waitForExistence(timeout: 5))
     }
@@ -59,7 +67,7 @@ final class RivaliftUITests: XCTestCase {
     func testBrowseTemplateDetailThenStart() throws {
         let app = launchAndOnboard()
 
-        app.buttons["startWorkoutButton"].tap()
+        openStartScreen(app)
         app.buttons["browseTemplates"].tap()
         let template = app.staticTexts["5×5 Workout B"].firstMatch
         XCTAssertTrue(template.waitForExistence(timeout: 5))
@@ -187,7 +195,7 @@ final class RivaliftUITests: XCTestCase {
     func testCompetedExerciseShowsLeagueHint() throws {
         let app = launchAndOnboard()
 
-        app.buttons["startWorkoutButton"].tap()
+        openStartScreen(app)
         app.buttons["startPickExercises"].tap()
         let search = app.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 5))
@@ -204,7 +212,7 @@ final class RivaliftUITests: XCTestCase {
     func testLogAndFinishWorkout() throws {
         let app = launchAndOnboard()
 
-        app.buttons["startWorkoutButton"].tap()
+        openStartScreen(app)
         app.buttons["startPickExercises"].tap()
         let search = app.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: 5))
@@ -227,3 +235,4 @@ final class RivaliftUITests: XCTestCase {
         app.buttons["summaryDoneButton"].tap()
     }
 }
+

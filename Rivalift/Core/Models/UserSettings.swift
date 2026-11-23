@@ -1,6 +1,11 @@
 import Foundation
 import SwiftData
 
+/// What Home shows: today's workout from the plan, or the user's own workouts.
+enum HomeMode: String, Sendable {
+    case plan, custom
+}
+
 /// Single-row settings. Duplicate rows (e.g. from two devices syncing through iCloud)
 /// are merged in `SettingsRepository`.
 @Model
@@ -33,6 +38,10 @@ final class UserSettings {
     var experienceRaw: String = ExperienceLevel.beginner.rawValue
     /// Program name from templates.json, e.g. "Full Body 3×"; empty until onboarding ends.
     var planProgram: String = ""
+    /// When the current plan started ("Week 2 of 8"); nil until Home first shows the plan.
+    var planStartedAt: Date?
+    /// Home mode: `HomeMode` raw value.
+    var homeModeRaw: String = HomeMode.plan.rawValue
     /// Weekly streak the user committed to during onboarding (0 = none).
     var streakGoalWeeks: Int = 0
     /// 0 = not started; then the step reached; persisted so closing the app keeps choices (AUTH-05).
@@ -50,6 +59,11 @@ final class UserSettings {
     var goal: TrainingGoal {
         get { TrainingGoal(rawValue: goalRaw) ?? .fitness }
         set { goalRaw = newValue.rawValue }
+    }
+
+    var homeMode: HomeMode {
+        get { HomeMode(rawValue: homeModeRaw) ?? .plan }
+        set { homeModeRaw = newValue.rawValue }
     }
 
     var experience: ExperienceLevel {

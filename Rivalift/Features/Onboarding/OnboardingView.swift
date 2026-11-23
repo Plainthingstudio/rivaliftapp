@@ -387,6 +387,7 @@ private struct PlanStep: View {
             let name = PlanRecommender.program(goal: s.goal, level: s.experience, weeklyTarget: s.weeklyTarget)
             program = env.templates.programs().first { $0.name == name }
             s.planProgram = name
+            s.planStartedAt = Date()
             env.saveSettings()
             for index in 1...checks.count {
                 try? await Task.sleep(for: .milliseconds(450))

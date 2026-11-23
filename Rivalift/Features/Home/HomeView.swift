@@ -7,19 +7,32 @@ struct HomeView: View {
     @State private var quickTemplates: [WorkoutTemplate] = []
     @State private var recentRecords: [PersonalRecord] = []
     @State private var overview: AppEnvironment.TrainingOverview?
+    @State private var plan: AppEnvironment.PlanHome?
+
+    /// My Plan needs a plan; without one (onboarding skipped) Home is always Custom.
+    private var showsPlan: Bool { plan != nil && env.settings.homeMode == .plan }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                greeting
-                if let progress { WeekCard(progress: progress) }
-                startButton
-                if let overview, overview.totalWorkouts > 0 { MetricsCard(overview: overview, unit: env.unit) }
+                header
+                if showsPlan, let plan {
+                    PlanCard(plan: plan)
+                    PlanWeekStrip(plan: plan)
+                    PlanToday(plan: plan)
+                } else {
+                    if let progress { WeekCard(progress: progress) }
+                    startButton
+                    if !quickTemplates.isEmpty { quickStart }
+                }
                 LeagueTeaserCard()
-                if !quickTemplates.isEmpty { quickStart }
                 if !recentRecords.isEmpty { records }
+                if let overview, overview.totalWorkouts > 0 { MetricsCard(overview: overview, unit: env.unit) }
             }
             .padding()
+        }
+        .safeAreaInset(edge: .bottom) {
+            if showsPlan, let plan { PlanStartButton(plan: plan) }
         }
         .screenBackground()
         .navigationTitle("Home")
@@ -31,18 +44,53 @@ struct HomeView: View {
         .onChange(of: env.dataVersion) { _, _ in reload() }
     }
 
-    private var greeting: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(Date(), format: .dateTime.weekday(.wide).day().month())
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Text(env.settings.displayName.isEmpty ? String(localized: "Let's lift") : String(localized: "Hi, \(env.settings.displayName)"))
-                .font(.largeTitle)
-            Text("Keep going. Consistency builds real progress")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    /// Date, the mode switcher ("My Plan ▾") and the weekly streak.
+    private var header: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(Date(), format: .dateTime.weekday(.wide).day().month())
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if plan != nil {
+                    Menu {
+                        Picker("Home mode", selection: homeMode) {
+                            Label("My Plan", systemImage: "sparkles").tag(HomeMode.plan)
+                            Label("Custom", systemImage: "square.and.pencil").tag(HomeMode.custom)
+                        }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(showsPlan ? "My Plan" : "Custom").font(.largeTitle)
+                            Image(systemName: "chevron.down").font(.headline)
+                        }
+                        .foregroundStyle(.white)
+                        .frame(minHeight: Theme.minTap)
+                    }
+                    .accessibilityIdentifier("homeModeMenu")
+                } else {
+                    Text("Home").font(.largeTitle).frame(minHeight: Theme.minTap)
+                }
+            }
+            Spacer()
+            if let progress {
+                HStack(spacing: 4) {
+                    Image(systemName: "flame.fill").foregroundStyle(Theme.heat)
+                    Text("\(progress.streakWeeks)").font(.callout.weight(.medium)).monospacedDigit()
+                }
+                .padding(.horizontal, 14)
+                .frame(minHeight: Theme.minTap)
+                .background(Theme.glassControl, in: Capsule())
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(progress.streakWeeks) week streak")
+            }
         }
         .padding(.top, 12)
+    }
+
+    private var homeMode: Binding<HomeMode> {
+        Binding(
+            get: { env.settings.homeMode },
+            set: { env.settings.homeMode = $0; env.saveSettings() }
+        )
     }
 
     @ViewBuilder
@@ -163,6 +211,7 @@ struct HomeView: View {
                 .prefix(3)
         )
         overview = env.trainingOverview()
+        plan = env.planHome()
     }
 }
 
