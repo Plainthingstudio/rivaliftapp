@@ -5,6 +5,8 @@ struct TemplatesView: View {
     @Environment(AppEnvironment.self) private var env
     /// False in Library, where plans have their own tab.
     var showsPrograms = true
+    /// Opens on Programs, e.g. from Home's "Create workout › From a ready-made workout".
+    var opensPrograms = false
     @State private var segment: Segment = .mine
     @State private var mine: [WorkoutTemplate] = []
     @State private var programs: [TemplateRepository.Program] = []
@@ -59,7 +61,7 @@ struct TemplatesView: View {
         }
         .onAppear {
             reload()
-            if mine.isEmpty && showsPrograms { segment = .programs }
+            if showsPrograms && (opensPrograms || mine.isEmpty) { segment = .programs }
         }
     }
 
@@ -143,7 +145,7 @@ struct TemplateEditorView: View {
         NavigationStack {
             List {
                 Section {
-                    TextField("Template name", text: $template.name)
+                    TextField("Workout name", text: $template.name)
                         .glassField()
                         .listRowBackground(Color.clear)
                         .listRowSeparator(.hidden)
@@ -167,7 +169,7 @@ struct TemplateEditorView: View {
                 }
             }
             .glassList()
-            .navigationTitle("Edit template")
+            .navigationTitle("Edit workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

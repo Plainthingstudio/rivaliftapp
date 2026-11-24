@@ -141,12 +141,15 @@ final class RivaliftUITests: XCTestCase {
         let app = launchAndOnboard()
 
         openStartScreen(app)
-        app.buttons["browseTemplates"].tap()
+        app.buttons["createWorkoutButton"].tap()
+        app.buttons["From a ready-made workout"].tap()
         let template = app.staticTexts["5×5 Workout B"].firstMatch
         XCTAssertTrue(template.waitForExistence(timeout: 5))
         template.tap()
         let start = app.buttons["startTemplateButton"]
         XCTAssertTrue(start.waitForExistence(timeout: 5))
+        // A ready-made workout is copied before editing.
+        XCTAssertTrue(app.buttons["saveTemplateCopy"].exists)
 
         // Each exercise opens its detail with how-to steps.
         let exercise = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Overhead Press'")).firstMatch

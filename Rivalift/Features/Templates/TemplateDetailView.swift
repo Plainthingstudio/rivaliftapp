@@ -4,6 +4,7 @@ import SwiftUI
 struct TemplateDetailView: View {
     @Environment(AppEnvironment.self) private var env
     let template: WorkoutTemplate
+    @State private var editing: WorkoutTemplate?
 
     var body: some View {
         ScrollView {
@@ -43,6 +44,21 @@ struct TemplateDetailView: View {
         .screenBackground()
         .navigationTitle(template.name)
         .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                // Your own workouts edit in place; a ready-made one is copied first.
+                if template.isBuiltIn {
+                    Button("Save as mine") { editing = env.templates.duplicate(template) }
+                        .accessibilityIdentifier("saveTemplateCopy")
+                } else {
+                    Button("Edit") { editing = template }
+                        .accessibilityIdentifier("editTemplateButton")
+                }
+            }
+        }
+        .sheet(item: $editing) { template in
+            TemplateEditorView(template: template).environment(env)
+        }
     }
 
     /// Figma "Stat": red rounded square with a number and a label.

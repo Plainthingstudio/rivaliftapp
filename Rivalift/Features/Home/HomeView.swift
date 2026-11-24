@@ -13,6 +13,8 @@ struct HomeView: View {
     /// presented on top of a closing sheet.
     @State private var pickedStart: WorkoutStore.StartRequest?
     @State private var editing: WorkoutTemplate?
+    @State private var toDelete: WorkoutTemplate?
+    @State private var isBrowsing = false
     @State private var recentRecords: [PersonalRecord] = []
     @State private var overview: AppEnvironment.TrainingOverview?
     @State private var plan: AppEnvironment.PlanHome?
@@ -59,6 +61,17 @@ struct HomeView: View {
         }
         .navigationDestination(isPresented: $isQuickPresented) {
             QuickWorkoutView()
+        }
+        .navigationDestination(isPresented: $isBrowsing) {
+            TemplatesView(opensPrograms: true)
+        }
+        .confirmationDialog("Delete \(toDelete?.name ?? "")?", isPresented: Binding(get: { toDelete != nil }, set: { if !$0 { toDelete = nil } }), titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                if let toDelete { env.templates.delete(toDelete) }
+                reload()
+            }
+        } message: {
+            Text("Your past sessions stay in History.")
         }
         .onAppear(perform: reload)
         .onChange(of: env.dataVersion) { _, _ in reload() }
@@ -176,21 +189,26 @@ struct HomeView: View {
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("repeatLastWorkout")
             }
-            HStack(spacing: 8) {
-                Button { isPickerPresented = true } label: { Label("Pick exercises", systemImage: "plus") }
-                    .buttonStyle(.secondary)
-                    .accessibilityIdentifier("startPickExercises")
+            // Create (save for later) is the main action; Pick exercises starts a one-off session.
+            Menu {
                 Button { editing = env.templates.create(name: String(localized: "New workout")) } label: {
-                    Label("Create workout", systemImage: "square.and.pencil")
+                    Label("Start from scratch", systemImage: "square.and.pencil")
                 }
-                .buttonStyle(.secondary)
-                .accessibilityIdentifier("createWorkoutButton")
+                Button { isBrowsing = true } label: {
+                    Label("From a ready-made workout", systemImage: "square.grid.2x2")
+                }
+            } label: {
+                Label("Create workout", systemImage: "plus")
+                    .font(.subheadline.weight(.medium))
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .foregroundStyle(.black)
+                    .background(.white, in: Capsule())
             }
+            .accessibilityIdentifier("createWorkoutButton")
             .padding(.top, 4)
-            NavigationLink { TemplatesView() } label: {
-                Text("Browse ready-made workouts").font(.subheadline.weight(.medium)).frame(maxWidth: .infinity, minHeight: Theme.minTap)
-            }
-            .accessibilityIdentifier("browseTemplates")
+            Button { isPickerPresented = true } label: { Label("Pick exercises", systemImage: "list.bullet") }
+                .buttonStyle(.secondary)
+                .accessibilityIdentifier("startPickExercises")
         }
     }
 
@@ -221,6 +239,14 @@ struct HomeView: View {
         }
         .padding(16)
         .glassCard()
+        .contextMenu {
+            Button("Edit", systemImage: "pencil") { editing = template }
+            Button("Duplicate", systemImage: "plus.square.on.square") {
+                env.templates.duplicate(template)
+                reload()
+            }
+            Button("Delete", systemImage: "trash", role: .destructive) { toDelete = template }
+        }
     }
 
     private func startPicked() {
