@@ -34,6 +34,7 @@ Commit di branch aktif (lama → baru):
 | `2aed1ea`, `b557b14` | Dokumen handoff |
 | `7562d66` | Layar Streak dengan rest week (RIV-58) |
 | `b608f3b` | Quick Workout dari menu mode Home (RIV-59) |
+| `acb5f6f` | PRD: PLAN-01…09, LIB-07, PROG-07 (RIV-61) |
 
 ## Latar belakang keputusan (sesi 23 Nov)
 
@@ -211,9 +212,7 @@ Semua token terpusat, jadi seluruh app ikut berubah:
 1. **Merge PR #1** setelah Herdetya review (push dan PR sudah).
 2. Dari artifact yang sengaja dilewati: fase plan (Foundations/Build/Easy/Push, isi latihan belum
    berbeda per fase), baris Equipment dan "Rebuild plan" di layar Plan (belum ada data peralatan).
-3. Update `docs/PRD.md` (termasuk streak + rest week) untuk IA baru (tab Library, History di Profile, plan bernama tujuan,
-   tukar latihan) dan requirement ID-nya.
-4. Sisa lama:
+3. Sisa lama:
    - **2 foto latihan** perlu di-generate ulang: `bayesian_cable_curl` (membelakangi mesin kabel,
      satu tangan) dan `wrist_curl` (telapak ke atas). Pakai `scripts/exercise_photos/cutout.py`,
      detail di `docs/EXERCISE_PHOTOS.md`.
@@ -223,7 +222,7 @@ Semua token terpusat, jadi seluruh app ikut berubah:
      Production. Akun developer berbayar, team `RXV32BBK97`.
    - Label salah ketik di Figma "All Exercises" (hanya Figma).
    - Kartu share setelah latihan; setelah M5: badge, rekap bulanan, peta otot, widget.
-5. M4: proyek Supabase "rivalift" (organisasi "animos app"), login Apple + Google, sinkronisasi;
+4. M4: proyek Supabase "rivalift" (organisasi "animos app"), login Apple + Google, sinkronisasi;
    lalu M5.
 
 ## Perangkat
