@@ -408,8 +408,9 @@ private struct PlanStep: View {
                             Text("Recommended for you").font(.subheadline)
                         }
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(program.name).font(.title2)
-                            DividedText(parts: [s.experience.title, s.goal.title, String(localized: "\(s.weeklyTarget)x per week")])
+                            // Plans are named for the goal; the split is what is inside (CLAUDE.md).
+                            Text(PlanCatalog.plan(for: s.goal).title).font(.title2)
+                            DividedText(parts: [AppEnvironment.splitName(for: program.name), s.experience.title, String(localized: "\(s.weeklyTarget)x per week")])
                         }
                     }
                     .padding(.horizontal, 24)
