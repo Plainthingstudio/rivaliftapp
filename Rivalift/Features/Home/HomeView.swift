@@ -18,7 +18,7 @@ struct HomeView: View {
     @State private var plan: AppEnvironment.PlanHome?
     @State private var isQuickPresented = false
 
-    /// My Plan needs a plan; without one (onboarding skipped) Home is always My Workouts.
+    /// My Plan needs a plan; without one (onboarding skipped) Home is always Custom.
     private var showsPlan: Bool { plan != nil && env.settings.homeMode == .plan }
 
     var body: some View {
@@ -75,7 +75,7 @@ struct HomeView: View {
                     Menu {
                         Picker("Home mode", selection: homeMode) {
                             Label("My Plan", systemImage: "sparkles").tag(HomeMode.plan)
-                            Label("My Workouts", systemImage: "square.and.pencil").tag(HomeMode.custom)
+                            Label("Custom", systemImage: "square.and.pencil").tag(HomeMode.custom)
                         }
                         Divider()
                         Button { isQuickPresented = true } label: {
@@ -84,7 +84,7 @@ struct HomeView: View {
                         }
                     } label: {
                         HStack(spacing: 6) {
-                            Text(showsPlan ? "My Plan" : "My Workouts").font(.largeTitle)
+                            Text(showsPlan ? "My Plan" : "Custom").font(.largeTitle)
                             Image(systemName: "chevron.down").font(.headline)
                         }
                         .foregroundStyle(.white)
@@ -132,7 +132,7 @@ struct HomeView: View {
         }
     }
 
-    /// My Workouts mode: the user's own workouts start in one tap; no plan recommendation here.
+    /// Custom mode: the user's own workouts start in one tap; no plan recommendation here.
     private var myWorkouts: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {

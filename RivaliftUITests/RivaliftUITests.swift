@@ -17,12 +17,12 @@ final class RivaliftUITests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
     }
 
-    /// Pick exercises and ready-made workouts live in My Workouts mode; Home opens in My Plan.
+    /// Pick exercises and ready-made workouts live in Custom mode; Home opens in My Plan.
     private func openStartScreen(_ app: XCUIApplication) {
         let menu = app.buttons["homeModeMenu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 5))
         menu.tap()
-        app.buttons["My Workouts"].tap()
+        app.buttons["Custom"].tap()
         XCTAssertTrue(app.buttons["startPickExercises"].waitForExistence(timeout: 5))
     }
 

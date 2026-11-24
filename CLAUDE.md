@@ -50,7 +50,7 @@ Rivalift/
     Services/     RestTimerService, NotificationService, Haptics
     DesignSystem/ Theme, shared components
   Features/       One folder per screen group; stores live next to their views.
-                  Tabs: Home (My Plan / My Workouts), Library (plans, exercises, my
+                  Tabs: Home (My Plan / Custom), Library (plans, exercises, my
                   workouts), Leagues, Profile (History lives here)
   Resources/      exercises.json, templates.json, Localizable.xcstrings, Assets
 RivaliftTests/    Domain tests, scoring vector tests, repository integration tests
