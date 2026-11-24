@@ -103,7 +103,8 @@ Semua token terpusat, jadi seluruh app ikut berubah:
 - Dihapus: `redCard`/`redFill`, `barGradient`, `blueGlow`, `dotTexture`, aset `DotGrid`,
   `DotGridWeek`, `BlueGlow`, ring putus-putus. `RingIcon` = lingkaran biru polos.
   `InfoChip` = outline, `PillPicker`/`WeekdayPicker` = fill kartu + border.
-- **Belum:** font Figtree dari Figma (app masih SF). Masih ada beberapa inner shadow kecil di level
+- **Font:** tetap SF (sistem); Figtree dari Figma sengaja tidak dipakai (keputusan 24 Nov, RIV-60
+  Canceled). Masih ada beberapa inner shadow kecil di level
   fitur (trek progres di History/Exercise detail, `RestTimerBar`) yang belum diseragamkan.
 - Kartu Home mengikuti artifact: liga menampilkan top 3 (atau top 2 + kamu) dengan baris kamu
   disorot dan selisih poin; "Personal bests this week"; "Your training" = Workouts, Time trained,
@@ -207,13 +208,12 @@ Semua token terpusat, jadi seluruh app ikut berubah:
 
 ## Belum dikerjakan (urutan yang disarankan)
 
-1. **Font Figtree** dari Figma.
-2. **Merge PR #1** setelah Herdetya review (push dan PR sudah).
-3. Dari artifact yang sengaja dilewati: fase plan (Foundations/Build/Easy/Push, isi latihan belum
+1. **Merge PR #1** setelah Herdetya review (push dan PR sudah).
+2. Dari artifact yang sengaja dilewati: fase plan (Foundations/Build/Easy/Push, isi latihan belum
    berbeda per fase), baris Equipment dan "Rebuild plan" di layar Plan (belum ada data peralatan).
-4. Update `docs/PRD.md` (termasuk streak + rest week) untuk IA baru (tab Library, History di Profile, plan bernama tujuan,
+3. Update `docs/PRD.md` (termasuk streak + rest week) untuk IA baru (tab Library, History di Profile, plan bernama tujuan,
    tukar latihan) dan requirement ID-nya.
-5. Sisa lama:
+4. Sisa lama:
    - **2 foto latihan** perlu di-generate ulang: `bayesian_cable_curl` (membelakangi mesin kabel,
      satu tangan) dan `wrist_curl` (telapak ke atas). Pakai `scripts/exercise_photos/cutout.py`,
      detail di `docs/EXERCISE_PHOTOS.md`.
@@ -223,7 +223,7 @@ Semua token terpusat, jadi seluruh app ikut berubah:
      Production. Akun developer berbayar, team `RXV32BBK97`.
    - Label salah ketik di Figma "All Exercises" (hanya Figma).
    - Kartu share setelah latihan; setelah M5: badge, rekap bulanan, peta otot, widget.
-6. M4: proyek Supabase "rivalift" (organisasi "animos app"), login Apple + Google, sinkronisasi;
+5. M4: proyek Supabase "rivalift" (organisasi "animos app"), login Apple + Google, sinkronisasi;
    lalu M5.
 
 ## Perangkat
@@ -271,7 +271,7 @@ Workspace Plainthing Studio, teamspace "Rivalift App". Database **Issues**
 setiap langkah selesai jadi update.
 
 Sesi 23 Nov tercatat: **RIV-51 … RIV-57** (Done, kolom Commit terisi), **RIV-58 … RIV-62** (Todo:
-streak, Quick Workout, Figtree, PRD, push + PR; RIV-58 streak sudah Done), dua entri Updates 23 Nov, baris M3 di tabel
+streak, Quick Workout, Figtree, PRD, push + PR; RIV-58, RIV-59, RIV-62 Done, RIV-60 Figtree Canceled), dua entri Updates 23 Nov, baris M3 di tabel
 milestone hub, dan open decision soal aturan rest week.
 
 **Akses:** konektor Notion di Claude masuk ke workspace pribadi, bukan Plainthing Studio. Pakai

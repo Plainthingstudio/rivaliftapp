@@ -82,7 +82,8 @@ supabase/         migrations/, functions/ (M4+)
   `String(localized:)` so they land in the String Catalog.
 - Design system (`Core/DesignSystem`): cards use `.glassCard()` (white 10% fill, thin
   border), buttons `.buttonStyle(.primary)` (white pill) or `.secondary`, accent and gradients
-  are blue. Use the `Theme` tokens; don't add red cards, inner glows or dot textures.
+  are blue, the font is the system font (SF, not Figtree). Use the `Theme` tokens; don't add
+  red cards, inner glows or dot textures.
 - Plans are named for the goal (`PlanCatalog`); the split is what is inside. Never show a
   split name as the plan's title.
 - Accessibility: 44×44 pt tap targets, VoiceOver labels on icon buttons, Dynamic Type
