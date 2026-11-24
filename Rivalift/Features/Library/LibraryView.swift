@@ -104,7 +104,8 @@ struct PlanCatalogCard: View {
     }
 }
 
-/// A plan before starting it: what it does, how many days a week, and that week's workouts.
+/// A plan before starting it: days a week, which days, a fuller first week when starting
+/// mid-week, and the workouts. Switching from another plan asks first.
 struct PlanDetailView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.dismiss) private var dismiss
@@ -112,17 +113,27 @@ struct PlanDetailView: View {
     /// After starting; the default goes back and shows Home.
     var onStart: (() -> Void)?
     @State private var days: Int?
+    @State private var weekdays: Set<Int>?
+    @State private var fitThisWeek = false
+    @State private var isConfirming = false
+
+    private static let symbols = Calendar(identifier: .iso8601).shortWeekdaySymbols
+    private static func names(_ days: Set<Int>) -> String {
+        days.sorted().map { symbols[$0 % 7] }.joined(separator: ", ")
+    }
 
     var body: some View {
-        let isCurrent = plan.id == env.currentPlan.id && env.planHome() != nil
+        let hasPlan = env.planHome() != nil
+        let isCurrent = plan.id == env.currentPlan.id && hasPlan
         let days = days ?? env.suggestedDays(for: plan)
+        let weekdays = weekdays ?? (env.planWeekdays().count == days ? env.planWeekdays() : PlanWeek.defaultWeekdays(count: days))
         let programName = plan.program(daysPerWeek: days)
         let workouts = env.templates.programs().first { $0.name == programName }?.templates ?? []
-        let weekdays = env.planWeekdays().count == days ? env.planWeekdays() : PlanWeek.defaultWeekdays(count: days)
-        let symbols = Calendar(identifier: .iso8601).shortWeekdaySymbols
-        let schedule = Array(weekdays.sorted().enumerated())
+        let today = (Calendar.current.component(.weekday, from: Date()) + 5) % 7 + 1 // ISO: Monday = 1
+        let catchUp = PlanWeek.catchUpWeekdays(count: days, weekdays: weekdays, today: today)
+        let unchanged = isCurrent && env.settings.planProgram == programName && weekdays == env.planWeekdays()
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 20) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(plan.title).font(.largeTitle)
                     Text(plan.summary).font(.subheadline).foregroundStyle(.secondary)
@@ -131,22 +142,17 @@ struct PlanDetailView: View {
                         .foregroundStyle(.secondary)
                         .padding(.top, 4)
                 }
-                if plan.days.count > 1 {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("DAYS A WEEK").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-                        HStack(spacing: 8) {
-                            ForEach(Array(plan.days), id: \.self) { count in
-                                let selected = count == days
-                                Button { self.days = count } label: {
-                                    FilterPill(title: String(localized: "\(count) days"), isSelected: selected)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityAddTraits(selected ? .isSelected : [])
-                                .accessibilityIdentifier("planDays-\(count)")
-                            }
-                        }
+                if plan.days.count > 1 { dayCountPicker(selected: days) }
+                VStack(alignment: .leading, spacing: 8) {
+                    caption("WHICH DAYS")
+                    WeekdayPicker(selection: Binding(get: { weekdays }, set: { self.weekdays = $0 }))
+                    if weekdays.count != days {
+                        Text("Pick ^[\(days) day](inflect: true). You picked \(weekdays.count).")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
                     }
                 }
+                if let catchUp, weekdays.count == days { thisWeekCard(catchUp, days: days, weekdays: weekdays, today: today) }
                 VStack(alignment: .leading, spacing: 2) {
                     Text("What's inside: \(AppEnvironment.splitName(for: programName))").font(.headline.weight(.medium))
                     Group {
@@ -159,14 +165,15 @@ struct PlanDetailView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }
-                .padding(.top, 4)
                 if !workouts.isEmpty {
-                    ForEach(schedule, id: \.element) { index, weekday in
-                        let workout = workouts[index % workouts.count]
-                        NavigationLink { TemplateDetailView(template: workout) } label: {
-                            dayCard(day: symbols[weekday % 7], workout: workout)
+                    VStack(spacing: 8) {
+                        ForEach(Array(weekdays.sorted().enumerated()), id: \.element) { index, weekday in
+                            let workout = workouts[index % workouts.count]
+                            NavigationLink { TemplateDetailView(template: workout) } label: {
+                                dayCard(day: Self.symbols[weekday % 7], workout: workout)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -174,17 +181,14 @@ struct PlanDetailView: View {
         }
         .safeAreaInset(edge: .bottom) {
             Group {
-                if isCurrent && env.settings.planProgram == programName {
+                if unchanged {
                     Button("This is your plan") {}.buttonStyle(.secondary).disabled(true)
                 } else {
-                    Button(isCurrent ? String(localized: "Switch to \(days) days a week") : String(localized: "Start this plan · \(days) days")) {
-                        env.startPlan(plan, daysPerWeek: days)
-                        if let onStart { onStart() } else {
-                            dismiss()
-                            env.selectedTab = .home
-                        }
+                    Button(isCurrent ? String(localized: "Save changes") : String(localized: "Start this plan · \(days) days")) {
+                        if hasPlan { isConfirming = true } else { start(days: days, weekdays: weekdays, catchUp: catchUp) }
                     }
                     .buttonStyle(.primary)
+                    .disabled(weekdays.count != days)
                     .accessibilityIdentifier("startThisPlan")
                 }
             }
@@ -193,8 +197,98 @@ struct PlanDetailView: View {
             .padding(.bottom, 8)
             .background(Theme.bottomFade)
         }
+        .alert(isCurrent ? String(localized: "Change your plan?") : String(localized: "Switch to \(plan.title)?"), isPresented: $isConfirming) {
+            Button(isCurrent ? String(localized: "Save changes") : String(localized: "Switch plan")) {
+                start(days: days, weekdays: weekdays, catchUp: catchUp)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if isCurrent {
+                Text("\(plan.title) keeps going with \(AppEnvironment.splitName(for: programName)) on \(Self.names(weekdays)).")
+            } else {
+                Text("\(env.currentPlan.title) stops and \(plan.title) starts this week, week 1 of \(plan.weeks). Your workouts and records stay.")
+            }
+        }
         .screenBackground()
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func start(days: Int, weekdays: Set<Int>, catchUp: Set<Int>?) {
+        env.startPlan(plan, daysPerWeek: days, weekdays: weekdays, thisWeek: fitThisWeek ? catchUp : nil)
+        if let onStart { onStart() } else {
+            dismiss()
+            env.selectedTab = .home
+        }
+    }
+
+    private func caption(_ text: LocalizedStringKey) -> some View {
+        Text(text).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+    }
+
+    /// One large button per day count, with the split it gets.
+    private func dayCountPicker(selected: Int) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            caption("DAYS A WEEK")
+            HStack(spacing: 8) {
+                ForEach(Array(plan.days), id: \.self) { count in
+                    let isSelected = count == selected
+                    Button {
+                        days = count
+                        weekdays = nil
+                        fitThisWeek = false
+                    } label: {
+                        VStack(spacing: 2) {
+                            Text("\(count) days").font(.title3.weight(.semibold))
+                            Text(AppEnvironment.splitName(for: plan.program(daysPerWeek: count)))
+                                .font(.caption)
+                                .foregroundStyle(isSelected ? .white.opacity(0.85) : .secondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 68)
+                        .background {
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(isSelected ? AnyShapeStyle(Theme.primaryGradient) : AnyShapeStyle(Theme.glassFill))
+                        }
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .strokeBorder(isSelected ? Theme.accent.opacity(0.6) : Theme.border)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(isSelected ? .isSelected : [])
+                    .accessibilityIdentifier("planDays-\(count)")
+                }
+            }
+        }
+    }
+
+    /// Starting mid-week: offer to fit the week's workouts into the days left.
+    private func thisWeekCard(_ catchUp: Set<Int>, days: Int, weekdays: Set<Int>, today: Int) -> some View {
+        let usual = weekdays.filter { $0 >= today }
+        return VStack(alignment: .leading, spacing: 8) {
+            Toggle(isOn: $fitThisWeek) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(catchUp.count < days
+                         ? String(localized: "Fit ^[\(catchUp.count) workout](inflect: true) into this week")
+                         : String(localized: "Fit all \(days) workouts into this week"))
+                        .font(.subheadline.weight(.medium))
+                    Text(fitThisWeek
+                         ? String(localized: "This week: \(Self.names(catchUp)). From next week: \(Self.names(weekdays)).")
+                         : usual.isEmpty
+                            ? String(localized: "You're starting late this week, so your first workout is next week.")
+                            : String(localized: "This week you'd train \(Self.names(usual)) only, since the week has started."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .tint(Theme.accent)
+            .accessibilityIdentifier("fitThisWeek")
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard(cornerRadius: 24)
     }
 
     private func dayCard(day: String, workout: WorkoutTemplate) -> some View {

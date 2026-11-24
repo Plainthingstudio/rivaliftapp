@@ -99,6 +99,10 @@ final class RivaliftUITests: XCTestCase {
         XCTAssertTrue(program.waitForExistence(timeout: 5))
         program.tap()
         app.buttons["startThisPlan"].tap()
+        // Onboarding already gave a plan, so switching asks first.
+        let confirm = app.alerts.buttons["Switch plan"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        confirm.tap()
         XCTAssertTrue(app.buttons["startPlanWorkout"].waitForExistence(timeout: 5))
         XCTAssertTrue(labelled(app, "Full Body A").exists)
 

@@ -44,6 +44,8 @@ final class UserSettings {
     var planStartedAt: Date?
     /// Home mode: `HomeMode` raw value.
     var homeModeRaw: String = HomeMode.plan.rawValue
+    /// Training days for one week only, when a plan starts mid-week: "weekStartKey|2,4,5,7".
+    var weekOverrideRaw: String = ""
     /// Plan exercises swapped "just today" (`ExerciseSwap.DaySwaps`).
     var daySwapsRaw: String = ""
     /// Weekly streak the user committed to during onboarding (0 = none).

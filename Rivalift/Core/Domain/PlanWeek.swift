@@ -53,6 +53,22 @@ struct PlanWeek: Equatable, Sendable {
         return PlanWeek(days: days, todayIndex: todayIndex, nextWorkoutID: next)
     }
 
+    /// Starting mid-week: days this week that fit `count` workouts from `today` (ISO weekday)
+    /// on. Keeps the training days still ahead and adds free days, preferring ones not next to
+    /// another workout. Nil when the usual days already fit. Late in the week it returns as
+    /// many days as are left.
+    static func catchUpWeekdays(count: Int, weekdays: Set<Int>, today: Int) -> Set<Int>? {
+        var chosen = weekdays.filter { $0 >= today }
+        guard chosen.count < count, today <= 7 else { return nil }
+        var free = (today...7).filter { !chosen.contains($0) }
+        while chosen.count < count, !free.isEmpty {
+            let pick = free.first { !chosen.contains($0 - 1) && !chosen.contains($0 + 1) } ?? free[0]
+            chosen.insert(pick)
+            free.removeAll { $0 == pick }
+        }
+        return chosen
+    }
+
     /// Training days spread over the week when the user has not picked any.
     static func defaultWeekdays(count: Int) -> Set<Int> {
         switch count {

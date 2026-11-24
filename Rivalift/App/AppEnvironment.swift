@@ -422,11 +422,12 @@ extension AppEnvironment {
         }
         let start = settings.planStartedAt ?? now
         let weekdays = planWeekdays(now: now)
+        let scheduleDays = thisWeekWeekdays(now: now)
         let weekStart = calendar.weekStart(for: now)
         let thisWeek = planSessions.filter { $0.startedAt >= weekStart }
         let week = PlanWeek.make(
             rotation: program.templates.map(\.id),
-            weekdays: weekdays,
+            weekdays: scheduleDays,
             done: thisWeek.reversed().compactMap { session in session.templateID.map { PlanWeek.Done(date: session.startedAt, workoutID: $0) } },
             lastDone: planSessions.first?.templateID,
             now: now,
@@ -456,11 +457,22 @@ extension AppEnvironment {
     func setTrainingDays(_ days: Set<Int>) {
         let oldCount = planWeekdays().count
         settings.trainingWeekdays = days
+        settings.weekOverrideRaw = ""
         if !days.isEmpty, days.count != oldCount {
             settings.planProgram = currentPlan.program(daysPerWeek: days.count)
             settings.requestWeeklyTarget(days.count)
         }
         saveSettings()
+    }
+
+    /// This week's training days: a mid-week start's one-week days, else `planWeekdays`.
+    func thisWeekWeekdays(now: Date = Date()) -> Set<Int> {
+        let calendar = WeekCalendar()
+        let parts = settings.weekOverrideRaw.split(separator: "|")
+        if parts.count == 2, parts[0] == calendar.localDateString(for: calendar.weekStart(for: now)) {
+            return Set(parts[1].split(separator: ",").compactMap { Int($0) })
+        }
+        return planWeekdays(now: now)
     }
 
     /// Training days picked in onboarding or on the Plan screen, else spread over the week for the target.
@@ -481,13 +493,18 @@ extension AppEnvironment {
     }
 
     /// Switch plan: its program for `daysPerWeek`, its length, starting this week on Home.
-    /// Training days follow the day count; the weekly target follows from next week.
-    func startPlan(_ plan: TrainingPlan, daysPerWeek: Int, now: Date = Date()) {
+    /// The weekly target follows from next week.
+    /// - Parameters:
+    ///   - weekdays: the training days from now on.
+    ///   - thisWeek: other days for this week only (mid-week start), or nil.
+    func startPlan(_ plan: TrainingPlan, daysPerWeek: Int, weekdays: Set<Int>, thisWeek: Set<Int>? = nil, now: Date = Date()) {
         settings.planID = plan.id
         settings.planProgram = plan.program(daysPerWeek: daysPerWeek)
-        if planWeekdays(now: now).count != daysPerWeek {
-            settings.trainingWeekdays = PlanWeek.defaultWeekdays(count: daysPerWeek)
-        }
+        settings.trainingWeekdays = weekdays
+        let calendar = WeekCalendar()
+        settings.weekOverrideRaw = thisWeek.map {
+            calendar.localDateString(for: calendar.weekStart(for: now)) + "|" + $0.sorted().map(String.init).joined(separator: ",")
+        } ?? ""
         settings.requestWeeklyTarget(daysPerWeek, now: now)
         settings.streakGoalWeeks = plan.weeks
         settings.planStartedAt = now

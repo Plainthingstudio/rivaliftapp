@@ -58,6 +58,17 @@ struct PlanWeekTests {
         #expect(week.nextWorkoutID == c)
     }
 
+    @Test func catchUpFillsTheRestOfTheWeek() {
+        // 4 days (Mon Tue Thu Fri) starting Tuesday: Tue Thu Fri still ahead, add Sunday (not next to Fri).
+        #expect(PlanWeek.catchUpWeekdays(count: 4, weekdays: [1, 2, 4, 5], today: 2) == [2, 4, 5, 7])
+        // 3 days (Mon Wed Fri) starting Thursday: Fri ahead, add Sun, then Thu.
+        #expect(PlanWeek.catchUpWeekdays(count: 3, weekdays: [1, 3, 5], today: 4) == [4, 5, 7])
+        // Starting Saturday leaves two days at most.
+        #expect(PlanWeek.catchUpWeekdays(count: 4, weekdays: [1, 2, 4, 5], today: 6) == [6, 7])
+        // Starting Monday: the usual days fit.
+        #expect(PlanWeek.catchUpWeekdays(count: 3, weekdays: [1, 3, 5], today: 1) == nil)
+    }
+
     @Test func noTrainingDaysFallsBackToSpreadForTarget() {
         #expect(PlanWeek.defaultWeekdays(count: 1) == [6])
         #expect(PlanWeek.defaultWeekdays(count: 3) == [1, 3, 5])
