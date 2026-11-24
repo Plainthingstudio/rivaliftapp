@@ -32,7 +32,6 @@ struct HistoryView: View {
                                 actionTitle: "Start your first workout"
                             ) {
                                 env.selectedTab = .home
-                                env.workout.isStartScreenPresented = true
                             }
                         } else {
                             if let progress {

@@ -36,16 +36,6 @@ final class TemplateRepository {
         return order.map { Program(name: $0, templates: groups[$0] ?? []) }
     }
 
-    /// Recently used templates for the Home quick-start row.
-    func recentlyUsed(limit: Int = 3) -> [WorkoutTemplate] {
-        var descriptor = FetchDescriptor<WorkoutTemplate>(
-            predicate: #Predicate { $0.lastUsedAt != nil },
-            sortBy: [SortDescriptor(\.lastUsedAt, order: .reverse)]
-        )
-        descriptor.fetchLimit = limit
-        return (try? context.fetch(descriptor)) ?? []
-    }
-
     func template(id: UUID) -> WorkoutTemplate? {
         var descriptor = FetchDescriptor<WorkoutTemplate>(predicate: #Predicate { $0.id == id })
         descriptor.fetchLimit = 1

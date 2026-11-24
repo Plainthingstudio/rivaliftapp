@@ -108,7 +108,7 @@ Setiap persyaratan punya ID agar mudah dirujuk saat memberi tugas ke Claude Code
 
 | ID | Persyaratan | Prioritas |
 | --- | --- | --- |
-| LOG-01 | "Start workout" membuka pilihan dulu: rekomendasi (hari berikutnya dari program terakhir atau program onboarding), pilih latihan satuan, "ulangi sesi terakhir", atau template. Sesi dan durasinya baru mulai setelah user memilih | P0 |
+| LOG-01 | Memulai latihan selalu dari pilihan yang jelas, tanpa layar perantara: latihan hari ini dari plan (My Plan), workout buatan sendiri dengan satu tap, "ulangi sesi terakhir", pilih latihan satuan, atau template siap pakai (My Workouts). Sesi dan durasinya baru mulai setelah user memilih | P0 |
 | LOG-02 | Tambah, hapus, dan urutkan ulang latihan dalam sesi (drag) | P0 |
 | LOG-03 | Tabel set per latihan: nomor set, kolom "previous", beban, repetisi, tombol centang | P0 |
 | LOG-04 | Kolom "previous" menampilkan beban × repetisi set yang sama pada sesi terakhir latihan tersebut; tap untuk mengisi otomatis | P0 |
@@ -178,11 +178,11 @@ Tujuannya: pemula tidak perlu memilih program atau memahami istilah split. Plan 
 | PLAN-02 | Onboarding memilih plan dari tujuan (strength → Get Stronger, muscle → Build Muscle, consistency → Get in Shape, fitness → Overall Fitness). Plan bisa diganti dari Library atau layar Plan; plan baru mulai minggu ini dan hari latihan tidak ikut berubah | P0 |
 | PLAN-03 | Home mode My Plan: kartu plan (nama, split dan hari per minggu, "Week x of n", latihan selesai), strip Senin–Minggu (selesai, hari ini, akan datang, terlewat, istirahat), daftar latihan hari ini dengan resep (set · repetisi · saran beban dari PRG-01), tombol "Start today's workout" yang menempel di bawah. Hari istirahat atau latihan selesai menampilkan "Next up" dan tombol "Train anyway" | P0 |
 | PLAN-04 | Rotasi: latihan berikutnya adalah latihan setelah sesi plan terakhir yang selesai, dibagikan ke hari latihan pilihan user (atau hari bawaan sesuai target). Hari terlewat tidak melompati latihan | P0 |
-| PLAN-05 | Menu mode di header Home: My Plan, Custom (Home bebas: ringkasan minggu, Start Workout, quick start), dan Quick Workout | P0 |
+| PLAN-05 | Menu mode di header Home: My Plan, My Workouts (Home bebas: ringkasan minggu, workout buatan sendiri yang mulai dengan satu tap, ulangi sesi terakhir, pilih latihan, buat workout, template siap pakai; tanpa rekomendasi dari plan), dan Quick Workout | P0 |
 | PLAN-06 | Tukar latihan (⇄) di setiap latihan hari ini: sampai 4 alternatif dengan otot utama sama yang belum ada di sesi itu; pilihan "Just today" (berlaku saat latihan dimulai, kedaluwarsa besok) atau "Always in my plan" | P1 |
 | PLAN-07 | Detail plan dibuka dari kartu plan: mode preview (latihan per hari dengan hari jatuhnya minggu ini, hari latihan, panjang plan); tombol Edit membuka pengaturan hari latihan, panjang plan (4–16 minggu), dan "Change plan" | P0 |
 | PLAN-08 | Quick Workout: pilih alat (full gym, dumbbell, tanpa alat, band), durasi (15–60 menit → 3–6 latihan), dan fokus (full body, upper, legs, core); latihan disusun otomatis (compound dulu, gerakan umum dulu, gerakan lanjutan seperti pistol squat tidak ditawarkan) dengan tombol acak | P1 |
-| PLAN-09 | Hanya sesi yang dimulai dari plan yang memajukan plan. Semua sesi (plan, Quick Workout, Custom) dihitung untuk streak dan liga | P0 |
+| PLAN-09 | Hanya sesi yang dimulai dari plan yang memajukan plan. Semua sesi (plan, Quick Workout, My Workouts) dihitung untuk streak dan liga | P0 |
 
 **Acceptance criteria:**
 
@@ -349,7 +349,7 @@ Diagram menunjukkan alur utama; layar pendukung tercantum di tabel berikut.
 | Layar | Isi utama | Persyaratan terkait |
 | --- | --- | --- |
 | Onboarding | Nama, tujuan, level, satuan, target dan hari latihan, komitmen streak, rekomendasi program | AUTH-04, AUTH-05 |
-| Home | Menu mode (My Plan, Custom, Quick Workout), ikon streak; My Plan: kartu plan, strip minggu, latihan hari ini dengan tukar latihan, tombol mulai; Custom: ringkasan minggu, tombol mulai (membuka pilihan), template cepat; lalu kartu liga, personal best minggu ini, metrik latihan | PLAN-03, PLAN-05, PLAN-06, PROG-06, LOG-01 |
+| Home | Menu mode (My Plan, My Workouts, Quick Workout), ikon streak; My Plan: kartu plan, strip minggu, latihan hari ini dengan tukar latihan, tombol mulai; My Workouts: ringkasan minggu, workout sendiri dengan tombol ▶, ulangi sesi terakhir, Pick exercises, Create workout, template siap pakai; lalu kartu liga, personal best minggu ini, metrik latihan | PLAN-03, PLAN-05, PLAN-06, PROG-06, LOG-01 |
 | Plan | Preview plan (latihan per hari, hari latihan, panjang plan) dan mode Edit dengan Change plan | PLAN-07, PLAN-02 |
 | Swap Exercise | Sheet alternatif latihan, "Just today" atau "Always in my plan" | PLAN-06 |
 | Quick Workout | Pilihan alat, durasi, fokus; daftar latihan; acak; mulai | PLAN-08 |
@@ -729,7 +729,7 @@ Diperbarui 24 Nov 2026 mengikuti konsep "Rivalift Coach Mode" dan desain minimal
 
 - Header: tanggal, menu mode "My Plan ▾" (My Plan, Custom, Quick Workout), dan ikon api streak pribadi yang membuka layar Streak.
 - My Plan: kartu plan (nama tujuan, split dan hari per minggu, "Week x of n", segmen per minggu, latihan selesai), strip Senin–Minggu, "Today · <latihan>" dengan daftar latihan (foto, resep, tombol ⇄), tombol "Start today's workout" menempel di bawah. Hari istirahat: kartu "Rest day" dan "Next up".
-- Custom: kartu "This week" (7 titik hari, "2 of 3 sessions"), tombol "Start workout" yang membuka pilihan (LOG-01), template cepat.
+- My Workouts: kartu "This week" (7 titik hari, "2 of 3 sessions"), "Your workouts" (tiap workout dengan ▶ untuk langsung mulai, kosong: ajakan membuat workout pertama), "Repeat last workout", tombol Pick exercises dan Create workout, tautan "Browse ready-made workouts" (LOG-01).
 - Kartu liga: "Weekly league", nama grup dan hitung mundur, peringkat "#2 of 6", top 3 (atau top 2 + user) dengan baris user disorot, selisih poin. Tanpa grup: ajakan membuat atau bergabung.
 - "Personal bests this week" dengan jumlah rekor baru.
 - "Your training": workouts, waktu latihan, dan total beban minggu ini vs minggu lalu, plus grafik 8 minggu.

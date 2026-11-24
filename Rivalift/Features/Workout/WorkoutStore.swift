@@ -57,9 +57,6 @@ final class WorkoutStore {
     var isStalePromptPresented = false
     /// Set when a start is requested while another session is active.
     var pendingStart: StartRequest?
-    /// "Start workout" pushes a chooser screen on Home first; the session (and its clock)
-    /// starts only after the user picks what to do. Starting pops the chooser.
-    var isStartScreenPresented = false
     var notice: String?
     var onDataChange: (@MainActor () -> Void)?
 
@@ -157,7 +154,6 @@ final class WorkoutStore {
             session = sessions.start(name: String(localized: "Quick Workout"), items: planned)
         }
         isPresented = true
-        isStartScreenPresented = false
         onDataChange?()
     }
 

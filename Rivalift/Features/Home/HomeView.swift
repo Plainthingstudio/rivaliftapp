@@ -6,13 +6,19 @@ struct HomeView: View {
     @State private var progress: WeekProgress?
     /// Personal streak with rest weeks (the league streak has none).
     @State private var streak: PersonalStreak?
-    @State private var quickTemplates: [WorkoutTemplate] = []
+    @State private var myTemplates: [WorkoutTemplate] = []
+    @State private var lastSessionName: String?
+    @State private var isPickerPresented = false
+    /// Picked exercises start once the picker has closed, so the workout cover is not
+    /// presented on top of a closing sheet.
+    @State private var pickedStart: WorkoutStore.StartRequest?
+    @State private var editing: WorkoutTemplate?
     @State private var recentRecords: [PersonalRecord] = []
     @State private var overview: AppEnvironment.TrainingOverview?
     @State private var plan: AppEnvironment.PlanHome?
     @State private var isQuickPresented = false
 
-    /// My Plan needs a plan; without one (onboarding skipped) Home is always Custom.
+    /// My Plan needs a plan; without one (onboarding skipped) Home is always My Workouts.
     private var showsPlan: Bool { plan != nil && env.settings.homeMode == .plan }
 
     var body: some View {
@@ -27,8 +33,8 @@ struct HomeView: View {
                     PlanToday(plan: plan)
                 } else {
                     if let progress { WeekCard(progress: progress) }
-                    startButton
-                    if !quickTemplates.isEmpty { quickStart }
+                    resumeButton
+                    myWorkouts
                 }
                 LeagueTeaserCard()
                 if !recentRecords.isEmpty { records }
@@ -42,8 +48,14 @@ struct HomeView: View {
         .screenBackground()
         .navigationTitle("Home")
         .toolbar(.hidden, for: .navigationBar)
-        .navigationDestination(isPresented: Bindable(env.workout).isStartScreenPresented) {
-            StartWorkoutView()
+        .sheet(isPresented: $isPickerPresented, onDismiss: startPicked) {
+            ExercisePickerView(title: "Pick exercises") { selected in
+                pickedStart = .exercises(selected.map(\.id))
+            }
+            .environment(env)
+        }
+        .sheet(item: $editing, onDismiss: reload) { template in
+            TemplateEditorView(template: template).environment(env)
         }
         .navigationDestination(isPresented: $isQuickPresented) {
             QuickWorkoutView()
@@ -63,7 +75,7 @@ struct HomeView: View {
                     Menu {
                         Picker("Home mode", selection: homeMode) {
                             Label("My Plan", systemImage: "sparkles").tag(HomeMode.plan)
-                            Label("Custom", systemImage: "square.and.pencil").tag(HomeMode.custom)
+                            Label("My Workouts", systemImage: "square.and.pencil").tag(HomeMode.custom)
                         }
                         Divider()
                         Button { isQuickPresented = true } label: {
@@ -72,7 +84,7 @@ struct HomeView: View {
                         }
                     } label: {
                         HStack(spacing: 6) {
-                            Text(showsPlan ? "My Plan" : "Custom").font(.largeTitle)
+                            Text(showsPlan ? "My Plan" : "My Workouts").font(.largeTitle)
                             Image(systemName: "chevron.down").font(.headline)
                         }
                         .foregroundStyle(.white)
@@ -113,53 +125,108 @@ struct HomeView: View {
     }
 
     @ViewBuilder
-    private var startButton: some View {
+    private var resumeButton: some View {
         if env.workout.session != nil {
             Button("Resume workout") { env.workout.isPresented = true }
                 .buttonStyle(.primary)
-        } else {
-            Button {
-                env.workout.isStartScreenPresented = true
-            } label: {
-                HStack(spacing: 6) {
-                    Image("IconPlay").accessibilityHidden(true)
-                    Text("Start Workout")
-                }
-            }
-            .buttonStyle(.primary)
-            .accessibilityIdentifier("startWorkoutButton")
         }
     }
 
-    private var quickStart: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Quick start").font(.callout)
+    /// My Workouts mode: the user's own workouts start in one tap; no plan recommendation here.
+    private var myWorkouts: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Your workouts").font(.headline.weight(.medium))
                 Spacer()
-                NavigationLink { TemplatesView() } label: {
-                    HStack(spacing: 0) {
-                        Text("All templates")
-                        Image("IconChevronRight").accessibilityHidden(true)
+                if !myTemplates.isEmpty {
+                    NavigationLink("Manage") { TemplatesView(showsPrograms: false) }
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .frame(minHeight: Theme.minTap)
+                }
+            }
+            .padding(.horizontal, 4)
+            if myTemplates.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Build your first workout").font(.headline.weight(.medium))
+                    Text("Save the exercises you like as a workout, then start it here in one tap.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .glassCard()
+            }
+            ForEach(myTemplates) { workoutRow($0) }
+            if let lastSessionName {
+                Button { env.workout.requestStart(.repeatLast) } label: {
+                    HStack(spacing: 8) {
+                        RingIcon(image: "Icon_ring_repeat", strong: true)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("Repeat last workout").font(.callout)
+                            Text(lastSessionName).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        Spacer(minLength: 0)
+                        Image("IconChevronCircle").accessibilityHidden(true)
                     }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(minHeight: Theme.minTap)
+                    .padding(16)
+                    .glassCard()
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("repeatLastWorkout")
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, -12)
-            HStack(spacing: 4) {
-                ForEach(quickTemplates.prefix(2)) { template in
-                    NavigationLink {
-                        TemplateDetailView(template: template)
-                    } label: {
-                        QuickStartCard(template: template)
-                    }
-                    .buttonStyle(.plain)
+            HStack(spacing: 8) {
+                Button { isPickerPresented = true } label: { Label("Pick exercises", systemImage: "plus") }
+                    .buttonStyle(.secondary)
+                    .accessibilityIdentifier("startPickExercises")
+                Button { editing = env.templates.create(name: String(localized: "New workout")) } label: {
+                    Label("Create workout", systemImage: "square.and.pencil")
                 }
+                .buttonStyle(.secondary)
+                .accessibilityIdentifier("createWorkoutButton")
             }
+            .padding(.top, 4)
+            NavigationLink { TemplatesView() } label: {
+                Text("Browse ready-made workouts").font(.subheadline.weight(.medium)).frame(maxWidth: .infinity, minHeight: Theme.minTap)
+            }
+            .accessibilityIdentifier("browseTemplates")
         }
+    }
+
+    /// Tap the card for details; the play button starts it right away.
+    private func workoutRow(_ template: WorkoutTemplate) -> some View {
+        HStack(spacing: 12) {
+            NavigationLink { TemplateDetailView(template: template) } label: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(template.name).font(.callout)
+                    DividedText(parts: Array(template.orderedExercises.compactMap(\.exercise?.name).prefix(3)))
+                    Text("\(template.totalSets) sets · \(template.estimatedDurationMin) min")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Button { env.workout.requestStart(.template(template.id)) } label: {
+                Image(systemName: "play.fill")
+                    .font(.body)
+                    .foregroundStyle(.black)
+                    .frame(width: Theme.minTap, height: Theme.minTap)
+                    .background(.white, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Start \(template.name)")
+        }
+        .padding(16)
+        .glassCard()
+    }
+
+    private func startPicked() {
+        guard let pickedStart else { return }
+        self.pickedStart = nil
+        env.workout.requestStart(pickedStart)
     }
 
     private var records: some View {
@@ -221,11 +288,9 @@ struct HomeView: View {
     private func reload() {
         progress = env.weekProgress()
         streak = env.streakOverview().streak
-        quickTemplates = env.templates.recentlyUsed()
-        if quickTemplates.isEmpty {
-            let plan = env.templates.programs().first { $0.name == env.settings.planProgram }?.templates
-            quickTemplates = Array((plan ?? env.templates.builtInTemplates()).prefix(3))
-        }
+        // An empty workout (created, then left without exercises) has nothing to start.
+        myTemplates = env.templates.userTemplates().filter { !$0.orderedExercises.isEmpty }
+        lastSessionName = env.sessions.completedSessions().first?.name
         let calendar = WeekCalendar()
         let weekSessions = env.sessions.completedSessions(from: calendar.weekStart(for: Date()), to: calendar.weekEnd(for: Date()))
         recentRecords = Array(
@@ -449,63 +514,6 @@ struct LeagueTeaserCard: View {
             Spacer(minLength: 0)
             Image(systemName: "chevron.right").foregroundStyle(.secondary).accessibilityHidden(true)
         }
-    }
-}
-
-/// Template card with an illustration of its main lift.
-private struct QuickStartCard: View {
-    let template: WorkoutTemplate
-
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text(template.name).font(.callout).lineLimit(1)
-            Spacer(minLength: 0)
-            HStack(spacing: 0) {
-                HStack(spacing: 2) {
-                    Image("IconClock")
-                    Text("\(template.estimatedDurationMin) min")
-                }
-                Spacer(minLength: 4)
-                Rectangle().fill(.white.opacity(0.2)).frame(width: 0.5, height: 10)
-                Spacer(minLength: 4)
-                HStack(spacing: 2) {
-                    Image("IconClipboard")
-                    Text("^[\(template.orderedExercises.count) exercise](inflect: true)")
-                }
-            }
-            .font(.caption.weight(.light))
-            .lineLimit(1)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, minHeight: 160, alignment: .leading)
-        .background { art }
-        .glassCard()
-        .accessibilityElement(children: .combine)
-    }
-
-    /// Position of each illustration inside the card, as fractions of the card (from the design).
-    private var art: some View {
-        let lower = isLowerBody
-        let rect = lower
-            ? CGRect(x: 0.0892, y: 0.2179, width: 0.7834, height: 0.7069)
-            : CGRect(x: 0.1695, y: 0.2386, width: 0.6723, height: 0.5924)
-        return GeometryReader { geo in
-            Image(lower ? "QuickStartLower" : "QuickStartUpper")
-                .resizable()
-                .scaledToFit()
-                .blendMode(.lighten) // the illustration's near-black backdrop melts into the card
-                .frame(width: geo.size.width * rect.width, height: geo.size.height * rect.height)
-                .offset(x: geo.size.width * rect.minX, y: geo.size.height * rect.minY)
-        }
-        .accessibilityHidden(true)
-    }
-
-    // ponytail: two illustrations (squat, bench); per-template art when templates get images
-    private var isLowerBody: Bool {
-        let muscles = template.orderedExercises.compactMap(\.exercise?.primaryMuscle)
-        let lower = muscles.filter { [.quads, .hamstrings, .glutes, .calves].contains($0) }.count
-        return lower * 2 > muscles.count
     }
 }
 

@@ -17,13 +17,13 @@ final class RivaliftUITests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
     }
 
-    /// The start screen (pick exercises, templates) lives in Custom mode; Home opens in My Plan.
+    /// Pick exercises and ready-made workouts live in My Workouts mode; Home opens in My Plan.
     private func openStartScreen(_ app: XCUIApplication) {
         let menu = app.buttons["homeModeMenu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 5))
         menu.tap()
-        app.buttons["Custom"].tap()
-        app.buttons["startWorkoutButton"].tap()
+        app.buttons["My Workouts"].tap()
+        XCTAssertTrue(app.buttons["startPickExercises"].waitForExistence(timeout: 5))
     }
 
     /// - Parameter trainToday: picks today as the only training day, so the plan has a workout

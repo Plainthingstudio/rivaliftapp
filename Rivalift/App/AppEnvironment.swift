@@ -185,28 +185,6 @@ extension AppEnvironment {
             .compactMap { item in byID[item.id].map { (item, $0) } }
     }
 
-    struct Recommendation {
-        var template: WorkoutTemplate
-        var reason: String
-    }
-
-    /// Next day of the program the user last trained, else of the onboarding plan.
-    func recommendedWorkout() -> Recommendation? {
-        let programs = templates.programs()
-        if let lastID = sessions.completedSessions().first?.templateID,
-           let last = templates.template(id: lastID), last.isBuiltIn,
-           let program = programs.first(where: { $0.name == last.programName }),
-           let nextID = PlanRecommender.next(in: program.templates.map(\.id), after: last.id),
-           let next = program.templates.first(where: { $0.id == nextID }) {
-            return Recommendation(template: next, reason: String(localized: "Next in \(Self.splitName(for: program.name)) · last time \(last.name)"))
-        }
-        guard let program = programs.first(where: { $0.name == settings.planProgram }) else { return nil }
-        let lastUsed = program.templates.filter { $0.lastUsedAt != nil }.max { ($0.lastUsedAt ?? .distantPast) < ($1.lastUsedAt ?? .distantPast) }
-        guard let nextID = PlanRecommender.next(in: program.templates.map(\.id), after: lastUsed?.id),
-              let next = program.templates.first(where: { $0.id == nextID }) else { return nil }
-        return Recommendation(template: next, reason: String(localized: "From your plan · \(currentPlan.title)"))
-    }
-
     /// Client estimate of this week's Consistency score from the user's own workouts.
     /// `excluding` leaves one session out, for "before this workout" comparisons (SOC-18).
     func leagueEstimate(now: Date = Date(), excluding sessionID: UUID? = nil) -> LeagueScoreEstimator.Breakdown {
