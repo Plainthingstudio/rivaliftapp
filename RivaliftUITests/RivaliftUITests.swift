@@ -26,7 +26,9 @@ final class RivaliftUITests: XCTestCase {
         app.buttons["startWorkoutButton"].tap()
     }
 
-    private func launchAndOnboard() -> XCUIApplication {
+    /// - Parameter trainToday: picks today as the only training day, so the plan has a workout
+    ///   today whatever day the tests run (Home shows a rest day otherwise).
+    private func launchAndOnboard(trainToday: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-ui-testing"]
         app.launch()
@@ -43,6 +45,10 @@ final class RivaliftUITests: XCTestCase {
         app.buttons["level-beginner"].tap()
         app.buttons["unit-kg"].tap()
         app.buttons["target-3"].tap()
+        if trainToday {
+            let calendar = Calendar.current
+            app.buttons[calendar.weekdaySymbols[calendar.component(.weekday, from: Date()) - 1]].tap()
+        }
         app.buttons["scheduleContinue"].tap()
         app.buttons["commitButton"].tap()
         XCTAssertTrue(app.buttons["onboardingFinish"].waitForExistence(timeout: 5))
@@ -65,7 +71,7 @@ final class RivaliftUITests: XCTestCase {
 
     @MainActor
     func testSwapPlanExerciseAndOpenPlan() throws {
-        let app = launchAndOnboard()
+        let app = launchAndOnboard(trainToday: true)
 
         let swap = app.buttons["swapExercise"].firstMatch
         XCTAssertTrue(swap.waitForExistence(timeout: 5))

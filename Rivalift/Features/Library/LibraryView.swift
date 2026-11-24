@@ -104,65 +104,85 @@ struct PlanCatalogCard: View {
     }
 }
 
-/// A plan before starting it: what it does and the workouts inside it for your weekly target.
+/// A plan before starting it: what it does, how many days a week, and that week's workouts.
 struct PlanDetailView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.dismiss) private var dismiss
     let plan: TrainingPlan
+    /// After starting; the default goes back and shows Home.
+    var onStart: (() -> Void)?
+    @State private var days: Int?
 
     var body: some View {
         let isCurrent = plan.id == env.currentPlan.id && env.planHome() != nil
-        let programName = plan.program(daysPerWeek: env.settings.effectiveWeeklyTarget())
-        let program = env.templates.programs().first { $0.name == programName }
+        let days = days ?? env.suggestedDays(for: plan)
+        let programName = plan.program(daysPerWeek: days)
+        let workouts = env.templates.programs().first { $0.name == programName }?.templates ?? []
+        let weekdays = env.planWeekdays().count == days ? env.planWeekdays() : PlanWeek.defaultWeekdays(count: days)
+        let symbols = Calendar(identifier: .iso8601).shortWeekdaySymbols
+        let schedule = Array(weekdays.sorted().enumerated())
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(plan.title).font(.largeTitle)
                     Text(plan.summary).font(.subheadline).foregroundStyle(.secondary)
-                    Text("\(plan.daysText) · \(plan.weeks) weeks · \(plan.levelName)")
+                    Text("\(plan.weeks) weeks · \(plan.levelName)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.top, 4)
                 }
-                Text("What's inside: \(AppEnvironment.splitName(for: programName))")
-                    .font(.headline.weight(.medium))
-                    .padding(.top, 8)
-                ForEach(Array((program?.templates ?? []).enumerated()), id: \.element.id) { index, workout in
-                    NavigationLink { TemplateDetailView(template: workout) } label: {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Day \(index + 1) · \(workout.name)").font(.headline.weight(.medium))
-                                    Text("\(workout.orderedExercises.count) exercises · \(workout.estimatedDurationMin) min")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                if plan.days.count > 1 {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("DAYS A WEEK").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                        HStack(spacing: 8) {
+                            ForEach(Array(plan.days), id: \.self) { count in
+                                let selected = count == days
+                                Button { self.days = count } label: {
+                                    FilterPill(title: String(localized: "\(count) days"), isSelected: selected)
                                 }
-                                Spacer()
-                                Image(systemName: "chevron.right").foregroundStyle(.secondary).accessibilityHidden(true)
-                            }
-                            HStack(spacing: 6) {
-                                ForEach(workout.orderedExercises.prefix(5)) { ExercisePhoto(exercise: $0.exercise, width: 52, height: 40) }
+                                .buttonStyle(.plain)
+                                .accessibilityAddTraits(selected ? .isSelected : [])
+                                .accessibilityIdentifier("planDays-\(count)")
                             }
                         }
-                        .padding(16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .glassCard(cornerRadius: 24)
-                        .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("What's inside: \(AppEnvironment.splitName(for: programName))").font(.headline.weight(.medium))
+                    Group {
+                        if workouts.count < days {
+                            Text("^[\(workouts.count) workout](inflect: true) on repeat. Next week picks up where you left off.")
+                        } else {
+                            Text("^[\(days) workout](inflect: true) a week.")
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                .padding(.top, 4)
+                if !workouts.isEmpty {
+                    ForEach(schedule, id: \.element) { index, weekday in
+                        let workout = workouts[index % workouts.count]
+                        NavigationLink { TemplateDetailView(template: workout) } label: {
+                            dayCard(day: symbols[weekday % 7], workout: workout)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
             .padding()
         }
         .safeAreaInset(edge: .bottom) {
             Group {
-                if isCurrent {
+                if isCurrent && env.settings.planProgram == programName {
                     Button("This is your plan") {}.buttonStyle(.secondary).disabled(true)
                 } else {
-                    Button("Start this plan") {
-                        env.startPlan(plan)
-                        dismiss()
-                        env.selectedTab = .home
+                    Button(isCurrent ? String(localized: "Switch to \(days) days a week") : String(localized: "Start this plan · \(days) days")) {
+                        env.startPlan(plan, daysPerWeek: days)
+                        if let onStart { onStart() } else {
+                            dismiss()
+                            env.selectedTab = .home
+                        }
                     }
                     .buttonStyle(.primary)
                     .accessibilityIdentifier("startThisPlan")
@@ -175,5 +195,27 @@ struct PlanDetailView: View {
         }
         .screenBackground()
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func dayCard(day: String, workout: WorkoutTemplate) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(day) · \(workout.name)").font(.headline.weight(.medium))
+                    Text("\(workout.orderedExercises.count) exercises · \(workout.estimatedDurationMin) min")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").foregroundStyle(.secondary).accessibilityHidden(true)
+            }
+            HStack(spacing: 6) {
+                ForEach(workout.orderedExercises.prefix(5)) { ExercisePhoto(exercise: $0.exercise, width: 52, height: 40) }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard(cornerRadius: 24)
+        .contentShape(Rectangle())
     }
 }

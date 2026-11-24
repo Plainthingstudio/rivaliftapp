@@ -248,16 +248,8 @@ struct SettingsView: View {
         }
     }
 
-    /// Target changes apply from next week so the current league week stays fair (section 6.1).
     private func setWeeklyTarget(_ value: Int) {
-        let settings = env.settings
-        if value == settings.weeklyTarget {
-            settings.pendingWeeklyTarget = nil
-            settings.pendingTargetEffectiveFrom = nil
-        } else {
-            settings.pendingWeeklyTarget = value
-            settings.pendingTargetEffectiveFrom = WeekCalendar().weekEnd(for: Date())
-        }
+        env.settings.requestWeeklyTarget(value)
         env.saveSettings()
     }
 

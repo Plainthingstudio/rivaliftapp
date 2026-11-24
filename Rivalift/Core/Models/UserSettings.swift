@@ -81,6 +81,17 @@ final class UserSettings {
         set { reminderWeekdaysRaw = newValue.sorted().map(String.init).joined(separator: ",") }
     }
 
+    /// Target changes apply from next week so the current league week stays fair (section 6.1).
+    func requestWeeklyTarget(_ value: Int, now: Date = Date()) {
+        if value == weeklyTarget {
+            pendingWeeklyTarget = nil
+            pendingTargetEffectiveFrom = nil
+        } else {
+            pendingWeeklyTarget = value
+            pendingTargetEffectiveFrom = WeekCalendar().weekEnd(for: now)
+        }
+    }
+
     /// Promotes a pending target once its week has started.
     func applyPendingTargetIfDue(now: Date = Date()) {
         guard let pending = pendingWeeklyTarget, let from = pendingTargetEffectiveFrom, now >= from else { return }

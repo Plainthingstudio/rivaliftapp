@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// "Your plan": the plan's workouts and settings. Opens as a preview; Edit unlocks the
-/// schedule, length and goal, and changing plan.
+/// "Your plan": this week's workouts and the plan's settings. Opens as a preview; Edit unlocks
+/// training days (which re-pick the program for that many days), length, and changing plan.
 struct PlanView: View {
     @Environment(AppEnvironment.self) private var env
     @State private var plan: AppEnvironment.PlanHome?
@@ -13,12 +13,17 @@ struct PlanView: View {
             VStack(alignment: .leading, spacing: 20) {
                 if let plan {
                     header(plan)
-                    VStack(spacing: 8) {
-                        ForEach(Array(plan.program.templates.enumerated()), id: \.element.id) { index, workout in
-                            NavigationLink { TemplateDetailView(template: workout) } label: {
-                                dayCard(index: index, workout: workout, plan: plan)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("This week").font(.headline.weight(.medium)).padding(.horizontal, 4)
+                        ForEach(plan.week.days.filter { $0.state != .rest }, id: \.date) { day in
+                            if let workout = plan.workout(day.workoutID) {
+                                NavigationLink { TemplateDetailView(template: workout) } label: {
+                                    dayCard(day, workout: workout)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                missedCard(day)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
                     if isEditing { settings } else { summary }
@@ -64,24 +69,22 @@ struct PlanView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func dayCard(index: Int, workout: WorkoutTemplate, plan: AppEnvironment.PlanHome) -> some View {
-        let day = plan.week.days.first { $0.workoutID == workout.id }
-        return VStack(alignment: .leading, spacing: 12) {
+    /// A training day this week: weekday, workout, and done or today.
+    private func dayCard(_ day: PlanWeek.Day, workout: WorkoutTemplate) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Day \(index + 1) · \(workout.name)").font(.headline.weight(.medium))
-                    Group {
-                        if let day {
-                            Text("\(workout.orderedExercises.count) exercises · \(workout.estimatedDurationMin) min · \(day.date.formatted(.dateTime.weekday(.abbreviated)))")
-                        } else {
-                            Text("\(workout.orderedExercises.count) exercises · \(workout.estimatedDurationMin) min")
-                        }
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    Text("\(day.date.formatted(.dateTime.weekday(.abbreviated))) · \(workout.name)").font(.headline.weight(.medium))
+                    Text("\(workout.orderedExercises.count) exercises · \(workout.estimatedDurationMin) min")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Image(systemName: "chevron.right").foregroundStyle(.secondary).accessibilityHidden(true)
+                switch day.state {
+                case .done: Label("Done", systemImage: "checkmark.circle.fill").font(.caption.weight(.medium)).foregroundStyle(Theme.success)
+                case .today: Text("Today").font(.caption.weight(.medium)).foregroundStyle(Theme.accent)
+                default: Image(systemName: "chevron.right").foregroundStyle(.secondary).accessibilityHidden(true)
+                }
             }
             HStack(spacing: 6) {
                 ForEach(workout.orderedExercises.prefix(5)) { item in
@@ -93,6 +96,19 @@ struct PlanView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassCard(cornerRadius: 24)
         .contentShape(Rectangle())
+    }
+
+    private func missedCard(_ day: PlanWeek.Day) -> some View {
+        HStack {
+            Text("\(day.date.formatted(.dateTime.weekday(.abbreviated))) · Missed").font(.headline.weight(.medium))
+            Spacer()
+            Text("Your next workout moves to the next training day").font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.trailing)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard(cornerRadius: 24)
+        .opacity(0.7)
+        .accessibilityElement(children: .combine)
     }
 
     /// Read-only settings in preview mode.
@@ -124,7 +140,7 @@ struct PlanView: View {
                 Text("Training days").font(.subheadline)
                 WeekdayPicker(selection: Binding(
                     get: { env.planWeekdays() },
-                    set: { env.settings.trainingWeekdays = $0; env.saveSettings() }
+                    set: { env.setTrainingDays($0) }
                 ))
             }
             GlassDivider()
@@ -160,10 +176,7 @@ private struct ChoosePlanSheet: View {
             ScrollView {
                 VStack(spacing: 8) {
                     ForEach(PlanCatalog.all) { plan in
-                        Button {
-                            if plan.id != current { env.startPlan(plan) }
-                            dismiss()
-                        } label: {
+                        NavigationLink { PlanDetailView(plan: plan) { dismiss() } } label: {
                             PlanCatalogCard(plan: plan, isCurrent: plan.id == current)
                         }
                         .buttonStyle(.plain)

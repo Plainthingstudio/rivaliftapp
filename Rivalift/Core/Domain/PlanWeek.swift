@@ -31,7 +31,9 @@ struct PlanWeek: Equatable, Sendable {
     ///   - weekdays: ISO training weekdays (1 = Monday).
     ///   - done: plan workouts completed this week.
     ///   - lastDone: the most recent plan workout ever completed.
-    static func make(rotation: [UUID], weekdays: Set<Int>, done: [Done], lastDone: UUID?, now: Date, calendar: WeekCalendar) -> PlanWeek {
+    /// - Parameter startedAt: when the plan started; training days before it are rest, not missed.
+    static func make(rotation: [UUID], weekdays: Set<Int>, done: [Done], lastDone: UUID?, now: Date, startedAt: Date? = nil, calendar: WeekCalendar) -> PlanWeek {
+        let start = startedAt.map(calendar.localDateString(for:))
         let next = PlanRecommender.next(in: rotation, after: lastDone)
         var pointer = next
         let today = calendar.localDateString(for: now)
@@ -42,7 +44,7 @@ struct PlanWeek: Equatable, Sendable {
             if let workout = done.last(where: { calendar.localDateString(for: $0.date) == key }) {
                 return Day(date: date, state: .done, workoutID: workout.workoutID)
             }
-            guard weekdays.contains(index + 1) else { return Day(date: date, state: .rest) }
+            guard weekdays.contains(index + 1), start.map({ key >= $0 }) ?? true else { return Day(date: date, state: .rest) }
             if key < today { return Day(date: date, state: .missed) }
             let workout = pointer
             pointer = pointer.flatMap { PlanRecommender.next(in: rotation, after: $0) }

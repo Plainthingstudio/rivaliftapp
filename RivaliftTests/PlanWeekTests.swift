@@ -37,6 +37,16 @@ struct PlanWeekTests {
         #expect(week.nextDay?.workoutID == b)
     }
 
+    @Test func daysBeforeThePlanStartedAreRestNotMissed() {
+        // Plan started Wednesday; Monday was a training day but the plan did not exist yet.
+        let week = PlanWeek.make(
+            rotation: rotation, weekdays: [1, 3, 5], done: [], lastDone: nil,
+            now: date("2026-11-25"), startedAt: date("2026-11-25"), calendar: calendar
+        )
+        #expect(week.days.map(\.state) == [.rest, .rest, .today, .rest, .upcoming, .rest, .rest])
+        #expect(week.today.workoutID == a)
+    }
+
     @Test func todayDoneShowsNextUp() {
         let week = PlanWeek.make(
             rotation: rotation, weekdays: [1, 3, 5],

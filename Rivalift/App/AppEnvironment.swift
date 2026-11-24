@@ -430,6 +430,7 @@ extension AppEnvironment {
             done: thisWeek.reversed().compactMap { session in session.templateID.map { PlanWeek.Done(date: session.startedAt, workoutID: $0) } },
             lastDone: planSessions.first?.templateID,
             now: now,
+            startedAt: start,
             calendar: calendar
         )
         let progress = PlanProgress.make(
@@ -450,6 +451,18 @@ extension AppEnvironment {
         )
     }
 
+    /// New training days from the Plan screen. A different day count re-picks the plan's
+    /// program (Get in Shape: 3 days Full body, 4 days Upper/Lower) and the weekly target.
+    func setTrainingDays(_ days: Set<Int>) {
+        let oldCount = planWeekdays().count
+        settings.trainingWeekdays = days
+        if !days.isEmpty, days.count != oldCount {
+            settings.planProgram = currentPlan.program(daysPerWeek: days.count)
+            settings.requestWeeklyTarget(days.count)
+        }
+        saveSettings()
+    }
+
     /// Training days picked in onboarding or on the Plan screen, else spread over the week for the target.
     func planWeekdays(now: Date = Date()) -> Set<Int> {
         settings.trainingWeekdays.isEmpty
@@ -462,10 +475,20 @@ extension AppEnvironment {
         PlanCatalog.plan(id: settings.planID) ?? PlanCatalog.plan(for: settings.goal)
     }
 
-    /// Switch plan: its program for the weekly target, its length, starting this week on Home.
-    func startPlan(_ plan: TrainingPlan, now: Date = Date()) {
+    /// Days a week the plan detail suggests first: the user's training days, kept inside the plan's range.
+    func suggestedDays(for plan: TrainingPlan, now: Date = Date()) -> Int {
+        min(max(planWeekdays(now: now).count, plan.days.lowerBound), plan.days.upperBound)
+    }
+
+    /// Switch plan: its program for `daysPerWeek`, its length, starting this week on Home.
+    /// Training days follow the day count; the weekly target follows from next week.
+    func startPlan(_ plan: TrainingPlan, daysPerWeek: Int, now: Date = Date()) {
         settings.planID = plan.id
-        settings.planProgram = plan.program(daysPerWeek: settings.effectiveWeeklyTarget(at: now))
+        settings.planProgram = plan.program(daysPerWeek: daysPerWeek)
+        if planWeekdays(now: now).count != daysPerWeek {
+            settings.trainingWeekdays = PlanWeek.defaultWeekdays(count: daysPerWeek)
+        }
+        settings.requestWeeklyTarget(daysPerWeek, now: now)
         settings.streakGoalWeeks = plan.weeks
         settings.planStartedAt = now
         settings.daySwapsRaw = ""
