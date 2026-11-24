@@ -1,6 +1,8 @@
 # PRD — Rivalift (iOS Gym Log + Friend Leagues)
 
-Sep 24, 2026 · @plainthing studio
+Sep 24, 2026 · @plainthing studio · diperbarui 24 Nov 2026
+
+**Perubahan 24 Nov 2026 (beginner rework):** app terasa membingungkan untuk pemula (istilah, program yang tidak konsisten, memilih program sulit). Home sekarang langsung menunjukkan latihan hari ini dari plan yang bernama tujuan (PLAN-01 s.d. PLAN-09), tab History diganti Library (LIB-07) dan riwayat pindah ke Profile, streak pribadi punya rest week (PROG-06, PROG-07), dan ada Quick Workout. Detail teknis di `docs/HANDOFF.md`.
 
 ## 1. Ringkasan produk
 
@@ -60,7 +62,8 @@ MVP mencakup gym log lengkap yang bekerja offline, satu format kompetisi (liga m
 - Login dengan Apple dan Google, profil singkat, pilihan satuan kg/lb.
 - Pencatatan latihan: set, beban, repetisi, tipe set, rest timer otomatis, catatan.
 - Library latihan bawaan (±120 gerakan) dan latihan custom.
-- Template program bawaan dan template buatan user.
+- Plan bernama tujuan ("Get in Shape", "Build Muscle"…) yang menentukan latihan hari ini, dengan program bawaan sebagai isinya, plus template buatan user.
+- Quick Workout: satu latihan untuk hari ini dari alat, waktu, dan fokus yang dipilih.
 - Riwayat sesi, grafik progres per latihan, rekor pribadi otomatis.
 - Saran beban berikutnya berbasis aturan.
 - Grup teman lewat tautan undangan, liga mingguan dengan tiga mode (Consistency, Strength, Custom), leaderboard, hasil akhir minggu.
@@ -93,12 +96,12 @@ Setiap persyaratan punya ID agar mudah dirujuk saat memberi tugas ke Claude Code
 | AUTH-02 | Login dengan Google | P1 |
 | AUTH-03 | Mode tanpa akun: user bisa langsung mencatat latihan; login baru diminta saat membuat atau bergabung ke grup | P0 |
 | AUTH-04 | Profil: nama tampilan (wajib), avatar (foto atau inisial berwarna), satuan kg/lb, target sesi per minggu (1–7, default 3) | P0 |
-| AUTH-05 | Onboarding 6 langkah (nama, tujuan, level, satuan, target mingguan dan hari latihan, komitmen streak) lalu rekomendasi program dari jawaban tersebut | P0 |
+| AUTH-05 | Onboarding 6 langkah (nama, tujuan, level, satuan, target mingguan dan hari latihan, komitmen streak) lalu rekomendasi plan dari jawaban tersebut (tujuan → plan, lihat PLAN-02) | P0 |
 | AUTH-06 | Data lokal yang dibuat sebelum login tetap tersimpan dan terhubung ke akun setelah login | P0 |
 
 **Acceptance criteria:**
 
-- User baru menyelesaikan onboarding dalam ≤ 10 tap (di luar mengetik nama) dan melihat program yang direkomendasikan beserta alasannya.
+- User baru menyelesaikan onboarding dalam ≤ 10 tap (di luar mengetik nama) dan melihat plan yang direkomendasikan beserta alasannya; setelah itu Home langsung menunjukkan latihan hari ini.
 - Menutup app di tengah onboarding tidak menghilangkan pilihan yang sudah dibuat.
 
 ### 5.2 Pencatatan latihan (LOG)
@@ -134,20 +137,27 @@ Setiap persyaratan punya ID agar mudah dirujuk saat memberi tugas ke Claude Code
 | LIB-01 | Library bawaan ±120 latihan, di-bundle sebagai JSON: nama, kelompok otot utama, otot sekunder, alat (barbell, dumbbell, machine, cable, bodyweight, kettlebell, band), tipe (weight\_reps, bodyweight\_reps, duration) | P0 |
 | LIB-02 | Pencarian dan filter berdasarkan kelompok otot dan alat | P0 |
 | LIB-03 | Buat latihan custom dengan field yang sama | P0 |
-| LIB-04 | Template bawaan: Full Body 3×, Upper/Lower 4×, Push/Pull/Legs 6×, 5×5 | P0 |
+| LIB-04 | Program bawaan: Full Body 3×, Upper/Lower 4×, Push/Pull/Legs 6×, 5×5, Get Lean 3× ("Full body burn": 12–15 repetisi, istirahat 45–60 detik, finisher). Program adalah isi plan (PLAN-01); namanya tidak dipakai sebagai judul plan | P0 |
 | LIB-05 | Buat, edit, duplikat, dan hapus template sendiri; simpan sesi yang sudah selesai sebagai template | P0 |
 | LIB-06 | Template menyimpan latihan, jumlah set, target repetisi, dan durasi istirahat | P0 |
+| LIB-07 | Tab Library dengan tiga bagian: Plans (plan aktif lalu semua plan, detail plan dengan "Start this plan"), Exercises (library latihan), My workouts (template milik user) | P0 |
 
 ### 5.4 Riwayat dan progres (PROG)
 
 | ID | Persyaratan | Prioritas |
 | --- | --- | --- |
-| PROG-01 | Riwayat sesi dalam tampilan daftar (terbaru di atas) dan kalender bulanan dengan penanda hari latihan | P0 |
+| PROG-01 | Riwayat sesi dalam tampilan daftar (terbaru di atas) dan kalender bulanan dengan penanda hari latihan. Dibuka dari kartu History di Profile (bukan tab sendiri) | P0 |
 | PROG-02 | Detail sesi lampau: semua latihan dan set | P0 |
 | PROG-03 | Halaman per latihan: riwayat semua set, grafik estimasi 1RM dan beban terberat per sesi (Swift Charts) | P0 |
 | PROG-04 | Rekor pribadi otomatis per latihan: beban terberat, estimasi 1RM (rumus Epley), repetisi terbanyak pada satu beban, volume sesi terbesar | P0 |
 | PROG-05 | Perayaan rekor baru: badge di baris set saat dicentang dan daftar rekor di layar ringkasan | P0 |
-| PROG-06 | Ringkasan mingguan di Home: sesi minggu ini vs target, streak minggu berturut-turut mencapai target | P0 |
+| PROG-06 | Ringkasan mingguan di Home: sesi minggu ini vs target, dan streak pribadi (minggu berturut-turut mencapai target, dilindungi rest week) sebagai ikon api di header | P0 |
+| PROG-07 | Layar Streak (tap ikon api): streak dan rekor terbaik, progres minggu ini, rest week tersimpan dan berapa minggu lagi sampai rest week berikutnya, 12 minggu terakhir (target tercapai, rest week terpakai, terlewat). Aturan rest week: 1 untuk setiap 4 minggu yang mencapai target, maksimal 2 disimpan; minggu terlewat memakai 1 dan streak lanjut tanpa bertambah; tanpa rest week streak dan simpanan reset; minggu berjalan tidak pernah memutus streak. Streak tetap mingguan, bukan harian | P1 |
+
+**Acceptance criteria:**
+
+- Rest week hanya melindungi streak pribadi. Poin liga (K, bagian 6.1) tetap memakai streak tanpa rest week.
+- "Best streak" di Profile memakai aturan yang sama dengan layar Streak.
 
 ### 5.5 Saran beban (PROGRESSION)
 
@@ -158,7 +168,29 @@ Setiap persyaratan punya ID agar mudah dirujuk saat memberi tugas ke Claude Code
 | PRG-03 | Jika gagal 3 sesi berturut-turut, sarankan turun 10% (deload) | P1 |
 | PRG-04 | Saran tampil sebagai placeholder di input beban; user bebas mengabaikan | P0 |
 
-### 5.6 Grup dan liga (SOCIAL)
+### 5.6 Plan dan latihan terarah (PLAN)
+
+Tujuannya: pemula tidak perlu memilih program atau memahami istilah split. Plan dinamai sesuai tujuan; split (Full body, Upper/Lower, Push/Pull/Legs, 5×5) hanya isi di dalamnya.
+
+| ID | Persyaratan | Prioritas |
+| --- | --- | --- |
+| PLAN-01 | Katalog plan bernama tujuan: Get in Shape, Get Lean, Build Muscle, Get Stronger, Overall Fitness, Go All In. Masing-masing punya ringkasan satu kalimat, hari per minggu, durasi (minggu), dan level. Program isinya dipilih dari target mingguan (misalnya Build Muscle: Upper/Lower untuk 4 hari, Push/Pull/Legs untuk 5–6 hari) | P0 |
+| PLAN-02 | Onboarding memilih plan dari tujuan (strength → Get Stronger, muscle → Build Muscle, consistency → Get in Shape, fitness → Overall Fitness). Plan bisa diganti dari Library atau layar Plan; plan baru mulai minggu ini dan hari latihan tidak ikut berubah | P0 |
+| PLAN-03 | Home mode My Plan: kartu plan (nama, split dan hari per minggu, "Week x of n", latihan selesai), strip Senin–Minggu (selesai, hari ini, akan datang, terlewat, istirahat), daftar latihan hari ini dengan resep (set · repetisi · saran beban dari PRG-01), tombol "Start today's workout" yang menempel di bawah. Hari istirahat atau latihan selesai menampilkan "Next up" dan tombol "Train anyway" | P0 |
+| PLAN-04 | Rotasi: latihan berikutnya adalah latihan setelah sesi plan terakhir yang selesai, dibagikan ke hari latihan pilihan user (atau hari bawaan sesuai target). Hari terlewat tidak melompati latihan | P0 |
+| PLAN-05 | Menu mode di header Home: My Plan, Custom (Home bebas: ringkasan minggu, Start Workout, quick start), dan Quick Workout | P0 |
+| PLAN-06 | Tukar latihan (⇄) di setiap latihan hari ini: sampai 4 alternatif dengan otot utama sama yang belum ada di sesi itu; pilihan "Just today" (berlaku saat latihan dimulai, kedaluwarsa besok) atau "Always in my plan" | P1 |
+| PLAN-07 | Detail plan dibuka dari kartu plan: mode preview (latihan per hari dengan hari jatuhnya minggu ini, hari latihan, panjang plan); tombol Edit membuka pengaturan hari latihan, panjang plan (4–16 minggu), dan "Change plan" | P0 |
+| PLAN-08 | Quick Workout: pilih alat (full gym, dumbbell, tanpa alat, band), durasi (15–60 menit → 3–6 latihan), dan fokus (full body, upper, legs, core); latihan disusun otomatis (compound dulu, gerakan umum dulu, gerakan lanjutan seperti pistol squat tidak ditawarkan) dengan tombol acak | P1 |
+| PLAN-09 | Hanya sesi yang dimulai dari plan yang memajukan plan. Semua sesi (plan, Quick Workout, Custom) dihitung untuk streak dan liga | P0 |
+
+**Acceptance criteria:**
+
+- User baru melihat latihan hari ini di Home tanpa memilih program sendiri.
+- Judul plan di Home, Library, dan layar Plan selalu nama tujuan, tidak pernah nama split.
+- Melewatkan hari latihan tidak membuat latihan berikutnya terlompati.
+
+### 5.7 Grup dan liga (SOCIAL)
 
 | ID | Persyaratan | Prioritas |
 | --- | --- | --- |
@@ -192,7 +224,7 @@ Setiap persyaratan punya ID agar mudah dirujuk saat memberi tugas ke Claude Code
 | SOC-17 | Di layar latihan aktif, latihan yang menjadi kategori atau lift kompetisi diberi penanda trofi dan info pembanding (misalnya "Your best: 12 · Leader: 14") | P1 |
 | SOC-18 | Ringkasan sesi menampilkan perubahan posisi di setiap kategori | P1 |
 
-### 5.7 Pengaturan (SET)
+### 5.8 Pengaturan (SET)
 
 | ID | Persyaratan | Prioritas |
 | --- | --- | --- |
@@ -286,6 +318,7 @@ Mode Custom membiarkan admin membuat 1–5 kategori; setiap kategori punya perin
 - Nilai yang melonjak lebih dari 25% (beban) atau 50% (repetisi dan durasi) dibanding catatan terbaik 8 minggu sebelumnya tidak dihitung untuk kompetisi, tetapi tetap tersimpan di log pribadi.
 - Semua nilai disimpan dalam kg dan ditampilkan dalam satuan masing-masing anggota.
 - Aturan backdate, masa tenggang 6 jam, dan penutupan liga sama untuk semua mode.
+- Streak untuk poin K tidak memakai rest week (PROG-07); rest week hanya untuk streak pribadi.
 
 ## 7. Navigasi dan daftar layar
 
@@ -294,13 +327,17 @@ App memakai tab bar dengan 4 tab; sesi latihan aktif tampil sebagai layar penuh 
 ```mermaid
 flowchart TD
     A[Launch] --> B{Onboarding selesai?}
-    B -- Belum --> C[Onboarding 3 langkah]
+    B -- Belum --> C[Onboarding 6 langkah]
     C --> D[Tab bar]
     B -- Sudah --> D
     D --> E[Home]
-    D --> F[History]
+    D --> F[Library]
     D --> G[Leagues]
     D --> H[Profile]
+    E --> P[Plan]
+    E --> Q[Quick Workout]
+    E --> S[Streak]
+    H --> R[History]
     E --> I[Active Workout]
     I --> J[Workout Summary]
     G --> K[Group Leaderboard]
@@ -312,20 +349,25 @@ Diagram menunjukkan alur utama; layar pendukung tercantum di tabel berikut.
 | Layar | Isi utama | Persyaratan terkait |
 | --- | --- | --- |
 | Onboarding | Nama, tujuan, level, satuan, target dan hari latihan, komitmen streak, rekomendasi program | AUTH-04, AUTH-05 |
-| Home | Tombol mulai latihan (membuka pilihan), ringkasan minggu ini, metrik latihan, kartu posisi liga, template cepat | PROG-06, LOG-01 |
+| Home | Menu mode (My Plan, Custom, Quick Workout), ikon streak; My Plan: kartu plan, strip minggu, latihan hari ini dengan tukar latihan, tombol mulai; Custom: ringkasan minggu, tombol mulai (membuka pilihan), template cepat; lalu kartu liga, personal best minggu ini, metrik latihan | PLAN-03, PLAN-05, PLAN-06, PROG-06, LOG-01 |
+| Plan | Preview plan (latihan per hari, hari latihan, panjang plan) dan mode Edit dengan Change plan | PLAN-07, PLAN-02 |
+| Swap Exercise | Sheet alternatif latihan, "Just today" atau "Always in my plan" | PLAN-06 |
+| Quick Workout | Pilihan alat, durasi, fokus; daftar latihan; acak; mulai | PLAN-08 |
+| Streak | Streak, rekor, minggu ini, rest week, 12 minggu terakhir | PROG-07 |
+| Library | Plans (plan aktif, semua plan, detail plan), Exercises, My workouts | LIB-07, PLAN-01, LIB-01 s.d. LIB-06 |
 | Active Workout | Header statistik, daftar latihan dengan tabel set, rest timer melayang, tombol selesai | LOG-02 s.d. LOG-14 |
 | Exercise Picker | Pencarian, filter otot dan alat, tambah latihan custom | LIB-01 s.d. LIB-03 |
 | Workout Summary | Durasi, volume, set, rekor baru, estimasi poin liga | LOG-12, PROG-05 |
-| History | Daftar sesi dan kalender | PROG-01 |
+| History | Daftar sesi dan kalender, dibuka dari kartu History di Profile | PROG-01 |
 | Session Detail | Semua latihan dan set sesi lampau, opsi simpan sebagai template | PROG-02, LIB-05 |
 | Exercise Detail | Grafik progres, rekor, riwayat set | PROG-03, PROG-04 |
-| Templates | Template bawaan dan milik user, editor template | LIB-04 s.d. LIB-06 |
+| Templates | Template milik user (Library → My workouts) dan editor template; program bawaan tampil sebagai isi plan | LIB-04 s.d. LIB-06 |
 | Leagues | Daftar grup dengan posisi user, tombol buat atau gabung grup | SOC-01, SOC-03 |
 | Group Leaderboard | Hitung mundur, leaderboard, tombol undang, pengaturan grup | SOC-05 s.d. SOC-07, SOC-11 |
 | Week Results | Podium, skor final, lencana | SOC-08 |
 | Member Detail | Statistik minggu ini dan streak anggota | SOC-10 |
 | Join Group | Masukkan kode atau konfirmasi dari tautan | SOC-02, SOC-03 |
-| Profile | Avatar, nama, statistik total, akses ke pengaturan | AUTH-04 |
+| Profile | Avatar, nama, statistik total (best streak memakai rest week), kartu History, grafik progres, akses ke pengaturan | AUTH-04, PROG-01 |
 | Settings | Satuan, timer, notifikasi, ekspor, akun, legal | SET-01 s.d. SET-06 |
 | Sign In | Sign in with Apple dan Google, muncul saat fitur sosial pertama kali dibuka | AUTH-01 s.d. AUTH-03 |
 
@@ -683,13 +725,15 @@ Referensi: [Gymshark — pilih satuan](https://mobbin.com/flows/497dfa33-efe9-49
 
 Referensi: [Hevy — quick start dan routines](https://mobbin.com/screens/c3143e37-c87b-431f-80ad-87637ce62d7b), [pushr — kartu minggu ini dengan streak](https://mobbin.com/screens/2d9dedab-7961-4927-ada0-5d9338d95bf7), [pliability — kartu sesi hari ini](https://mobbin.com/screens/3908dd21-ea9e-4f49-bbcc-3c878d1a8602).
 
-- Sapaan dengan nama (tanpa tombol avatar; Profile ada di tab bar).
-- Kartu "This week": 7 titik hari (Senin–Minggu) dengan centang pada hari latihan, teks "2 of 3 sessions", dan ikon api streak mingguan.
-- Tombol utama besar "Start workout" yang membuka pilihan (LOG-01); jika ada sesi aktif, berubah menjadi "Resume workout".
-- Kartu metrik "Your training": volume, jumlah set, waktu latihan, dan jumlah workout minggu ini dengan perubahan % dari minggu lalu, total workout sepanjang waktu, dan grafik volume 8 minggu terakhir.
-- Kartu liga: nama grup, peringkat user, skor, selisih poin ke peringkat di atasnya, dan hitung mundur. Jika belum punya grup, kartu berubah menjadi ajakan membuat atau bergabung.
-- Template cepat: 2–3 template terakhir dipakai sebagai kartu horizontal dengan tombol mulai.
-- Rekor terbaru minggu ini (maksimal 3) sebagai pengingat progres.
+Diperbarui 24 Nov 2026 mengikuti konsep "Rivalift Coach Mode" dan desain minimalis Figma (node 695:29871).
+
+- Header: tanggal, menu mode "My Plan ▾" (My Plan, Custom, Quick Workout), dan ikon api streak pribadi yang membuka layar Streak.
+- My Plan: kartu plan (nama tujuan, split dan hari per minggu, "Week x of n", segmen per minggu, latihan selesai), strip Senin–Minggu, "Today · <latihan>" dengan daftar latihan (foto, resep, tombol ⇄), tombol "Start today's workout" menempel di bawah. Hari istirahat: kartu "Rest day" dan "Next up".
+- Custom: kartu "This week" (7 titik hari, "2 of 3 sessions"), tombol "Start workout" yang membuka pilihan (LOG-01), template cepat.
+- Kartu liga: "Weekly league", nama grup dan hitung mundur, peringkat "#2 of 6", top 3 (atau top 2 + user) dengan baris user disorot, selisih poin. Tanpa grup: ajakan membuat atau bergabung.
+- "Personal bests this week" dengan jumlah rekor baru.
+- "Your training": workouts, waktu latihan, dan total beban minggu ini vs minggu lalu, plus grafik 8 minggu.
+- Jika ada sesi aktif, tombol mulai berubah menjadi "Resume workout".
 
 ### A.3 Active Workout
 
@@ -747,7 +791,9 @@ Referensi: [Hevy — ringkasan dengan grafik dan tab](https://mobbin.com/screens
 - Kartu rekor pribadi: beban terberat, estimasi 1RM, repetisi terbanyak, masing-masing dengan tanggal.
 - History: daftar per sesi berisi tanggal dan semua set, dengan badge rekor di set yang relevan.
 
-### A.8 Templates
+### A.8 Library dan Templates
+
+Diperbarui 24 Nov 2026: tab Library (LIB-07) dengan segmented control Plans, Exercises, My workouts. Plans berisi "Current plan" dan "All plans" (kartu: nama tujuan, ringkasan, chip hari, minggu, level); detail plan menampilkan "What's inside: <split>" dengan hari-hari latihannya dan tombol "Start this plan". My workouts memakai pola di bawah.
 
 Referensi: [Hevy — My Routines](https://mobbin.com/screens/9b47d4d4-5284-4849-a244-fb797cf63e87), [MyFitnessPal — kartu dengan estimasi durasi](https://mobbin.com/screens/8e5250ba-b2e3-47aa-8806-4a2204e1fb68).
 
@@ -791,6 +837,6 @@ Referensi: [Transit — podium top 3](https://mobbin.com/screens/d1aa00b6-6263-4
 
 Referensi: [Hevy — profil dengan grafik mingguan](https://mobbin.com/screens/f4d2dd73-7a30-4a55-9229-fda8a1c7b39a), [Peloton — statistik 30 hari dan streak](https://mobbin.com/screens/b67a1ba9-0c9f-4dcb-8084-deea7969767a), [Ladder — lencana](https://mobbin.com/screens/b3e5ddf6-f89e-4bec-91b3-864a586f1eff).
 
-- Profile: avatar, nama, tombol edit, statistik total (sesi, volume, streak terpanjang), grafik batang mingguan (durasi atau volume), jumlah kemenangan liga dan lencana.
-- Pintasan: Templates, Exercises, Calendar.
+- Profile: avatar, nama, tombol edit, statistik total (sesi, volume, streak terpanjang), kartu History (jumlah latihan bulan ini, latihan terakhir, "See all"), grafik batang mingguan (durasi atau volume), jumlah kemenangan liga dan lencana.
+- Templates dan Exercises pindah ke tab Library (24 Nov 2026).
 - Settings (daftar standar iOS): Units, Rest timer, Notifications, Privacy (Share workout details), Export data, Account (Sign out, Delete account), About (Privacy policy, Terms, Send feedback, versi app).
