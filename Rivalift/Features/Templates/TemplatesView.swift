@@ -140,6 +140,8 @@ struct TemplateEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var template: WorkoutTemplate
     @State private var isPickerPresented = false
+    @State private var replacing: TemplateExercise?
+    @State private var editMode: EditMode = .inactive
 
     var body: some View {
         NavigationStack {
@@ -152,7 +154,10 @@ struct TemplateEditorView: View {
                 }
                 Section {
                     ForEach(template.orderedExercises) { item in
-                        TemplateExerciseRow(item: item).glassListRow()
+                        TemplateExerciseRow(item: item, onReplace: { replacing = item }, onRemove: { env.templates.removeExercise(item) })
+                            .buttonStyle(.borderless)
+                            .deleteDisabled(editMode.isEditing)
+                            .glassListRow()
                     }
                     .onDelete { offsets in
                         let items = template.orderedExercises
@@ -165,20 +170,36 @@ struct TemplateEditorView: View {
                 } header: {
                     Text("Exercises").font(.body).foregroundStyle(.white).textCase(nil)
                 } footer: {
-                    Text("Swipe left to remove, tap Edit to reorder.").font(.footnote)
+                    Text("Tap ⋯ to replace or remove an exercise.").font(.footnote)
                 }
             }
             .glassList()
             .navigationTitle("Edit workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        env.templates.save()
-                        dismiss()
+                // While reordering, the one Done ends reordering; otherwise Done saves and closes.
+                if editMode.isEditing {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { withAnimation { editMode = .inactive } }
+                    }
+                } else {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Reorder") { withAnimation { editMode = .active } }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            env.templates.save()
+                            dismiss()
+                        }
                     }
                 }
-                ToolbarItem(placement: .topBarLeading) { EditButton() }
+            }
+            .environment(\.editMode, $editMode)
+            .sheet(item: $replacing) { item in
+                ExercisePickerView(title: "Replace exercise", allowsMultipleSelection: false) { selected in
+                    if let exercise = selected.first { env.templates.replaceExercise(item, with: exercise) }
+                }
+                .environment(env)
             }
             .sheet(isPresented: $isPickerPresented) {
                 ExercisePickerView(title: "Add exercises") { selected in
@@ -190,21 +211,87 @@ struct TemplateEditorView: View {
     }
 }
 
+/// One exercise in the workout editor: what it is, ⋯ to replace or remove, then sets, reps and rest.
 struct TemplateExerciseRow: View {
+    @Environment(\.editMode) private var editMode
     @Bindable var item: TemplateExercise
+    let onReplace: () -> Void
+    let onRemove: () -> Void
+
+    private static let restOptions = [0, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
-                ExercisePhoto(exercise: item.exercise, width: 52, height: 38)
-                Text(item.exercise?.name ?? "").font(.headline)
+                ExercisePhoto(exercise: item.exercise, width: 56, height: 42)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.exercise?.name ?? "").font(.callout.weight(.medium)).lineLimit(2)
+                    if let exercise = item.exercise {
+                        Text(exercise.subtitle).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                Spacer(minLength: 0)
+                if editMode?.wrappedValue.isEditing != true { optionsMenu }
             }
-            Stepper("Sets: \(item.setCount)", value: $item.setCount, in: 1...10)
-            if item.exercise?.type != .duration {
-                Stepper("Target reps: \(item.targetReps)", value: $item.targetReps, in: 1...50)
-            }
-            Stepper("Rest: \(DurationFormatter.clock(item.restSec))", value: $item.restSec, in: 0...300, step: 15)
+            // Reordering shows just the name, so the rows are short enough to drag.
+            if editMode?.wrappedValue.isEditing != true { values }
         }
-        .font(.subheadline)
+    }
+
+    private var optionsMenu: some View {
+        Menu {
+            Button("Replace exercise", systemImage: "arrow.left.arrow.right", action: onReplace)
+            Button("Remove", systemImage: "trash", role: .destructive, action: onRemove)
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: Theme.minTap, height: Theme.minTap)
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel("Options for \(item.exercise?.name ?? "")")
+    }
+
+    private var values: some View {
+        HStack(spacing: 8) {
+            valueMenu("Sets", value: "\(item.setCount)", selection: $item.setCount, options: Array(1...10)) { "\($0)" }
+            if item.exercise?.type != .duration {
+                valueMenu("Reps", value: "\(item.targetReps)", selection: $item.targetReps,
+                          options: Array(Set(Array(1...30) + [item.targetReps])).sorted()) { "\($0)" }
+            }
+            valueMenu("Rest", value: Self.rest(item.restSec), selection: $item.restSec,
+                      options: Array(Set(Self.restOptions + [item.restSec])).sorted(), label: Self.rest)
+        }
+    }
+
+    private static func rest(_ seconds: Int) -> String {
+        seconds == 0 ? String(localized: "Off") : DurationFormatter.clock(seconds)
+    }
+
+    /// Small labelled box; tapping it opens a menu of values.
+    private func valueMenu(_ title: LocalizedStringKey, value: String, selection: Binding<Int>, options: [Int], label: @escaping (Int) -> String) -> some View {
+        Menu {
+            Picker(title, selection: selection) {
+                ForEach(options, id: \.self) { Text(label($0)).tag($0) }
+            }
+        } label: {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).font(.caption2).foregroundStyle(.white.opacity(0.6))
+                HStack(spacing: 4) {
+                    Text(value).font(.subheadline.weight(.medium)).monospacedDigit().foregroundStyle(.white)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.up.chevron.down").font(.caption2).foregroundStyle(.white.opacity(0.6))
+                }
+            }
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(.white.opacity(0.08))
+                    .strokeBorder(.white.opacity(0.16))
+            )
+            .contentShape(Rectangle())
+        }
+        .accessibilityLabel(Text(title) + Text(" \(value)"))
     }
 }

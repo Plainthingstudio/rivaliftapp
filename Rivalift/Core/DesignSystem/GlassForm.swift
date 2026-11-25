@@ -190,9 +190,10 @@ extension View {
             Color.clear
                 .glassCard(cornerRadius: 20)
                 .padding(.vertical, 4)
+                .padding(.horizontal, 16)
         )
         .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 12, leading: 20, bottom: 12, trailing: 20))
+        .listRowInsets(EdgeInsets(top: 16, leading: 32, bottom: 16, trailing: 32))
     }
 
     /// Clear `List` on the screen background, with room between glass rows.

@@ -63,6 +63,13 @@ final class TemplateRepository {
         try? context.save()
     }
 
+    /// Keeps sets and reps; rest follows the new exercise.
+    func replaceExercise(_ entry: TemplateExercise, with exercise: Exercise) {
+        entry.exercise = exercise
+        entry.restSec = exercise.defaultRestSec
+        try? context.save()
+    }
+
     func removeExercise(_ entry: TemplateExercise) {
         context.delete(entry)
         try? context.save()
