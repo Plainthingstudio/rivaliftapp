@@ -56,8 +56,8 @@ struct HomeView: View {
             }
             .environment(env)
         }
-        .sheet(item: $editing, onDismiss: reload) { template in
-            TemplateEditorView(template: template).environment(env)
+        .navigationDestination(item: $editing) { template in
+            TemplateEditorView(template: template)
         }
         .navigationDestination(isPresented: $isQuickPresented) {
             QuickWorkoutView()

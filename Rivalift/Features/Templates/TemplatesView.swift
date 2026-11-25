@@ -12,6 +12,7 @@ struct TemplatesView: View {
     @State private var programs: [TemplateRepository.Program] = []
     @State private var editing: WorkoutTemplate?
     @State private var toDelete: WorkoutTemplate?
+    @State private var didPickSegment = false
 
     enum Segment: Hashable { case mine, programs }
 
@@ -50,8 +51,8 @@ struct TemplatesView: View {
                 .tint(.white)
             }
         }
-        .sheet(item: $editing, onDismiss: reload) { template in
-            TemplateEditorView(template: template).environment(env)
+        .navigationDestination(item: $editing) { template in
+            TemplateEditorView(template: template)
         }
         .confirmationDialog("Delete template?", isPresented: Binding(get: { toDelete != nil }, set: { if !$0 { toDelete = nil } }), titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
@@ -61,7 +62,9 @@ struct TemplatesView: View {
         }
         .onAppear {
             reload()
-            if showsPrograms && (opensPrograms || mine.isEmpty) { segment = .programs }
+            // Only on first appear, so coming back from the editor keeps the chosen tab.
+            if !didPickSegment, showsPrograms, opensPrograms || mine.isEmpty { segment = .programs }
+            didPickSegment = true
         }
     }
 
@@ -137,76 +140,67 @@ struct TemplateRowCard: View {
 /// Create and edit a user template: exercises, sets, target reps, rest (LIB-06).
 struct TemplateEditorView: View {
     @Environment(AppEnvironment.self) private var env
-    @Environment(\.dismiss) private var dismiss
     @Bindable var template: WorkoutTemplate
     @State private var isPickerPresented = false
     @State private var replacing: TemplateExercise?
     @State private var editMode: EditMode = .inactive
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    TextField("Workout name", text: $template.name)
-                        .glassField()
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
-                }
-                Section {
-                    ForEach(template.orderedExercises) { item in
-                        TemplateExerciseRow(item: item, onReplace: { replacing = item }, onRemove: { env.templates.removeExercise(item) })
-                            .buttonStyle(.borderless)
-                            .deleteDisabled(editMode.isEditing)
-                            .glassListRow()
-                    }
-                    .onDelete { offsets in
-                        let items = template.orderedExercises
-                        for index in offsets { env.templates.removeExercise(items[index]) }
-                    }
-                    .onMove { env.templates.move(in: template, from: $0, to: $1) }
-                    Button { isPickerPresented = true } label: { GlassAddLabel(title: "Add exercises") }
-                        .buttonStyle(.plain)
+        List {
+            Section {
+                TextField("Workout name", text: $template.name)
+                    .glassField()
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+            }
+            Section {
+                ForEach(template.orderedExercises) { item in
+                    TemplateExerciseRow(item: item, onReplace: { replacing = item }, onRemove: { env.templates.removeExercise(item) })
+                        .buttonStyle(.borderless)
+                        .deleteDisabled(editMode.isEditing)
                         .glassListRow()
-                } header: {
-                    Text("Exercises").font(.body).foregroundStyle(.white).textCase(nil)
-                } footer: {
-                    Text("Tap ⋯ to replace or remove an exercise.").font(.footnote)
                 }
+                .onDelete { offsets in
+                    let items = template.orderedExercises
+                    for index in offsets { env.templates.removeExercise(items[index]) }
+                }
+                .onMove { env.templates.move(in: template, from: $0, to: $1) }
+                Button { isPickerPresented = true } label: { GlassAddLabel(title: "Add exercises") }
+                    .buttonStyle(.plain)
+                    .glassListRow()
+            } header: {
+                Text("Exercises").font(.body).foregroundStyle(.white).textCase(nil)
+            } footer: {
+                Text("Tap ⋯ to replace or remove an exercise.").font(.footnote)
             }
-            .glassList()
-            .navigationTitle("Edit workout")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                // While reordering, the one Done ends reordering; otherwise Done saves and closes.
+        }
+        .glassList()
+        .navigationTitle("Edit workout")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            // A pushed screen: Back saves too. While reordering, Done only ends reordering.
+            ToolbarItem(placement: .topBarTrailing) {
                 if editMode.isEditing {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { withAnimation { editMode = .inactive } }
-                    }
+                    Button("Done") { withAnimation { editMode = .inactive } }
                 } else {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button("Reorder") { withAnimation { editMode = .active } }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") {
-                            env.templates.save()
-                            dismiss()
-                        }
-                    }
+                    Button("Reorder") { withAnimation { editMode = .active } }
                 }
             }
-            .environment(\.editMode, $editMode)
-            .sheet(item: $replacing) { item in
-                ExercisePickerView(title: "Replace exercise", allowsMultipleSelection: false) { selected in
-                    if let exercise = selected.first { env.templates.replaceExercise(item, with: exercise) }
-                }
-                .environment(env)
+        }
+        .navigationBarBackButtonHidden(editMode.isEditing)
+        .environment(\.editMode, $editMode)
+        .onDisappear { env.templates.save() }
+        .sheet(item: $replacing) { item in
+            ExercisePickerView(title: "Replace exercise", allowsMultipleSelection: false) { selected in
+                if let exercise = selected.first { env.templates.replaceExercise(item, with: exercise) }
             }
-            .sheet(isPresented: $isPickerPresented) {
-                ExercisePickerView(title: "Add exercises") { selected in
-                    for exercise in selected { env.templates.addExercise(exercise, to: template) }
-                }
-                .environment(env)
+            .environment(env)
+        }
+        .sheet(isPresented: $isPickerPresented) {
+            ExercisePickerView(title: "Add exercises") { selected in
+                for exercise in selected { env.templates.addExercise(exercise, to: template) }
             }
+            .environment(env)
         }
     }
 }

@@ -56,8 +56,8 @@ struct TemplateDetailView: View {
                 }
             }
         }
-        .sheet(item: $editing) { template in
-            TemplateEditorView(template: template).environment(env)
+        .navigationDestination(item: $editing) { template in
+            TemplateEditorView(template: template)
         }
     }
 
