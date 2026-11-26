@@ -10,6 +10,9 @@ final class WorkoutTemplate {
     var isBuiltIn: Bool = false
     var createdAt: Date = Date()
     var lastUsedAt: Date?
+    /// Days this routine is scheduled on (Custom mode), ISO weekdays (1 = Monday) comma separated.
+    /// One routine per day; `TemplateRepository.setDays` keeps it that way.
+    var weekdaysRaw: String = ""
 
     @Relationship(deleteRule: .cascade, inverse: \TemplateExercise.template)
     var exercises: [TemplateExercise]? = []
@@ -18,6 +21,11 @@ final class WorkoutTemplate {
         self.name = name
         self.programName = programName
         self.isBuiltIn = isBuiltIn
+    }
+
+    var weekdays: Set<Int> {
+        get { Set(weekdaysRaw.split(separator: ",").compactMap { Int($0) }) }
+        set { weekdaysRaw = newValue.sorted().map(String.init).joined(separator: ",") }
     }
 
     var orderedExercises: [TemplateExercise] {

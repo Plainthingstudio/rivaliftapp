@@ -54,6 +54,8 @@ final class UserSettings {
     var onboardingStep: Int = 0
     var onboardingDone: Bool = false
     var hasAskedNotificationPermission: Bool = false
+    /// The one-time "Custom is for your own routines" sheet has been shown.
+    var hasSeenCustomIntro: Bool = false
 
     init() {}
 

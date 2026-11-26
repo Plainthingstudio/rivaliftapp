@@ -99,7 +99,8 @@ supabase/         migrations/, functions/ (M4+)
       photo avatar and workout reminders (NOT-02, `ReminderPlanner`) done; TestFlight build to do.
       Beginner rework (branch `claude/minimal-design-system`, see `docs/HANDOFF.md`): My Plan
       Home, goal-named plans, exercise swap, Plan screen, Library tab, minimal design system,
-      Custom Home (own workouts with one-tap start, Create workout menu, pushed workout editor)
+      Custom Home = routines (own workouts with days, today's routine, one-time intro,
+      "Something different today" for picked exercises / repeat / Quick Workout)
 - [ ] M4 Backend and accounts (Supabase, AUTH-01…03, AUTH-06, SyncService)
 - [ ] M5 Groups and leagues (SOC-01…18; domain scorers + vectors already exist)
 - [ ] M6 Remote notifications and release (NOT-03…06, SET-05, SET-06 legal pages)

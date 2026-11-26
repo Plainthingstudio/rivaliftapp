@@ -48,7 +48,7 @@ struct TemplateDetailView: View {
             ToolbarItem(placement: .primaryAction) {
                 // Your own workouts edit in place; a ready-made one is copied first.
                 if template.isBuiltIn {
-                    Button("Save as mine") { editing = env.templates.duplicate(template) }
+                    Button("Add to my routines") { editing = env.templates.duplicate(template) }
                         .accessibilityIdentifier("saveTemplateCopy")
                 } else {
                     Button("Edit") { editing = template }

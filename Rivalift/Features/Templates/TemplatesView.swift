@@ -20,13 +20,13 @@ struct TemplatesView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 if showsPrograms {
-                    PillPicker(selection: $segment, options: [(.mine, "My templates"), (.programs, "Programs")])
+                    PillPicker(selection: $segment, options: [(.mine, "My routines"), (.programs, "Ready-made")])
                         .frame(maxWidth: .infinity)
                 }
                 switch segment {
                 case .mine:
                     if mine.isEmpty {
-                        Text("Create a template or save a finished workout as one.")
+                        Text("Build a routine, add a ready-made one, or save a finished workout as a routine.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 8)
@@ -42,11 +42,11 @@ struct TemplatesView: View {
             .padding()
         }
         .screenBackground()
-        .navigationTitle(showsPrograms ? "Templates" : "Library")
+        .navigationTitle(showsPrograms ? "Routines" : "Library")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button("New template", systemImage: "plus") {
-                    editing = env.templates.create(name: String(localized: "New template"))
+                Button("New routine", systemImage: "plus") {
+                    editing = env.templates.create(name: "")
                 }
                 .tint(.white)
             }
@@ -144,14 +144,39 @@ struct TemplateEditorView: View {
     @State private var isPickerPresented = false
     @State private var replacing: TemplateExercise?
     @State private var editMode: EditMode = .inactive
+    @FocusState private var isNameFocused: Bool
+    /// A routine just created (no name, no exercises): "New routine", name field focused, and
+    /// thrown away if left without exercises.
+    @State private var isNew: Bool
+
+    init(template: WorkoutTemplate) {
+        self.template = template
+        _isNew = State(initialValue: template.name.isEmpty && template.orderedExercises.isEmpty)
+    }
 
     var body: some View {
         List {
             Section {
-                TextField("Workout name", text: $template.name)
+                TextField("Name your routine", text: $template.name)
+                    .focused($isNameFocused)
+                    .submitLabel(.done)
                     .glassField()
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
+                    .accessibilityIdentifier("routineName")
+            } footer: {
+                if template.name.isEmpty {
+                    Text("Leave it empty and we'll name it after the muscles, e.g. Chest & Back.").font(.footnote)
+                }
+            }
+            Section {
+                WeekdayPicker(selection: Binding(get: { template.weekdays }, set: { env.templates.setDays($0, for: template) }))
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+            } header: {
+                Text("Days").font(.body).foregroundStyle(.white).textCase(nil)
+            } footer: {
+                Text(daysFooter).font(.footnote)
             }
             Section {
                 ForEach(template.orderedExercises) { item in
@@ -168,6 +193,7 @@ struct TemplateEditorView: View {
                 Button { isPickerPresented = true } label: { GlassAddLabel(title: "Add exercises") }
                     .buttonStyle(.plain)
                     .glassListRow()
+                    .accessibilityIdentifier("addRoutineExercises")
             } header: {
                 Text("Exercises").font(.body).foregroundStyle(.white).textCase(nil)
             } footer: {
@@ -175,7 +201,7 @@ struct TemplateEditorView: View {
             }
         }
         .glassList()
-        .navigationTitle("Edit workout")
+        .navigationTitle(isNew ? "New routine" : "Edit routine")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             // A pushed screen: Back saves too. While reordering, Done only ends reordering.
@@ -189,7 +215,8 @@ struct TemplateEditorView: View {
         }
         .navigationBarBackButtonHidden(editMode.isEditing)
         .environment(\.editMode, $editMode)
-        .onDisappear { env.templates.save() }
+        .onAppear { if isNew { isNameFocused = true } }
+        .onDisappear(perform: finish)
         .sheet(item: $replacing) { item in
             ExercisePickerView(title: "Replace exercise", allowsMultipleSelection: false) { selected in
                 if let exercise = selected.first { env.templates.replaceExercise(item, with: exercise) }
@@ -202,6 +229,30 @@ struct TemplateEditorView: View {
             }
             .environment(env)
         }
+    }
+
+    /// Days are optional; one routine per day, so picking a taken day moves it here.
+    private var daysFooter: String {
+        let symbols = Calendar(identifier: .iso8601).shortWeekdaySymbols
+        let taken = env.templates.userTemplates()
+            .filter { $0.id != template.id && !$0.name.isEmpty }
+            .flatMap { other in other.weekdays.map { ($0, other.name) } }
+            .sorted { $0.0 < $1.0 }
+            .map { String(localized: "\(symbols[$0.0 % 7]) is \($0.1)") }
+        let base = String(localized: "Optional. Days show on This week.")
+        return taken.isEmpty ? base : base + " " + taken.joined(separator: ", ") + ". " + String(localized: "Picking one of those moves it here.")
+    }
+
+    /// Leaving: a new routine without exercises is thrown away; an unnamed one is named after its muscles.
+    private func finish() {
+        if template.orderedExercises.isEmpty {
+            if isNew { env.templates.delete(template) }
+        } else if template.name.trimmingCharacters(in: .whitespaces).isEmpty {
+            let muscles = template.orderedExercises.compactMap(\.exercise?.primaryMuscle)
+            template.name = env.templates.uniqueName(RoutineNaming.name(primaryMuscles: muscles))
+        }
+        env.templates.save()
+        env.dataDidChange()
     }
 }
 

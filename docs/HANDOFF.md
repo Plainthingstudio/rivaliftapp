@@ -237,6 +237,36 @@ Semua token terpusat, jadi seluruh app ikut berubah:
 - `glassListRow()` sekarang punya margin samping 16 (juga dipakai sheet urutkan latihan saat sesi).
 - PRD LOG-01 dan PLAN-05 sudah disesuaikan.
 
+### 9. Custom = routines (26 Nov, RIV-68)
+
+- **Tujuan Custom** (disepakati Herdetya): untuk orang yang sudah punya rutinitas sendiri; tugasnya
+  memulai routine dengan satu tap dan mencatatnya. Pemula ke My Plan. Istilah: *routine* = template
+  milik user, *workout* = satu sesi, *plan* = program bernama tujuan. Mockup:
+  https://claude.ai/artifact/48qj57HbhJ4ntL89MZDCX9
+- **Domain** `Core/Domain/Routines.swift` (tes `RoutinesTests`): `RoutineNaming.name(primaryMuscles:)`
+  ("Chest & Back", "Legs", "Upper Body", "Full Body"), `RoutineNaming.unique` ("Upper A 2"),
+  `RoutineWeek.make(assignments:trainedWeekdays:today:)` (done / today / upcoming / missed / rest).
+- **Model:** `WorkoutTemplate.weekdaysRaw` (+ `weekdays`), `UserSettings.hasSeenCustomIntro`.
+  `TemplateRepository.setDays` (satu routine per hari; hari yang dipakai routine lain dipindah),
+  `uniqueName`; `duplicate` dan `createFromSession` memakai nama unik, bukan "Copy".
+- **Home** `Features/Home/CustomHomeViews.swift`: `CustomHome` (This week per routine, kartu TODAY,
+  Your routines dengan ▶ / label hari / tahan = Edit·Duplicate·Delete, ＋ = Build my own / Start from
+  a ready-made one, kartu kosong "Add your first routine"), `SomethingDifferentRow` (sheet: Pick
+  exercises myself, Repeat last workout, Suggest one for me = `QuickWorkoutView`; juga dipakai di My
+  Plan di bawah PlanToday), `CustomIntroSheet` (sekali, saat Custom pertama dibuka). Menu mode tinggal
+  My Plan / Custom. `WeekCard` lama dihapus.
+- **Editor** (`TemplateEditorView`): "New routine" / "Edit routine", nama fokus kalau baru, bagian
+  **Days** (`WeekdayPicker`, footer menyebut hari routine lain). Saat keluar: routine baru tanpa
+  latihan dihapus, nama kosong diisi dari otot.
+- **Ringkasan latihan:** sesi tanpa `templateID` mendapat kartu "Save as a routine?" (nama otomatis).
+  History: "Save as routine". Library: tab "My routines"; Templates: "My routines" / "Ready-made";
+  detail bawaan: "Add to my routines".
+- UI test baru `testBuildRoutineWithDaysAndStartFromHome`; `testQuickWorkoutFromModeMenu` jadi
+  `testSuggestedWorkoutFromMyPlan`. Helper `openCustom` menutup intro (`customIntroDone`),
+  `openSomethingDifferent` membuka sheet. Identifier: `somethingDifferent`, `suggestWorkout`,
+  `buildRoutine`, `browseReadyMade`, `newRoutineMenu`, `routineName`, `addRoutineExercises`,
+  `todayRoutine`, `saveRoutineButton`, `customIntroBuild`, `customIntroDone`.
+
 ### Model data baru di `UserSettings` (langsung di V1, app belum pernah rilis)
 
 `planStartedAt: Date?`, `homeModeRaw`, `daySwapsRaw`, `planID`. Semua punya default (aturan CloudKit).
@@ -244,10 +274,9 @@ Semua token terpusat, jadi seluruh app ikut berubah:
 ## Belum dikerjakan (urutan yang disarankan)
 
 1. **Merge PR #1** setelah Herdetya review (push dan PR sudah).
-   - Usulan Custom yang belum dikerjakan: nama workout baru otomatis dari isinya atau kolom nama
-     langsung aktif (sekarang "New workout" / "… Copy"); "Pick exercises" → "Start empty workout"
-     dan **Save as workout** di ringkasan latihan.
-   - Figma section 3 · Workout dan artifact "Custom Flow" masih memakai Custom lama.
+   - Figma section 3 dan 10 serta artifact "Custom Flow" masih memakai Custom sebelum routines;
+     mockup routines ada di artifact "Custom Routines".
+   - Pengingat latihan (`ReminderPlanner`) masih membaca hari My Plan, belum hari routine.
 2. Dari artifact yang sengaja dilewati: fase plan (Foundations/Build/Easy/Push, isi latihan belum
    berbeda per fase), baris Equipment dan "Rebuild plan" di layar Plan (belum ada data peralatan).
 3. Sisa lama:

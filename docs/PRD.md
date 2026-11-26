@@ -4,6 +4,8 @@ Sep 24, 2026 · @plainthing studio · diperbarui 24 Nov 2026
 
 **Perubahan 24 Nov 2026 (beginner rework):** app terasa membingungkan untuk pemula (istilah, program yang tidak konsisten, memilih program sulit). Home sekarang langsung menunjukkan latihan hari ini dari plan yang bernama tujuan (PLAN-01 s.d. PLAN-09), tab History diganti Library (LIB-07) dan riwayat pindah ke Profile, streak pribadi punya rest week (PROG-06, PROG-07), dan ada Quick Workout. Detail teknis di `docs/HANDOFF.md`.
 
+**Perubahan 26 Nov 2026 (Custom = routines):** mode Custom untuk orang yang sudah punya rutinitas sendiri. Workout milik user disebut **routine**, bisa diberi hari, dan Home Custom menampilkan minggu ini per routine serta routine hari ini. Pick exercises, ulangi sesi, dan Quick Workout pindah ke satu baris "Something different today" di kedua mode; menu mode tinggal My Plan / Custom (PLAN-05, LIB-05, LIB-06).
+
 ## 1. Ringkasan produk
 
 Rivalift adalah app iOS untuk mencatat latihan gym yang dilengkapi liga mingguan antar teman, dengan skor yang adil untuk semua level kekuatan. Versi pertama menyasar pasar global (bahasa Inggris) dan dibangun native dengan SwiftUI menggunakan Claude Code dan iOS Simulator.
@@ -108,7 +110,7 @@ Setiap persyaratan punya ID agar mudah dirujuk saat memberi tugas ke Claude Code
 
 | ID | Persyaratan | Prioritas |
 | --- | --- | --- |
-| LOG-01 | Memulai latihan selalu dari pilihan yang jelas, tanpa layar perantara: latihan hari ini dari plan (My Plan), workout buatan sendiri dengan satu tap, "ulangi sesi terakhir", pilih latihan satuan, atau template siap pakai (Custom). Sesi dan durasinya baru mulai setelah user memilih | P0 |
+| LOG-01 | Memulai latihan selalu dari pilihan yang jelas, tanpa layar perantara: latihan hari ini dari plan (My Plan), routine sendiri dengan satu tap (Custom), atau "Something different today" (pilih latihan satuan, ulangi sesi terakhir, saran Quick Workout) di kedua mode. Sesi dan durasinya baru mulai setelah user memilih | P0 |
 | LOG-02 | Tambah, hapus, dan urutkan ulang latihan dalam sesi (drag) | P0 |
 | LOG-03 | Tabel set per latihan: nomor set, kolom "previous", beban, repetisi, tombol centang | P0 |
 | LOG-04 | Kolom "previous" menampilkan beban × repetisi set yang sama pada sesi terakhir latihan tersebut; tap untuk mengisi otomatis | P0 |
@@ -138,8 +140,8 @@ Setiap persyaratan punya ID agar mudah dirujuk saat memberi tugas ke Claude Code
 | LIB-02 | Pencarian dan filter berdasarkan kelompok otot dan alat | P0 |
 | LIB-03 | Buat latihan custom dengan field yang sama | P0 |
 | LIB-04 | Program bawaan: Full Body 3×, Upper/Lower 4×, Push/Pull/Legs 6×, 5×5, Get Lean 3× ("Full body burn": 12–15 repetisi, istirahat 45–60 detik, finisher). Program adalah isi plan (PLAN-01); namanya tidak dipakai sebagai judul plan | P0 |
-| LIB-05 | Buat, edit, duplikat, dan hapus template sendiri; simpan sesi yang sudah selesai sebagai template | P0 |
-| LIB-06 | Template menyimpan latihan, jumlah set, target repetisi, dan durasi istirahat | P0 |
+| LIB-05 | Buat, edit, duplikat, dan hapus **routine** (template milik user); salin template bawaan jadi routine ("Add to my routines"); simpan sesi selesai sebagai routine dari ringkasan latihan atau History. Nama kosong diisi otomatis dari otot ("Chest & Back"); nama yang sudah dipakai mendapat angka ("Upper A 2") | P0 |
+| LIB-06 | Routine menyimpan latihan, jumlah set, target repetisi, durasi istirahat, dan hari (opsional, satu routine per hari) | P0 |
 | LIB-07 | Tab Library dengan tiga bagian: Plans (plan aktif lalu semua plan, detail plan dengan "Start this plan"), Exercises (library latihan), My workouts (template milik user) | P0 |
 
 ### 5.4 Riwayat dan progres (PROG)
@@ -178,10 +180,10 @@ Tujuannya: pemula tidak perlu memilih program atau memahami istilah split. Plan 
 | PLAN-02 | Onboarding memilih plan dari tujuan (strength → Get Stronger, muscle → Build Muscle, consistency → Get in Shape, fitness → Overall Fitness). Plan bisa diganti dari Library atau layar Plan; plan baru mulai minggu ini dan hari latihan tidak ikut berubah | P0 |
 | PLAN-03 | Home mode My Plan: kartu plan (nama, split dan hari per minggu, "Week x of n", latihan selesai), strip Senin–Minggu (selesai, hari ini, akan datang, terlewat, istirahat), daftar latihan hari ini dengan resep (set · repetisi · saran beban dari PRG-01), tombol "Start today's workout" yang menempel di bawah. Hari istirahat atau latihan selesai menampilkan "Next up" dan tombol "Train anyway" | P0 |
 | PLAN-04 | Rotasi: latihan berikutnya adalah latihan setelah sesi plan terakhir yang selesai, dibagikan ke hari latihan pilihan user (atau hari bawaan sesuai target). Hari terlewat tidak melompati latihan | P0 |
-| PLAN-05 | Menu mode di header Home: My Plan, Custom (Home bebas: ringkasan minggu, workout buatan sendiri yang mulai dengan satu tap, ulangi sesi terakhir, pilih latihan, buat workout, template siap pakai; tanpa rekomendasi dari plan), dan Quick Workout | P0 |
+| PLAN-05 | Menu mode di header Home: My Plan dan Custom. Custom untuk orang yang sudah punya rutinitas sendiri: minggu ini per routine, kartu TODAY, daftar routine dengan ▶, ＋ (buat sendiri atau dari template), dan "Something different today"; tanpa rekomendasi dari plan. Saat pertama dibuka, sheet singkat menjelaskan Custom (sekali saja) | P0 |
 | PLAN-06 | Tukar latihan (⇄) di setiap latihan hari ini: sampai 4 alternatif dengan otot utama sama yang belum ada di sesi itu; pilihan "Just today" (berlaku saat latihan dimulai, kedaluwarsa besok) atau "Always in my plan" | P1 |
 | PLAN-07 | Detail plan dibuka dari kartu plan: mode preview (latihan per hari dengan hari jatuhnya minggu ini, hari latihan, panjang plan); tombol Edit membuka pengaturan hari latihan, panjang plan (4–16 minggu), dan "Change plan" | P0 |
-| PLAN-08 | Quick Workout: pilih alat (full gym, dumbbell, tanpa alat, band), durasi (15–60 menit → 3–6 latihan), dan fokus (full body, upper, legs, core); latihan disusun otomatis (compound dulu, gerakan umum dulu, gerakan lanjutan seperti pistol squat tidak ditawarkan) dengan tombol acak | P1 |
+| PLAN-08 | Quick Workout ("Suggest one for me" di Something different today): pilih alat (full gym, dumbbell, tanpa alat, band), durasi (15–60 menit → 3–6 latihan), dan fokus (full body, upper, legs, core); latihan disusun otomatis (compound dulu, gerakan umum dulu, gerakan lanjutan seperti pistol squat tidak ditawarkan) dengan tombol acak | P1 |
 | PLAN-09 | Hanya sesi yang dimulai dari plan yang memajukan plan. Semua sesi (plan, Quick Workout, Custom) dihitung untuk streak dan liga | P0 |
 
 **Acceptance criteria:**
@@ -349,19 +351,19 @@ Diagram menunjukkan alur utama; layar pendukung tercantum di tabel berikut.
 | Layar | Isi utama | Persyaratan terkait |
 | --- | --- | --- |
 | Onboarding | Nama, tujuan, level, satuan, target dan hari latihan, komitmen streak, rekomendasi program | AUTH-04, AUTH-05 |
-| Home | Menu mode (My Plan, Custom, Quick Workout), ikon streak; My Plan: kartu plan, strip minggu, latihan hari ini dengan tukar latihan, tombol mulai; Custom: ringkasan minggu, workout sendiri dengan tombol ▶, ulangi sesi terakhir, Pick exercises, Create workout, template siap pakai; lalu kartu liga, personal best minggu ini, metrik latihan | PLAN-03, PLAN-05, PLAN-06, PROG-06, LOG-01 |
+| Home | Menu mode (My Plan, Custom), ikon streak; My Plan: kartu plan, strip minggu, latihan hari ini dengan tukar latihan, Something different today, tombol mulai; Custom: minggu ini per routine, kartu TODAY, Your routines (▶, ＋), Something different today; lalu kartu liga, personal best minggu ini, metrik latihan | PLAN-03, PLAN-05, PLAN-06, PROG-06, LOG-01 |
 | Plan | Preview plan (latihan per hari, hari latihan, panjang plan) dan mode Edit dengan Change plan | PLAN-07, PLAN-02 |
 | Swap Exercise | Sheet alternatif latihan, "Just today" atau "Always in my plan" | PLAN-06 |
 | Quick Workout | Pilihan alat, durasi, fokus; daftar latihan; acak; mulai | PLAN-08 |
 | Streak | Streak, rekor, minggu ini, rest week, 12 minggu terakhir | PROG-07 |
-| Library | Plans (plan aktif, semua plan, detail plan), Exercises, My workouts | LIB-07, PLAN-01, LIB-01 s.d. LIB-06 |
+| Library | Plans (plan aktif, semua plan, detail plan), Exercises, My routines | LIB-07, PLAN-01, LIB-01 s.d. LIB-06 |
 | Active Workout | Header statistik, daftar latihan dengan tabel set, rest timer melayang, tombol selesai | LOG-02 s.d. LOG-14 |
 | Exercise Picker | Pencarian, filter otot dan alat, tambah latihan custom | LIB-01 s.d. LIB-03 |
 | Workout Summary | Durasi, volume, set, rekor baru, estimasi poin liga | LOG-12, PROG-05 |
 | History | Daftar sesi dan kalender, dibuka dari kartu History di Profile | PROG-01 |
-| Session Detail | Semua latihan dan set sesi lampau, opsi simpan sebagai template | PROG-02, LIB-05 |
+| Session Detail | Semua latihan dan set sesi lampau, opsi simpan sebagai routine | PROG-02, LIB-05 |
 | Exercise Detail | Grafik progres, rekor, riwayat set | PROG-03, PROG-04 |
-| Templates | Template milik user (Library → My workouts) dan editor template; program bawaan tampil sebagai isi plan | LIB-04 s.d. LIB-06 |
+| Routines | Routine milik user (Library → My routines) dan editor routine (nama, hari, latihan dengan Sets/Reps/Rest, ganti/hapus latihan, urutkan); template bawaan di tab Ready-made | LIB-04 s.d. LIB-06 |
 | Leagues | Daftar grup dengan posisi user, tombol buat atau gabung grup | SOC-01, SOC-03 |
 | Group Leaderboard | Hitung mundur, leaderboard, tombol undang, pengaturan grup | SOC-05 s.d. SOC-07, SOC-11 |
 | Week Results | Podium, skor final, lencana | SOC-08 |
@@ -727,9 +729,9 @@ Referensi: [Hevy — quick start dan routines](https://mobbin.com/screens/c3143e
 
 Diperbarui 24 Nov 2026 mengikuti konsep "Rivalift Coach Mode" dan desain minimalis Figma (node 695:29871).
 
-- Header: tanggal, menu mode "My Plan ▾" (My Plan, Custom, Quick Workout), dan ikon api streak pribadi yang membuka layar Streak.
+- Header: tanggal, menu mode "My Plan ▾" (My Plan, Custom), dan ikon api streak pribadi yang membuka layar Streak.
 - My Plan: kartu plan (nama tujuan, split dan hari per minggu, "Week x of n", segmen per minggu, latihan selesai), strip Senin–Minggu, "Today · <latihan>" dengan daftar latihan (foto, resep, tombol ⇄), tombol "Start today's workout" menempel di bawah. Hari istirahat: kartu "Rest day" dan "Next up".
-- Custom: kartu "This week" (7 titik hari, "2 of 3 sessions"), "Your workouts" (tiap workout dengan ▶ untuk langsung mulai, kosong: ajakan membuat workout pertama), "Repeat last workout", tombol Pick exercises dan Create workout, tautan "Browse ready-made workouts" (LOG-01).
+- Custom: kartu "This week" (7 hari dengan nama routine per hari, centang untuk hari berlatih, "2 of 3 sessions"), kartu TODAY (routine hari ini), "Your routines" (▶ langsung mulai, label hari, tahan = Edit/Duplicate/Delete, ＋ = Build my own / Start from a ready-made one; kosong: "Add your first routine"), dan baris "Something different today" (Pick exercises myself, Repeat last workout, Suggest one for me). Sheet pengenalan muncul sekali saat Custom pertama dibuka (LOG-01, PLAN-05).
 - Kartu liga: "Weekly league", nama grup dan hitung mundur, peringkat "#2 of 6", top 3 (atau top 2 + user) dengan baris user disorot, selisih poin. Tanpa grup: ajakan membuat atau bergabung.
 - "Personal bests this week" dengan jumlah rekor baru.
 - "Your training": workouts, waktu latihan, dan total beban minggu ini vs minggu lalu, plus grafik 8 minggu.

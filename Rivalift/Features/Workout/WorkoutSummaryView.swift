@@ -22,8 +22,9 @@ struct WorkoutSummaryView: View {
                     summaryCard
                     if !summary.records.isEmpty { recordsCard }
                     leagueCard
+                    if session.templateID == nil { SaveRoutineCard(session: session) }
                     if summary.templateChanged, let template = summary.template {
-                        Button(templateUpdated ? String(localized: "Template updated") : String(localized: "Update “\(template.name)”")) {
+                        Button(templateUpdated ? String(localized: "Routine updated") : String(localized: "Update “\(template.name)”")) {
                             env.templates.update(template, from: session)
                             templateUpdated = true
                         }
@@ -304,5 +305,45 @@ struct ConfettiView: View {
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+}
+
+/// A workout not started from a routine (picked exercises, a suggestion): offer to keep it as one.
+private struct SaveRoutineCard: View {
+    @Environment(AppEnvironment.self) private var env
+    let session: WorkoutSession
+    @State private var name = ""
+    @State private var isSaved = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(isSaved ? "Saved to your routines" : "Save as a routine?").font(.headline.weight(.medium))
+                Text(isSaved ? "Start it from Home in one tap." : "Do this workout again in one tap from Home.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            if !isSaved {
+                TextField("Routine name", text: $name).glassField()
+                Button("Save routine") {
+                    let fallback = RoutineNaming.name(primaryMuscles: session.orderedExercises.compactMap(\.exercise?.primaryMuscle))
+                    let trimmed = name.trimmingCharacters(in: .whitespaces)
+                    env.templates.createFromSession(session, name: trimmed.isEmpty ? fallback : trimmed)
+                    env.dataDidChange()
+                    withAnimation { isSaved = true }
+                }
+                .buttonStyle(.primary)
+                .accessibilityIdentifier("saveRoutineButton")
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.accent.opacity(0.1), in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 32, style: .continuous).strokeBorder(Theme.accent.opacity(0.5)))
+        .onAppear {
+            if name.isEmpty {
+                name = RoutineNaming.name(primaryMuscles: session.orderedExercises.compactMap(\.exercise?.primaryMuscle))
+            }
+        }
     }
 }

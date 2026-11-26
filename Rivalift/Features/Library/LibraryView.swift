@@ -15,7 +15,7 @@ struct LibraryView: View {
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            PillPicker(selection: $segment, options: [(.plans, "Plans"), (.exercises, "Exercises"), (.workouts, "My workouts")])
+            PillPicker(selection: $segment, options: [(.plans, "Plans"), (.exercises, "Exercises"), (.workouts, "My routines")])
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal)
                 .padding(.bottom, 8)

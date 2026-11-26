@@ -63,6 +63,20 @@ final class TemplateRepository {
         try? context.save()
     }
 
+    /// "Upper A", or "Upper A 2" when the user already has a routine called that.
+    func uniqueName(_ base: String) -> String {
+        RoutineNaming.unique(base, existing: userTemplates().map(\.name))
+    }
+
+    /// Schedules a routine on `days`; a day can hold one routine, so others lose it.
+    func setDays(_ days: Set<Int>, for template: WorkoutTemplate) {
+        for other in userTemplates() where other.id != template.id && !other.weekdays.isDisjoint(with: days) {
+            other.weekdays.subtract(days)
+        }
+        template.weekdays = days
+        try? context.save()
+    }
+
     /// Keeps sets and reps; rest follows the new exercise.
     func replaceExercise(_ entry: TemplateExercise, with exercise: Exercise) {
         entry.exercise = exercise
@@ -84,7 +98,7 @@ final class TemplateRepository {
 
     @discardableResult
     func duplicate(_ template: WorkoutTemplate) -> WorkoutTemplate {
-        let copy = WorkoutTemplate(name: "\(template.name) Copy")
+        let copy = WorkoutTemplate(name: uniqueName(template.name))
         context.insert(copy)
         for item in template.orderedExercises {
             let entry = TemplateExercise(order: item.order, setCount: item.setCount, targetReps: item.targetReps, restSec: item.restSec, exercise: item.exercise)
@@ -104,7 +118,7 @@ final class TemplateRepository {
     /// LIB-05: save a completed session as a template.
     @discardableResult
     func createFromSession(_ session: WorkoutSession, name: String) -> WorkoutTemplate {
-        let template = WorkoutTemplate(name: name)
+        let template = WorkoutTemplate(name: uniqueName(name))
         context.insert(template)
         for (index, item) in session.orderedExercises.enumerated() {
             let working = item.orderedSets.filter { $0.setType.isWorking && $0.isCompleted }

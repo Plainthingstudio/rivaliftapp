@@ -17,13 +17,30 @@ final class RivaliftUITests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
     }
 
-    /// Pick exercises and ready-made workouts live in Custom mode; Home opens in My Plan.
-    private func openStartScreen(_ app: XCUIApplication) {
+    /// Switches Home to Custom and closes its one-time intro.
+    private func openCustom(_ app: XCUIApplication) {
         let menu = app.buttons["homeModeMenu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 5))
         menu.tap()
         app.buttons["Custom"].tap()
+        let done = app.buttons["customIntroDone"]
+        XCTAssertTrue(done.waitForExistence(timeout: 5))
+        done.tap()
+    }
+
+    /// "Something different today" → the choices (pick exercises, repeat, suggest). Works on either mode.
+    private func openSomethingDifferent(_ app: XCUIApplication) {
+        let row = app.buttons["somethingDifferent"]
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        if !row.isHittable { app.swipeUp() }
+        row.tap()
         XCTAssertTrue(app.buttons["startPickExercises"].waitForExistence(timeout: 5))
+    }
+
+    /// Pick exercises lives behind "Something different today".
+    private func openStartScreen(_ app: XCUIApplication) {
+        openCustom(app)
+        openSomethingDifferent(app)
     }
 
     /// - Parameter trainToday: picks today as the only training day, so the plan has a workout
@@ -121,14 +138,11 @@ final class RivaliftUITests: XCTestCase {
     }
 
     @MainActor
-    func testQuickWorkoutFromModeMenu() throws {
+    func testSuggestedWorkoutFromMyPlan() throws {
         let app = launchAndOnboard()
 
-        let menu = app.buttons["homeModeMenu"]
-        XCTAssertTrue(menu.waitForExistence(timeout: 5))
-        menu.tap()
-        // The menu item's label includes its subtitle.
-        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Quick Workout")).firstMatch.tap()
+        openSomethingDifferent(app)
+        app.buttons["suggestWorkout"].tap()
         let start = app.buttons["startQuickWorkout"]
         XCTAssertTrue(start.waitForExistence(timeout: 5))
         app.buttons["shuffleQuickWorkout"].tap()
@@ -140,9 +154,8 @@ final class RivaliftUITests: XCTestCase {
     func testBrowseTemplateDetailThenStart() throws {
         let app = launchAndOnboard()
 
-        openStartScreen(app)
-        app.buttons["createWorkoutButton"].tap()
-        app.buttons["From a ready-made workout"].tap()
+        openCustom(app)
+        app.buttons["browseReadyMade"].tap()
         let template = app.staticTexts["5×5 Workout B"].firstMatch
         XCTAssertTrue(template.waitForExistence(timeout: 5))
         template.tap()
@@ -309,6 +322,33 @@ final class RivaliftUITests: XCTestCase {
         app.buttons["finishWorkoutButton"].tap()
         XCTAssertTrue(app.buttons["summaryDoneButton"].waitForExistence(timeout: 5))
         app.buttons["summaryDoneButton"].tap()
+    }
+
+    @MainActor
+    func testBuildRoutineWithDaysAndStartFromHome() throws {
+        let app = launchAndOnboard()
+
+        openCustom(app)
+        app.buttons["buildRoutine"].tap()
+        let name = app.textFields["routineName"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.typeText("Push Day\n")
+        app.buttons["Monday"].tap()
+        app.buttons["addRoutineExercises"].tap()
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("Bench Press")
+        exerciseCard(app, "Barbell Bench Press").tap()
+        app.buttons["addSelectedExercisesButton"].tap()
+        XCTAssertTrue(labelled(app, "Barbell Bench Press").waitForExistence(timeout: 5))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        let start = app.buttons["Start Push Day"].firstMatch
+        XCTAssertTrue(start.waitForExistence(timeout: 5))
+        XCTAssertTrue(labelled(app, "Mon").exists)
+        start.tap()
+        XCTAssertTrue(app.buttons["finishWorkoutButton"].waitForExistence(timeout: 5))
     }
 }
 

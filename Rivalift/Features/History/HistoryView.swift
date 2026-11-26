@@ -459,7 +459,7 @@ struct SessionDetailView: View {
                         }
                     }
                 }
-                Button("Save as template") {
+                Button("Save as routine") {
                     templateName = session.name
                     isSaveTemplatePresented = true
                 }
@@ -474,8 +474,8 @@ struct SessionDetailView: View {
         .screenBackground()
         .navigationTitle(session.name)
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Save as template", isPresented: $isSaveTemplatePresented) {
-            TextField("Template name", text: $templateName)
+        .alert("Save as routine", isPresented: $isSaveTemplatePresented) {
+            TextField("Routine name", text: $templateName)
             Button("Save") {
                 env.templates.createFromSession(session, name: templateName.isEmpty ? session.name : templateName)
                 env.dataDidChange()

@@ -3,22 +3,11 @@ import SwiftUI
 /// PROG-06 / LOG-01 / appendix A.2. Layout follows Figma "Home" (node 163:32961).
 struct HomeView: View {
     @Environment(AppEnvironment.self) private var env
-    @State private var progress: WeekProgress?
     /// Personal streak with rest weeks (the league streak has none).
     @State private var streak: PersonalStreak?
-    @State private var myTemplates: [WorkoutTemplate] = []
-    @State private var lastSessionName: String?
-    @State private var isPickerPresented = false
-    /// Picked exercises start once the picker has closed, so the workout cover is not
-    /// presented on top of a closing sheet.
-    @State private var pickedStart: WorkoutStore.StartRequest?
-    @State private var editing: WorkoutTemplate?
-    @State private var toDelete: WorkoutTemplate?
-    @State private var isBrowsing = false
     @State private var recentRecords: [PersonalRecord] = []
     @State private var overview: AppEnvironment.TrainingOverview?
     @State private var plan: AppEnvironment.PlanHome?
-    @State private var isQuickPresented = false
 
     /// My Plan needs a plan; without one (onboarding skipped) Home is always Custom.
     private var showsPlan: Bool { plan != nil && env.settings.homeMode == .plan }
@@ -33,10 +22,10 @@ struct HomeView: View {
                         .accessibilityIdentifier("planCard")
                     PlanWeekStrip(plan: plan)
                     PlanToday(plan: plan)
+                    SomethingDifferentRow()
                 } else {
-                    if let progress { WeekCard(progress: progress) }
                     resumeButton
-                    myWorkouts
+                    CustomHome()
                 }
                 LeagueTeaserCard()
                 if !recentRecords.isEmpty { records }
@@ -50,29 +39,6 @@ struct HomeView: View {
         .screenBackground()
         .navigationTitle("Home")
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $isPickerPresented, onDismiss: startPicked) {
-            ExercisePickerView(title: "Pick exercises") { selected in
-                pickedStart = .exercises(selected.map(\.id))
-            }
-            .environment(env)
-        }
-        .navigationDestination(item: $editing) { template in
-            TemplateEditorView(template: template)
-        }
-        .navigationDestination(isPresented: $isQuickPresented) {
-            QuickWorkoutView()
-        }
-        .navigationDestination(isPresented: $isBrowsing) {
-            TemplatesView(opensPrograms: true)
-        }
-        .confirmationDialog("Delete \(toDelete?.name ?? "")?", isPresented: Binding(get: { toDelete != nil }, set: { if !$0 { toDelete = nil } }), titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
-                if let toDelete { env.templates.delete(toDelete) }
-                reload()
-            }
-        } message: {
-            Text("Your past sessions stay in History.")
-        }
         .onAppear(perform: reload)
         .onChange(of: env.dataVersion) { _, _ in reload() }
     }
@@ -86,14 +52,10 @@ struct HomeView: View {
                     .foregroundStyle(.secondary)
                 if plan != nil {
                     Menu {
+                        // Quick Workout lives in "Something different today" on both modes.
                         Picker("Home mode", selection: homeMode) {
                             Label("My Plan", systemImage: "sparkles").tag(HomeMode.plan)
                             Label("Custom", systemImage: "square.and.pencil").tag(HomeMode.custom)
-                        }
-                        Divider()
-                        Button { isQuickPresented = true } label: {
-                            Label("Quick Workout", systemImage: "bolt.fill")
-                            Text("One workout for today. Your plan stays as it is.")
                         }
                     } label: {
                         HStack(spacing: 6) {
@@ -143,116 +105,6 @@ struct HomeView: View {
             Button("Resume workout") { env.workout.isPresented = true }
                 .buttonStyle(.primary)
         }
-    }
-
-    /// Custom mode: the user's own workouts start in one tap; no plan recommendation here.
-    private var myWorkouts: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Your workouts").font(.headline.weight(.medium))
-                Spacer()
-                if !myTemplates.isEmpty {
-                    NavigationLink("Manage") { TemplatesView(showsPrograms: false) }
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .frame(minHeight: Theme.minTap)
-                }
-            }
-            .padding(.horizontal, 4)
-            if myTemplates.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Build your first workout").font(.headline.weight(.medium))
-                    Text("Save the exercises you like as a workout, then start it here in one tap.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .glassCard()
-            }
-            ForEach(myTemplates) { workoutRow($0) }
-            if let lastSessionName {
-                Button { env.workout.requestStart(.repeatLast) } label: {
-                    HStack(spacing: 8) {
-                        RingIcon(image: "Icon_ring_repeat", strong: true)
-                        VStack(alignment: .leading, spacing: 0) {
-                            Text("Repeat last workout").font(.callout)
-                            Text(lastSessionName).font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                        }
-                        Spacer(minLength: 0)
-                        Image("IconChevronCircle").accessibilityHidden(true)
-                    }
-                    .padding(16)
-                    .glassCard()
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("repeatLastWorkout")
-            }
-            // Create (save for later) is the main action; Pick exercises starts a one-off session.
-            Menu {
-                Button { editing = env.templates.create(name: String(localized: "New workout")) } label: {
-                    Label("Start from scratch", systemImage: "square.and.pencil")
-                }
-                Button { isBrowsing = true } label: {
-                    Label("From a ready-made workout", systemImage: "square.grid.2x2")
-                }
-            } label: {
-                Label("Create workout", systemImage: "plus")
-                    .font(.subheadline.weight(.medium))
-                    .frame(maxWidth: .infinity, minHeight: 48)
-                    .foregroundStyle(.black)
-                    .background(.white, in: Capsule())
-            }
-            .accessibilityIdentifier("createWorkoutButton")
-            .padding(.top, 4)
-            Button { isPickerPresented = true } label: { Label("Pick exercises", systemImage: "list.bullet") }
-                .buttonStyle(.secondary)
-                .accessibilityIdentifier("startPickExercises")
-        }
-    }
-
-    /// Tap the card for details; the play button starts it right away.
-    private func workoutRow(_ template: WorkoutTemplate) -> some View {
-        HStack(spacing: 12) {
-            NavigationLink { TemplateDetailView(template: template) } label: {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(template.name).font(.callout)
-                    DividedText(parts: Array(template.orderedExercises.compactMap(\.exercise?.name).prefix(3)))
-                    Text("\(template.totalSets) sets · \(template.estimatedDurationMin) min")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            Button { env.workout.requestStart(.template(template.id)) } label: {
-                Image(systemName: "play.fill")
-                    .font(.body)
-                    .foregroundStyle(.black)
-                    .frame(width: Theme.minTap, height: Theme.minTap)
-                    .background(.white, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Start \(template.name)")
-        }
-        .padding(16)
-        .glassCard()
-        .contextMenu {
-            Button("Edit", systemImage: "pencil") { editing = template }
-            Button("Duplicate", systemImage: "plus.square.on.square") {
-                env.templates.duplicate(template)
-                reload()
-            }
-            Button("Delete", systemImage: "trash", role: .destructive) { toDelete = template }
-        }
-    }
-
-    private func startPicked() {
-        guard let pickedStart else { return }
-        self.pickedStart = nil
-        env.workout.requestStart(pickedStart)
     }
 
     private var records: some View {
@@ -312,11 +164,7 @@ struct HomeView: View {
     }
 
     private func reload() {
-        progress = env.weekProgress()
         streak = env.streakOverview().streak
-        // An empty workout (created, then left without exercises) has nothing to start.
-        myTemplates = env.templates.userTemplates().filter { !$0.orderedExercises.isEmpty }
-        lastSessionName = env.sessions.completedSessions().first?.name
         let calendar = WeekCalendar()
         let weekSessions = env.sessions.completedSessions(from: calendar.weekStart(for: Date()), to: calendar.weekEnd(for: Date()))
         recentRecords = Array(
@@ -327,56 +175,6 @@ struct HomeView: View {
         )
         overview = env.trainingOverview()
         plan = env.planHome()
-    }
-}
-
-/// "This week": Monday–Sunday dots and sessions vs target.
-struct WeekCard: View {
-    let progress: WeekProgress
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("This week")
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(spacing: 0) {
-                    ForEach(Array(progress.days.enumerated()), id: \.element) { index, day in
-                        if index > 0 { Spacer(minLength: 0) }
-                        dayColumn(day)
-                    }
-                }
-                Text("\(progress.sessions) of \(progress.target) sessions")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 22)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glassCard()
-    }
-
-    private func dayColumn(_ day: Date) -> some View {
-        let trained = progress.trainedDays.contains(WeekCalendar().localDateString(for: day))
-        let isToday = Calendar.current.isDateInToday(day)
-        return VStack(spacing: 6) {
-            Text(day, format: .dateTime.weekday(.narrow))
-                .font(.caption.weight(isToday ? .medium : .regular))
-                .foregroundStyle(isToday ? .primary : .secondary)
-            if trained {
-                Circle()
-                    .fill(Theme.primaryGradient)
-                    .frame(width: 30, height: 30)
-                    .overlay {
-                        Image(systemName: "checkmark").font(.caption.weight(.bold)).foregroundStyle(.white)
-                    }
-            } else {
-                Circle()
-                    .fill(.white.opacity(0.1).shadow(.inner(color: .white.opacity(0.25), radius: 1)))
-                    .frame(width: 30, height: 30)
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(day, format: .dateTime.weekday(.wide)) + Text(trained ? ", trained" : ""))
     }
 }
 
