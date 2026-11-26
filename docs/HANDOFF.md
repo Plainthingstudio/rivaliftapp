@@ -1,4 +1,4 @@
-# Handoff — Rivalift (status 23 Nov 2026)
+# Handoff — Rivalift (status 26 Nov 2026)
 
 Ringkasan supaya sesi Claude berikutnya bisa langsung lanjut. Spesifikasi produk ada di
 `docs/PRD.md`, aturan kerja di `CLAUDE.md`. Baca dua file itu dulu, lalu dokumen ini.
@@ -15,10 +15,12 @@ Ringkasan supaya sesi Claude berikutnya bisa langsung lanjut. Spesifikasi produk
 
 | Branch | Isi | Status |
 |---|---|---|
-| `claude/determined-shannon-e2byic` | Pekerjaan sampai `54b5381` (My Plan Home pertama) | Belum di-push |
-| `claude/minimal-design-system` | Dibuat dari `54b5381`, berisi semua pekerjaan sesi 23 Nov | **Branch aktif.** Belum di-push, belum ada PR |
+| `claude/determined-shannon-e2byic` | Pekerjaan sampai `54b5381` (My Plan Home pertama) | Di-push, base PR #1 |
+| `claude/minimal-design-system` | Dibuat dari `54b5381`, berisi semua pekerjaan sejak 23 Nov | **Branch aktif.** Di-push, PR #1 |
 
-Run penuh terakhir di `claude/minimal-design-system`: **91 unit + 12 UI test lulus.** Semua sudah di-push; PR: https://github.com/Plainthingstudio/rivaliftapp/pull/1 (ke `claude/determined-shannon-e2byic`, belum di-merge).
+Run penuh terakhir di `claude/minimal-design-system` (`e74475f`): **93 unit + 12 UI test lulus.**
+PR: https://github.com/Plainthingstudio/rivaliftapp/pull/1 (ke `claude/determined-shannon-e2byic`,
+bisa di-merge, belum di-review; repo tidak punya CI).
 
 Commit di branch aktif (lama → baru):
 
@@ -35,6 +37,13 @@ Commit di branch aktif (lama → baru):
 | `7562d66` | Layar Streak dengan rest week (RIV-58) |
 | `b608f3b` | Quick Workout dari menu mode Home (RIV-59) |
 | `acb5f6f` | PRD: PLAN-01…09, LIB-07, PROG-07 (RIV-61) |
+| `53a313a` | Pilih jumlah hari per minggu sebuah plan; jadwal minggu ini (RIV-63) |
+| `de963cf` | Detail plan: tombol hari besar, pilih hari, mulai di tengah minggu, konfirmasi ganti (RIV-64) |
+| `dac39a5` | Plan ditulis dengan nama tujuan di onboarding (RIV-66) |
+| `d59e591`, `684d5fc` | Mode Custom dibangun ulang di sekitar workout sendiri; nama tetap "Custom" (RIV-67) |
+| `2114e56` | Custom: edit workout, Create workout jadi menu utama, Save as mine (RIV-67) |
+| `d0a3059` | Editor workout: kartu rapi, ganti latihan, menu Sets/Reps/Rest (RIV-67) |
+| `e74475f` | Editor workout jadi layar sendiri, bukan sheet (RIV-67) |
 
 ## Latar belakang keputusan (sesi 23 Nov)
 
@@ -44,8 +53,8 @@ pemula, program tidak konsisten, memilih program susah. Tujuannya:
 - Di Home user langsung tahu latihan hari ini; program sudah pasti tapi tetap bisa diubah.
 - Nama plan ramah pemula ("Get in Shape", "Get Lean", "Build Muscle"…); split (Push/Pull/Legs dll.)
   hanya isi di dalamnya.
-- Dua mode seperti Hevy: **My Plan** (terarah) dan **Custom** (bebas). Quick Workout sebagai mode
-  ketiga belum dibuat.
+- Dua mode seperti Hevy: **My Plan** (terarah) dan **Custom** (bebas), plus Quick Workout untuk
+  satu latihan dadakan (dibuat, lihat bagian 7; Custom dibangun ulang, lihat bagian 8).
 - IA baru: tab **Home, Library, Leagues, Profile**. History pindah ke Profile.
 - Gaya visual: lebih minimalis, mengikuti Figma node `695:29871` ("Home").
 
@@ -84,8 +93,8 @@ maksimal 2 disimpan.
   "Next up"), `PlanStartButton` (menempel di bawah: "Start today's workout" / "Train anyway · …" /
   "Resume workout").
 - **Menu mode** di header Home: "My Plan ▾" / "Custom ▾" (`UserSettings.homeMode`,
-  `homeModeRaw`). Custom = Home lama (kartu minggu, Start Workout, Quick start). Tanpa plan, Home
-  selalu Custom. UI test pindah ke Custom lewat helper `openStartScreen`.
+  `homeModeRaw`). Isi Custom lihat bagian 8. Tanpa plan, Home selalu Custom. UI test pindah ke
+  Custom lewat helper `openStartScreen` (menunggu `startPickExercises`).
 - Urutan Home (My Plan): header → kartu plan → strip minggu → latihan hari ini → kartu liga →
   personal best minggu ini → "Your training".
 
@@ -203,6 +212,31 @@ Semua token terpusat, jadi seluruh app ikut berubah:
   terpilih sekarang bergaya kartu (putih 10% + border).
 - UI test: item menu dicari dengan `label BEGINSWITH "Quick Workout"` karena label-nya ikut subtitle.
 
+### 8. Mode Custom dan editor workout (24–25 Nov, RIV-66, RIV-67)
+
+- **Kenapa:** Custom lama membuka layar "Start a workout" yang kartu utamanya rekomendasi dari plan,
+  dan workout buatan sendiri tersebar di tiga tempat. Nama "My Workouts" sempat dicoba lalu
+  dikembalikan ke **Custom** (terlalu mirip "My Plan").
+- **Home Custom** (`HomeView.myWorkouts`): This week → (Resume workout) → **Your workouts** (workout
+  sendiri yang berisi latihan, tombol ▶ langsung mulai, tap kartu = detail, tahan = Edit / Duplicate
+  / Delete, "Manage" = `TemplatesView(showsPrograms: false)`) → Repeat last workout → **Create
+  workout** (tombol primary, `Menu`: *Start from scratch* = editor kosong, *From a ready-made
+  workout* = `TemplatesView(opensPrograms: true)`) → **Pick exercises** (secondary, picker lalu
+  latihan mulai). Kosong: kartu "Build your first workout". Tidak ada rekomendasi plan di Custom.
+- **Dihapus:** `StartWorkoutView` (layar "Start a workout"), `AppEnvironment.recommendedWorkout()`,
+  `WorkoutStore.isStartScreenPresented`, `TemplateRepository.recentlyUsed`, kartu Quick start dan
+  aset `QuickStartUpper/Lower`. Empty state History sekarang membawa ke Home.
+- **Detail workout** (`TemplateDetailView`): workout sendiri punya **Edit**; template bawaan punya
+  **Save as mine** (`templates.duplicate`, lalu editor).
+- **Editor** (`TemplateEditorView` di `TemplatesView.swift`): layar yang di-push
+  (`navigationDestination(item:)` dari Home, Templates, detail), bukan sheet. Back menyimpan
+  (`onDisappear` → `templates.save()`); kanan atas **Reorder** / Done. `TemplateExerciseRow`: foto,
+  nama, otot · alat, menu ⋯ (*Replace exercise* lewat `ExercisePickerView` satu pilihan →
+  `TemplateRepository.replaceExercise`, sets/reps tetap, rest ikut latihan baru; *Remove*), dan
+  tiga kotak `Menu` Sets / Reps / Rest. Saat Reorder baris jadi ringkas dan tanpa tombol hapus.
+- `glassListRow()` sekarang punya margin samping 16 (juga dipakai sheet urutkan latihan saat sesi).
+- PRD LOG-01 dan PLAN-05 sudah disesuaikan.
+
 ### Model data baru di `UserSettings` (langsung di V1, app belum pernah rilis)
 
 `planStartedAt: Date?`, `homeModeRaw`, `daySwapsRaw`, `planID`. Semua punya default (aturan CloudKit).
@@ -210,6 +244,10 @@ Semua token terpusat, jadi seluruh app ikut berubah:
 ## Belum dikerjakan (urutan yang disarankan)
 
 1. **Merge PR #1** setelah Herdetya review (push dan PR sudah).
+   - Usulan Custom yang belum dikerjakan: nama workout baru otomatis dari isinya atau kolom nama
+     langsung aktif (sekarang "New workout" / "… Copy"); "Pick exercises" → "Start empty workout"
+     dan **Save as workout** di ringkasan latihan.
+   - Figma section 3 · Workout dan artifact "Custom Flow" masih memakai Custom lama.
 2. Dari artifact yang sengaja dilewati: fase plan (Foundations/Build/Easy/Push, isi latihan belum
    berbeda per fase), baris Equipment dan "Rebuild plan" di layar Plan (belum ada data peralatan).
 3. Sisa lama:
@@ -228,8 +266,9 @@ Semua token terpusat, jadi seluruh app ikut berubah:
 ## Perangkat
 
 - **Simulator:** iPhone 18 Pro `D8A495E6-E88B-41A3-A8DC-C511E5F99E7B`.
-- **iPhone 17 Herdetya** `00008150-001534C03A01401C`: build 16 Okt (lama, belum ada semua yang di atas).
-- **iPhone 15 Bahrur** `00008120-0011385C2663601E`: build 17 Nov, Developer Mode aktif.
+- **iPhone 17 Herdetya** `00008150-001534C03A01401C`: build 24 Nov pagi (sebelum Custom baru).
+- **iPhone 15 Bahrur** `00008120-0011385C2663601E`: build 24 Nov `684d5fc` (Custom baru, tanpa
+  editor baru), Developer Mode aktif. Yang tersambung kabel ke laptop.
 - Pasang ke HP:
   ```sh
   xcodebuild -project Rivalift.xcodeproj -scheme Rivalift -destination 'id=<UDID>' \
@@ -257,10 +296,18 @@ Semua token terpusat, jadi seluruh app ikut berubah:
   `.padding().background(Theme.bottomFade)`. Tutup keyboard (`typeText("…\n")`) sebelum mengetuk
   tombol di bawah. Identifier baru: `planCard`, `swapExercise`, `confirmSwap`, `editPlanButton`,
   `changePlanButton`, `startPlanWorkout`, `homeModeMenu`, `plan-<id>`, `startThisPlan`,
-  `profileHistory`.
+  `profileHistory`, `startPickExercises`, `createWorkoutButton`, `repeatLastWorkout`,
+  `saveTemplateCopy`, `editTemplateButton`. Item `Menu` dicari lewat label-nya, mis.
+  `app.buttons["From a ready-made workout"]`.
+- Simulator: setelah `simctl launch` layar bisa hitam beberapa detik; tunggu sebelum mengetuk.
 - CloudKit: semua atribut model wajib punya default atau optional; jangan pakai `.unique`.
 - Figma: [Rivalift — iOS Screens](https://www.figma.com/design/UbndheXZjjzAloGIBkWKPp), node
   minimalis `695:29871`. `get_design_context` per node anak lebih hemat daripada seluruh layar.
+  Page **"App flows · 24 Nov 2026"** (`860:2`): semua alur sebagai layer biasa (data contoh), satu
+  section per alur (1 Onboarding … 9 Leagues) plus **10 · Custom · updated 26 Nov**. Section 3
+  · Workout masih memakai Custom lama. Generatornya HTML → `html_to_figma` (skrip sementara di
+  scratchpad, tidak di repo). Artifact "Custom Flow": https://claude.ai/artifact/KqqALriUD83VByiTB8EsDZ
+  (versi 24 Nov, sebelum menu Create workout dan editor baru).
 
 ## Notion
 
@@ -272,6 +319,10 @@ setiap langkah selesai jadi update.
 Sesi 23 Nov tercatat: **RIV-51 … RIV-57** (Done, kolom Commit terisi), **RIV-58 … RIV-62** (Todo:
 streak, Quick Workout, Figtree, PRD, push + PR; RIV-58, RIV-59, RIV-62 Done, RIV-60 Figtree Canceled), dua entri Updates 23 Nov, baris M3 di tabel
 milestone hub, dan open decision soal aturan rest week.
+
+Sesi 24–25 Nov: **RIV-63, RIV-64** (jadwal dan detail plan), **RIV-65** (Figma semua alur),
+**RIV-66** (judul plan, `dac39a5`), **RIV-67** (Custom dan editor workout, beberapa commit), semua
+Done, dengan entri Updates per langkah.
 
 **Akses:** konektor Notion di Claude masuk ke workspace pribadi, bukan Plainthing Studio. Pakai
 REST API dengan token integration "Rivalift Claude" (workspace Plainthing Studio, akses ke hub
