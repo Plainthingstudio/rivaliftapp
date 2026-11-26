@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import Testing
 @testable import Rivalift
 
@@ -245,11 +246,28 @@ struct SeedDataTests {
         }
     }
 
+    @Test func everyExerciseHasAPhoto() throws {
+        let bundle = Bundle(for: BundleToken.self).appBundle
+        for exercise in try SeedLoader.loadExercises(bundle: bundle) {
+            #expect(UIImage(named: "Exercise_\(exercise.key)", in: bundle, with: nil) != nil, "\(exercise.key)")
+        }
+    }
+
+    @Test func everyExerciseHasAGuide() throws {
+        let bundle = Bundle(for: BundleToken.self).appBundle
+        let guides = try SeedLoader.loadGuides(bundle: bundle)
+        for exercise in try SeedLoader.loadExercises(bundle: bundle) {
+            let guide = guides[exercise.key]
+            #expect(guide != nil, "\(exercise.key)")
+            #expect((guide?.steps.count ?? 0) >= 3 && !(guide?.about.isEmpty ?? true), "\(exercise.key)")
+        }
+    }
+
     @Test func templatesReferenceKnownExercises() throws {
         let bundle = Bundle(for: BundleToken.self).appBundle
         let keys = Set(try SeedLoader.loadExercises(bundle: bundle).map(\.key))
         let programs = try SeedLoader.loadPrograms(bundle: bundle)
-        #expect(Set(programs.map(\.program)) == ["Full Body 3×", "Upper/Lower 4×", "Push/Pull/Legs 6×", "5×5"])
+        #expect(Set(programs.map(\.program)) == ["Full Body 3×", "Upper/Lower 4×", "Push/Pull/Legs 6×", "5×5", "Get Lean 3×"])
         for program in programs {
             for day in program.days {
                 for item in day.exercises {

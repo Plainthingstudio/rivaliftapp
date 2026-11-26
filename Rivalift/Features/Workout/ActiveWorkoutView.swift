@@ -22,7 +22,7 @@ struct ActiveWorkoutView: View {
                     ProgressView()
                 }
             }
-            .background(Theme.background)
+            .screenBackground()
             .toolbar { toolbar }
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -101,7 +101,10 @@ struct ActiveWorkoutView: View {
                 Button {
                     isPickerPresented = true
                 } label: {
-                    Label("Add exercise", systemImage: "plus")
+                    HStack(spacing: 6) {
+                        Image("Icon_plus").accessibilityHidden(true)
+                        Text("Add exercise")
+                    }
                 }
                 .buttonStyle(.secondary)
                 .accessibilityIdentifier("addExerciseButton")
@@ -127,6 +130,7 @@ struct ActiveWorkoutView: View {
                 store.isPresented = false
             } label: {
                 Image(systemName: "chevron.down")
+                    .foregroundStyle(.white)
             }
             .accessibilityLabel("Minimize workout")
         }
@@ -140,7 +144,8 @@ struct ActiveWorkoutView: View {
                 let check = store.finishCheck()
                 if check == .ready { store.finish() } else { finishCheck = check }
             }
-            .fontWeight(.semibold)
+            .fontWeight(.medium)
+            .foregroundStyle(.white)
             .accessibilityIdentifier("finishWorkoutButton")
         }
         ToolbarItemGroup(placement: .keyboard) {
@@ -159,13 +164,18 @@ struct WorkoutHeaderView: View {
 
     var body: some View {
         TimelineView(.periodic(from: session.startedAt, by: 1)) { context in
-            HStack {
-                StatTile(value: DurationFormatter.clock(Int(context.date.timeIntervalSince(session.startedAt))), label: "Duration")
-                StatTile(value: WeightFormatter.volume(kg: session.totalVolumeKg, unit: unit), label: "Volume")
-                StatTile(value: "\(session.completedSetCount)", label: "Sets")
-            }
+            StatStrip(items: [
+                (DurationFormatter.clock(Int(context.date.timeIntervalSince(session.startedAt))), "Duration"),
+                (WeightFormatter.volume(kg: session.totalVolumeKg, unit: unit), "Volume"),
+                ("\(session.completedSetCount)", "Sets"),
+            ])
+            .padding(.horizontal, 8)
         }
-        .card()
+        .padding(.horizontal, 24)
+        .padding(.vertical, 32)
+        .frame(maxWidth: .infinity)
+        .glassCard()
+        .contentShape(Rectangle())
         .accessibilityHint("Double tap to rename the workout")
     }
 }
@@ -179,10 +189,15 @@ struct ReorderExercisesView: View {
         NavigationStack {
             List {
                 ForEach(env.workout.session?.orderedExercises ?? []) { entry in
-                    Text(entry.exercise?.name ?? "")
+                    HStack(spacing: 12) {
+                        ExercisePhoto(exercise: entry.exercise, width: 52, height: 38)
+                        Text(entry.exercise?.name ?? "").font(.subheadline)
+                    }
+                    .glassListRow()
                 }
                 .onMove { env.workout.moveExercises(from: $0, to: $1) }
             }
+            .glassList()
             .environment(\.editMode, .constant(.active))
             .navigationTitle("Reorder")
             .navigationBarTitleDisplayMode(.inline)

@@ -1,6 +1,11 @@
 import Foundation
 import SwiftData
 
+/// What Home shows: today's workout from the plan, or the user's own workouts.
+enum HomeMode: String, Sendable {
+    case plan, custom
+}
+
 /// Single-row settings. Duplicate rows (e.g. from two devices syncing through iCloud)
 /// are merged in `SettingsRepository`.
 @Model
@@ -8,6 +13,8 @@ final class UserSettings {
     var id: UUID = UUID()
     var createdAt: Date = Date()
     var displayName: String = ""
+    /// Profile photo as a downscaled JPEG (AUTH-04); nil shows the default avatar.
+    @Attribute(.externalStorage) var avatarImageData: Data?
     var unitRaw: String = WeightUnit.kg.rawValue
     var weeklyTarget: Int = 3
     /// Target changes apply from the next week (section 6.1, T).
@@ -26,16 +33,67 @@ final class UserSettings {
     var reminderHour: Int = 18
     /// ISO weekdays (1 = Monday) for workout reminders, comma separated.
     var reminderWeekdaysRaw: String = ""
-    /// 0 = not started; 1…3 = step reached; persisted so closing the app keeps choices (AUTH-05).
+    /// Onboarding answers used to recommend a built-in program (`PlanRecommender`).
+    var goalRaw: String = TrainingGoal.fitness.rawValue
+    var experienceRaw: String = ExperienceLevel.beginner.rawValue
+    /// Program name from templates.json, e.g. "Full Body 3×"; empty until onboarding ends.
+    var planProgram: String = ""
+    /// `TrainingPlan.id` of the chosen plan ("build-muscle"); empty means the one for `goal`.
+    var planID: String = ""
+    /// When the current plan started ("Week 2 of 8"); nil until Home first shows the plan.
+    var planStartedAt: Date?
+    /// Home mode: `HomeMode` raw value.
+    var homeModeRaw: String = HomeMode.plan.rawValue
+    /// Training days for one week only, when a plan starts mid-week: "weekStartKey|2,4,5,7".
+    var weekOverrideRaw: String = ""
+    /// Plan exercises swapped "just today" (`ExerciseSwap.DaySwaps`).
+    var daySwapsRaw: String = ""
+    /// Weekly streak the user committed to during onboarding (0 = none).
+    var streakGoalWeeks: Int = 0
+    /// 0 = not started; then the step reached; persisted so closing the app keeps choices (AUTH-05).
     var onboardingStep: Int = 0
     var onboardingDone: Bool = false
     var hasAskedNotificationPermission: Bool = false
+    /// The one-time "Custom is for your own routines" sheet has been shown.
+    var hasSeenCustomIntro: Bool = false
 
     init() {}
 
     var unit: WeightUnit {
         get { WeightUnit(rawValue: unitRaw) ?? .kg }
         set { unitRaw = newValue.rawValue }
+    }
+
+    var goal: TrainingGoal {
+        get { TrainingGoal(rawValue: goalRaw) ?? .fitness }
+        set { goalRaw = newValue.rawValue }
+    }
+
+    var homeMode: HomeMode {
+        get { HomeMode(rawValue: homeModeRaw) ?? .plan }
+        set { homeModeRaw = newValue.rawValue }
+    }
+
+    var experience: ExperienceLevel {
+        get { ExperienceLevel(rawValue: experienceRaw) ?? .beginner }
+        set { experienceRaw = newValue.rawValue }
+    }
+
+    /// ISO weekdays (1 = Monday) the user plans to train.
+    var trainingWeekdays: Set<Int> {
+        get { Set(reminderWeekdaysRaw.split(separator: ",").compactMap { Int($0) }) }
+        set { reminderWeekdaysRaw = newValue.sorted().map(String.init).joined(separator: ",") }
+    }
+
+    /// Target changes apply from next week so the current league week stays fair (section 6.1).
+    func requestWeeklyTarget(_ value: Int, now: Date = Date()) {
+        if value == weeklyTarget {
+            pendingWeeklyTarget = nil
+            pendingTargetEffectiveFrom = nil
+        } else {
+            pendingWeeklyTarget = value
+            pendingTargetEffectiveFrom = WeekCalendar().weekEnd(for: now)
+        }
     }
 
     /// Promotes a pending target once its week has started.

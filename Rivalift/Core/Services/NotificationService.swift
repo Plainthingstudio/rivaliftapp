@@ -48,6 +48,25 @@ final class NotificationService {
         center.removePendingNotificationRequests(withIdentifiers: [Self.staleSessionID])
     }
 
+    /// Replaces all pending workout reminders (NOT-02). One-shot requests, so a day can be
+    /// skipped once the user trained; `AppEnvironment.refreshWorkoutReminders` keeps them current.
+    func scheduleWorkoutReminders(at dates: [Date]) {
+        center.removePendingNotificationRequests(withIdentifiers: (0..<Self.maxWorkoutReminders).map { "\(Self.workoutReminderPrefix)\($0)" })
+        for (index, date) in dates.prefix(Self.maxWorkoutReminders).enumerated() {
+            let content = UNMutableNotificationContent()
+            content.title = String(localized: "Time to train")
+            // ponytail: PRD copy mentions "your crew"; switch to it once leagues are live (M5).
+            content.body = String(localized: "Today is one of your training days. Start a workout to stay on track.")
+            content.sound = .default
+            let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            center.add(UNNotificationRequest(identifier: "\(Self.workoutReminderPrefix)\(index)", content: content, trigger: trigger))
+        }
+    }
+
+    static let workoutReminderPrefix = "workout-reminder-"
+    static let maxWorkoutReminders = 14
+
     private func schedule(id: String, content: UNNotificationContent, at date: Date) {
         let interval = max(1, date.timeIntervalSinceNow)
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: interval, repeats: false)

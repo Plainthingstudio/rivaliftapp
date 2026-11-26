@@ -24,6 +24,13 @@ final class ExerciseRepository {
         return try? context.fetch(descriptor).first
     }
 
+    private lazy var guides: [String: ExerciseGuide] = (try? SeedLoader.loadGuides()) ?? [:]
+
+    /// How-to text for built-in exercises; nil for custom ones.
+    func guide(for exercise: Exercise) -> ExerciseGuide? {
+        guides[exercise.key]
+    }
+
     func exercise(id: UUID) -> Exercise? {
         var descriptor = FetchDescriptor<Exercise>(predicate: #Predicate { $0.id == id })
         descriptor.fetchLimit = 1

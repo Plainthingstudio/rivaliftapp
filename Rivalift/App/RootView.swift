@@ -15,6 +15,7 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 env.workout.checkStaleSession()
+                env.refreshWorkoutReminders()
                 Task { await env.sync.processQueue() }
             }
         }
@@ -29,29 +30,36 @@ struct MainTabView: View {
         @Bindable var workout = env.workout
         TabView(selection: $env.selectedTab) {
             NavigationStack { HomeView() }
+                .tint(Theme.accent)
                 .workoutMiniBar()
                 .tabItem { Label("Home", systemImage: "house.fill") }
                 .tag(AppTab.home)
-            NavigationStack { HistoryView() }
+            NavigationStack { LibraryView() }
+                .tint(Theme.accent)
                 .workoutMiniBar()
-                .tabItem { Label("History", systemImage: "calendar") }
-                .tag(AppTab.history)
+                .tabItem { Label("Library", systemImage: "books.vertical.fill") }
+                .tag(AppTab.library)
             NavigationStack { LeaguesView() }
+                .tint(Theme.accent)
                 .workoutMiniBar()
                 .tabItem { Label("Leagues", systemImage: "trophy.fill") }
                 .tag(AppTab.leagues)
             NavigationStack { ProfileView() }
+                .tint(Theme.accent)
                 .workoutMiniBar()
                 .tabItem { Label("Profile", systemImage: "person.crop.circle") }
                 .tag(AppTab.profile)
         }
+        .tint(Theme.accent) // selected tab; content below keeps the app accent
         .fullScreenCover(isPresented: $workout.isPresented) {
             ActiveWorkoutView()
                 .environment(env)
+                .tint(Theme.accent)
         }
         .sheet(item: $workout.summary) { summary in
             WorkoutSummaryView(summary: summary)
                 .environment(env)
+                .tint(Theme.accent)
                 .interactiveDismissDisabled()
         }
         .startConflictAlert()

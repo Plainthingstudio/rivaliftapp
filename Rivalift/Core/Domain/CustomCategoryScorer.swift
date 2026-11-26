@@ -41,7 +41,7 @@ enum CustomCategoryScorer {
         case absolute, improvement
     }
 
-    struct Category: Codable, Equatable, Sendable {
+    struct Category: Codable, Hashable, Sendable {
         var id: String
         var exerciseKey: String
         var metric: Metric

@@ -29,8 +29,13 @@ struct WorkoutSummary: Identifiable {
 final class WorkoutStore {
     enum StartRequest: Equatable {
         case empty
-        case template(UUID)
+        /// `swaps`: template exercise ID → exercise ID to use instead, today only.
+        case template(UUID, swaps: [UUID: UUID] = [:])
         case repeatLast
+        /// Empty session prefilled with exercises picked before starting.
+        case exercises([UUID])
+        /// Quick Workout: exercises with sets and reps, no template (the plan does not move).
+        case quick([QuickWorkout.Item])
     }
 
     enum CompletionOutcome: Equatable {
@@ -129,15 +134,24 @@ final class WorkoutStore {
         switch request {
         case .empty:
             session = sessions.startEmpty(name: defaultName())
-        case .template(let id):
+        case .template(let id, let swaps):
             guard let template = templates.template(id: id) else { return }
-            let result = sessions.start(from: template)
+            let result = sessions.start(from: template, swaps: swaps.compactMapValues(exercises.exercise(id:)))
             session = result.session
             if !result.skipped.isEmpty {
                 notice = String(localized: "Skipped archived exercises: \(result.skipped.joined(separator: ", "))")
             }
         case .repeatLast:
             session = sessions.repeatLast() ?? sessions.startEmpty(name: defaultName())
+        case .exercises(let ids):
+            let session = sessions.startEmpty(name: defaultName())
+            for exercise in ids.compactMap(exercises.exercise(id:)) {
+                sessions.addExercise(exercise, to: session)
+            }
+            self.session = session
+        case .quick(let items):
+            let planned = items.compactMap { item in exercises.exercise(id: item.id).map { (exercise: $0, sets: item.sets, reps: item.reps) } }
+            session = sessions.start(name: String(localized: "Quick Workout"), items: planned)
         }
         isPresented = true
         onDataChange?()

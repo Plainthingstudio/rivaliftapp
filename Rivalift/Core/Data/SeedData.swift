@@ -13,6 +13,13 @@ struct ExerciseSeed: Codable, Sendable {
     var defaultRestSec: Int
 }
 
+/// How-to text for a built-in exercise, from the bundled `exercise_guides.json` keyed by exercise key.
+struct ExerciseGuide: Codable, Sendable {
+    var about: String
+    var steps: [String]
+    var tips: [String]
+}
+
 struct ProgramSeed: Codable, Sendable {
     struct Day: Codable, Sendable {
         var name: String
@@ -33,6 +40,10 @@ struct ProgramSeed: Codable, Sendable {
 enum SeedLoader {
     static func loadExercises(bundle: Bundle = .main) throws -> [ExerciseSeed] {
         try decode("exercises", bundle: bundle)
+    }
+
+    static func loadGuides(bundle: Bundle = .main) throws -> [String: ExerciseGuide] {
+        try decode("exercise_guides", bundle: bundle)
     }
 
     static func loadPrograms(bundle: Bundle = .main) throws -> [ProgramSeed] {

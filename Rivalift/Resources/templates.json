@@ -389,5 +389,133 @@
         ]
       }
     ]
+  },
+  {
+    "program": "Get Lean 3\u00d7",
+    "days": [
+      {
+        "name": "Full Body Burn A",
+        "exercises": [
+          {
+            "exerciseKey": "goblet_squat",
+            "sets": 3,
+            "targetReps": 12,
+            "restSec": 60
+          },
+          {
+            "exerciseKey": "dumbbell_bench_press",
+            "sets": 3,
+            "targetReps": 12,
+            "restSec": 60
+          },
+          {
+            "exerciseKey": "seated_cable_row",
+            "sets": 3,
+            "targetReps": 12,
+            "restSec": 60
+          },
+          {
+            "exerciseKey": "walking_lunge",
+            "sets": 2,
+            "targetReps": 12,
+            "restSec": 45
+          },
+          {
+            "exerciseKey": "kettlebell_swing",
+            "sets": 3,
+            "targetReps": 15,
+            "restSec": 45
+          },
+          {
+            "exerciseKey": "mountain_climber",
+            "sets": 2,
+            "targetReps": 20,
+            "restSec": 30
+          }
+        ]
+      },
+      {
+        "name": "Full Body Burn B",
+        "exercises": [
+          {
+            "exerciseKey": "dumbbell_romanian_deadlift",
+            "sets": 3,
+            "targetReps": 12,
+            "restSec": 60
+          },
+          {
+            "exerciseKey": "seated_dumbbell_shoulder_press",
+            "sets": 3,
+            "targetReps": 12,
+            "restSec": 60
+          },
+          {
+            "exerciseKey": "lat_pulldown",
+            "sets": 3,
+            "targetReps": 12,
+            "restSec": 60
+          },
+          {
+            "exerciseKey": "step_up",
+            "sets": 2,
+            "targetReps": 12,
+            "restSec": 45
+          },
+          {
+            "exerciseKey": "push_up",
+            "sets": 2,
+            "targetReps": 12,
+            "restSec": 45
+          },
+          {
+            "exerciseKey": "burpee",
+            "sets": 2,
+            "targetReps": 10,
+            "restSec": 45
+          }
+        ]
+      },
+      {
+        "name": "Full Body Burn C",
+        "exercises": [
+          {
+            "exerciseKey": "leg_press",
+            "sets": 3,
+            "targetReps": 15,
+            "restSec": 60
+          },
+          {
+            "exerciseKey": "incline_dumbbell_press",
+            "sets": 3,
+            "targetReps": 12,
+            "restSec": 60
+          },
+          {
+            "exerciseKey": "dumbbell_row",
+            "sets": 3,
+            "targetReps": 12,
+            "restSec": 60
+          },
+          {
+            "exerciseKey": "glute_bridge",
+            "sets": 2,
+            "targetReps": 15,
+            "restSec": 45
+          },
+          {
+            "exerciseKey": "kettlebell_swing",
+            "sets": 3,
+            "targetReps": 15,
+            "restSec": 45
+          },
+          {
+            "exerciseKey": "plank",
+            "sets": 2,
+            "targetReps": 0,
+            "restSec": 30
+          }
+        ]
+      }
+    ]
   }
 ]

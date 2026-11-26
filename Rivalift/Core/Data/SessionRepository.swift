@@ -100,13 +100,13 @@ final class SessionRepository {
 
     /// Starts from a template. Archived exercises are skipped and returned so the UI can
     /// mention them (section 14.2).
-    func start(from template: WorkoutTemplate) -> (session: WorkoutSession, skipped: [String]) {
+    func start(from template: WorkoutTemplate, swaps: [UUID: Exercise] = [:]) -> (session: WorkoutSession, skipped: [String]) {
         let session = WorkoutSession(name: template.name, templateID: template.id)
         context.insert(session)
         var skipped: [String] = []
         var order = 0
         for item in template.orderedExercises {
-            guard let exercise = item.exercise, !exercise.isArchived else {
+            guard let exercise = swaps[item.id] ?? item.exercise, !exercise.isArchived else {
                 if let name = item.exercise?.name { skipped.append(name) }
                 continue
             }
@@ -123,6 +123,25 @@ final class SessionRepository {
         template.lastUsedAt = Date()
         save()
         return (session, skipped)
+    }
+
+    /// A session with no template (Quick Workout): exercises with their sets and target reps
+    /// (0 = no rep target, e.g. a plank).
+    func start(name: String, items: [(exercise: Exercise, sets: Int, reps: Int)]) -> WorkoutSession {
+        let session = WorkoutSession(name: name)
+        context.insert(session)
+        for (order, item) in items.enumerated() {
+            let entry = SessionExercise(order: order, exercise: item.exercise, restSec: item.exercise.defaultRestSec, targetReps: item.reps > 0 ? item.reps : nil)
+            entry.session = session
+            context.insert(entry)
+            for index in 0..<max(item.sets, 1) {
+                let set = SetEntry(order: index)
+                set.sessionExercise = entry
+                context.insert(set)
+            }
+        }
+        save()
+        return session
     }
 
     /// "Repeat last session": same exercises and set structure as the latest completed session.
